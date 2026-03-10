@@ -1,1 +1,7 @@
-
+[theme]
+base="light"
+primaryColor="#FF8FB1"                 # 딸기우유 핑크
+backgroundColor="#FFF7FB"              # 아주 연한 핑크빛
+secondaryBackgroundColor="#FFF0F6"     # 카드 배경
+textColor="#2E2A2B"                    # 너무 새까맣지 않게
+font="sans serif"
