@@ -451,11 +451,21 @@ st.markdown("""
 .block-container {
     padding-top: 1.2rem;
     max-width: 1400px;
+    background: rgba(255, 250, 253, 0.55);
+    border-radius: 24px;
 }
 
 html, body, [data-testid="stApp"], [data-testid="stAppViewContainer"],
 [data-testid="stSidebar"], div, p, span, label, input, textarea, button, li {
     font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+}
+
+html, body, [data-testid="stAppViewContainer"] {
+    background: linear-gradient(180deg, #FFF7FB 0%, #FFF1F6 100%) !important;
+}
+
+[data-testid="stAppViewContainer"] > .main {
+    background: transparent !important;
 }
 
 input {
@@ -596,6 +606,20 @@ div[data-testid="stButton"] {
 div[data-testid="stButton"] button {
     padding: 2px 6px !important;
     min-height: 26px !important;
+}
+
+div[data-testid="stExpander"] {
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(255,143,177,0.18);
+    border-radius: 16px;
+    padding: 4px 8px;
+}
+
+[data-testid="stForm"] {
+    background: rgba(255,255,255,0.45);
+    border: 1px solid rgba(255,143,177,0.15);
+    border-radius: 18px;
+    padding: 14px;
 }
 
 label:has(input[type="checkbox"]) {
