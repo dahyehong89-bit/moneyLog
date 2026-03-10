@@ -7,7 +7,12 @@ from datetime import date, datetime
 
 import pandas as pd
 import streamlit as st
+import gspread
+from google.oauth2.service_account import Credentials
 
+month_key = datetime.today().strftime("%Y-%m")
+
+worksheet = get_month_sheet(gc, month_key)
 
 FILE = "money.csv"
 CHECKLIST_FILE = "checklist.csv"
@@ -57,10 +62,32 @@ CHECKLIST_ITEMS = [
     "보험료2 : 60,712원",
 ]
 
+def get_gspread_client():
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    credentials = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scopes,
+    )
+    return gspread.authorize(credentials)
+
+
+def get_worksheet(sheet_name: str):
+    client = get_gspread_client()
+    spreadsheet = client.open(st.secrets["sheets"]["spreadsheet_name"])
+    return spreadsheet.worksheet(sheet_name)
 
 def load_df() -> pd.DataFrame:
-    if os.path.exists(FILE):
-        df = pd.read_csv(FILE, encoding="utf-8-sig").fillna("")
+    try:
+        ws = get_worksheet("money")
+        values = ws.get_all_records()
+
+        if not values:
+            return pd.DataFrame(columns=COLUMNS)
+
+        df = pd.DataFrame(values).fillna("")
 
         for c in COLUMNS:
             if c not in df.columns:
@@ -82,42 +109,61 @@ def load_df() -> pd.DataFrame:
 
         return df
 
-    return pd.DataFrame(columns=COLUMNS)
+    except Exception:
+        return pd.DataFrame(columns=COLUMNS)
 
+def save_df(df: pd.DataFrame):
+    # CSV 백업
+    df.to_csv("money_backup.csv", index=False, encoding="utf-8-sig")
 
-def save_df(df: pd.DataFrame) -> None:
-    df.to_csv(FILE, index=False, encoding="utf-8-sig")
+    # Google Sheet 저장
+    worksheet.clear()
+    worksheet.update([df.columns.values.tolist()] + df.values.tolist())
 
+def get_month_sheet(gc, month_key):
+    sh = gc.open("moneyLog")
+
+    try:
+        worksheet = sh.worksheet(month_key)
+    except:
+        worksheet = sh.add_worksheet(title=month_key, rows="1000", cols="20")
+
+    return worksheet
 
 def load_checklist_df() -> pd.DataFrame:
-    if os.path.exists(CHECKLIST_FILE):
-        try:
-            if os.path.getsize(CHECKLIST_FILE) == 0:
-                return pd.DataFrame(columns=["month", "item", "checked"])
+    try:
+        ws = get_worksheet("checklist")
+        values = ws.get_all_records()
 
-            df = pd.read_csv(CHECKLIST_FILE, encoding="utf-8-sig").fillna("")
-
-            for c in ["month", "item", "checked"]:
-                if c not in df.columns:
-                    df[c] = ""
-
-            df = df[["month", "item", "checked"]].copy()
-            df["month"] = df["month"].astype(str)
-            df["item"] = df["item"].astype(str)
-            df["checked"] = df["checked"].astype(str).map(
-                lambda x: str(x).lower() in ["true", "1", "yes"]
-            )
-            return df
-
-        except pd.errors.EmptyDataError:
+        if not values:
             return pd.DataFrame(columns=["month", "item", "checked"])
 
-    return pd.DataFrame(columns=["month", "item", "checked"])
+        df = pd.DataFrame(values).fillna("")
 
+        for c in ["month", "item", "checked"]:
+            if c not in df.columns:
+                df[c] = ""
+
+        df = df[["month", "item", "checked"]].copy()
+        df["month"] = df["month"].astype(str)
+        df["item"] = df["item"].astype(str)
+        df["checked"] = df["checked"].astype(str).map(
+            lambda x: str(x).lower() in ["true", "1", "yes"]
+        )
+
+        return df
+
+    except Exception:
+        return pd.DataFrame(columns=["month", "item", "checked"])
 
 def save_checklist_df(df: pd.DataFrame) -> None:
-    df.to_csv(CHECKLIST_FILE, index=False, encoding="utf-8-sig")
+    ws = get_worksheet("checklist")
 
+    save_data = df[["month", "item", "checked"]].copy().fillna("")
+    rows = [["month", "item", "checked"]] + save_data.values.tolist()
+
+    ws.clear()
+    ws.update(rows)
 
 def get_month_checklist(month_key: str) -> pd.DataFrame:
     checklist_df = load_checklist_df()
