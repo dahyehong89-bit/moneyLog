@@ -10,10 +10,6 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 
-month_key = datetime.today().strftime("%Y-%m")
-
-worksheet = get_month_sheet(gc, month_key)
-
 FILE = "money.csv"
 CHECKLIST_FILE = "checklist.csv"
 COLUMNS = ["date", "amount", "category", "method", "memo"]
@@ -112,13 +108,14 @@ def load_df() -> pd.DataFrame:
     except Exception:
         return pd.DataFrame(columns=COLUMNS)
 
-def save_df(df: pd.DataFrame):
-    # CSV 백업
-    df.to_csv("money_backup.csv", index=False, encoding="utf-8-sig")
+def save_df(df: pd.DataFrame) -> None:
+    ws = get_worksheet("money")
 
-    # Google Sheet 저장
-    worksheet.clear()
-    worksheet.update([df.columns.values.tolist()] + df.values.tolist())
+    save_data = df[COLUMNS].copy().fillna("")
+    rows = [COLUMNS] + save_data.values.tolist()
+
+    ws.clear()
+    ws.update(rows)
 
 def get_month_sheet(gc, month_key):
     sh = gc.open("moneyLog")
@@ -129,6 +126,11 @@ def get_month_sheet(gc, month_key):
         worksheet = sh.add_worksheet(title=month_key, rows="1000", cols="20")
 
     return worksheet
+
+def get_worksheet(sheet_name: str):
+    client = get_gspread_client()
+    spreadsheet = client.open(st.secrets["sheets"]["spreadsheet_name"])
+    return spreadsheet.worksheet(sheet_name)
 
 def load_checklist_df() -> pd.DataFrame:
     try:
