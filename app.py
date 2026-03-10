@@ -58,6 +58,7 @@ CHECKLIST_ITEMS = [
     "보험료2 : 60,712원",
 ]
 
+@st.cache_resource
 def get_gspread_client():
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
@@ -75,6 +76,7 @@ def get_worksheet(sheet_name: str):
     spreadsheet = client.open(st.secrets["sheets"]["spreadsheet_name"])
     return spreadsheet.worksheet(sheet_name)
 
+@st.cache_data(ttl=60)
 def load_df() -> pd.DataFrame:
     try:
         ws = get_worksheet("money")
@@ -116,6 +118,7 @@ def save_df(df: pd.DataFrame) -> None:
 
     ws.clear()
     ws.update(rows)
+    load_df.clear()
 
 def get_month_sheet(gc, month_key):
     sh = gc.open("moneyLog")
@@ -132,6 +135,7 @@ def get_worksheet(sheet_name: str):
     spreadsheet = client.open(st.secrets["sheets"]["spreadsheet_name"])
     return spreadsheet.worksheet(sheet_name)
 
+@st.cache_data(ttl=60)
 def load_checklist_df() -> pd.DataFrame:
     try:
         ws = get_worksheet("checklist")
@@ -166,6 +170,7 @@ def save_checklist_df(df: pd.DataFrame) -> None:
 
     ws.clear()
     ws.update(rows)
+    load_checklist_df.clear()
 
 def get_month_checklist(month_key: str) -> pd.DataFrame:
     checklist_df = load_checklist_df()
