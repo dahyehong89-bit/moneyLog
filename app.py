@@ -814,7 +814,8 @@ load_font()
 theme_name = st.sidebar.selectbox(
     "🎨 테마 선택",
     list(THEMES.keys()),
-    index=0
+    index=0,
+    key="theme_select"
 )
 
 theme = THEMES[theme_name]
@@ -1810,6 +1811,7 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
