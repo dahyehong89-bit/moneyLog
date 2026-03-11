@@ -242,6 +242,60 @@ THEMES = {
         "filter_active_border": "rgba(167,145,206,0.45)",
         "filter_shadow": "rgba(167,145,206,0.16)",
     },
+    "mint": {
+        "bg1": "#F3FFFD",
+        "bg2": "#E6F9F6",
+        "container": "rgba(245,255,253,0.70)",
+        "accent1": "#CFF5EE",
+        "accent2": "#AEEDE2",
+        "border": "rgba(130,210,195,0.30)",
+        "text": "#2B8F82"
+    },
+    "lemon": {
+        "bg1": "#FFFDEB",
+        "bg2": "#FFF8CC",
+        "container": "rgba(255,255,240,0.70)",
+        "accent1": "#FFF3A3",
+        "accent2": "#FFE777",
+        "border": "rgba(230,210,120,0.35)",
+        "text": "#9A8B00"
+    },
+    "peach": {
+        "bg1": "#FFF6F1",
+        "bg2": "#FFEDE4",
+        "container": "rgba(255,250,247,0.70)",
+        "accent1": "#FFD6C6",
+        "accent2": "#FFBEA8",
+        "border": "rgba(255,170,150,0.35)",
+        "text": "#C7654E"
+    },
+    "navy": {
+        "bg1": "#F4F6FA",
+        "bg2": "#E6EBF5",
+        "container": "rgba(250,252,255,0.70)",
+        "accent1": "#B9C7E8",
+        "accent2": "#9FB2DE",
+        "border": "rgba(120,140,200,0.35)",
+        "text": "#3A4F8A"
+    },
+    "blackberry": {
+        "bg1": "#FBF7FF",
+        "bg2": "#EFE7FB",
+        "container": "rgba(250,245,255,0.70)",
+        "accent1": "#DCCBFA",
+        "accent2": "#C6AFF2",
+        "border": "rgba(170,140,220,0.35)",
+        "text": "#6C48A6"
+    },
+    "rose_gold": {
+        "bg1": "#FFF7F5",
+        "bg2": "#FFEDEA",
+        "container": "rgba(255,248,246,0.70)",
+        "accent1": "#FFD5CC",
+        "accent2": "#FFC1B6",
+        "border": "rgba(230,150,130,0.35)",
+        "text": "#B96A5C"
+    }
 }
 
 @st.cache_resource
@@ -631,7 +685,13 @@ st.set_page_config(page_title="빠른 가계부", layout="wide")
 df = load_df()
 load_font()
 
-theme = THEMES["strawberry"]
+theme_name = st.sidebar.selectbox(
+    "🎨 테마 선택",
+    list(THEMES.keys()),
+    index=0
+)
+
+theme = THEMES[theme_name]
 
 st.markdown(f"""
 <style>
@@ -1624,6 +1684,7 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
