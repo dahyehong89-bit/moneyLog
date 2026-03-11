@@ -998,9 +998,9 @@ div[role="radiogroup"] {{
     gap: 8px !important;
 }}
 
-div[role="radiogroup"] * {
+div[role="radiogroup"] * {{
     box-shadow: none !important;
-}
+}}
 
 div[role="radiogroup"] label {{
     background: {theme["filter_bg"]} !important;
@@ -1027,9 +1027,9 @@ div[role="radiogroup"] label:has(input:checked) {{
     color: {theme["button_text"]} !important;
 }}
 
-div[role="radiogroup"] label > div:first-child {
+div[role="radiogroup"] label > div:first-child {{
     display: none !important;
-}
+}}
 
 div[role="radiogroup"] input[type="radio"] {{
     display: none !important;
@@ -1037,9 +1037,9 @@ div[role="radiogroup"] input[type="radio"] {{
 
 div[role="radiogroup"] input[type="radio"],
 div[role="radiogroup"] input[type="radio"] + div,
-div[role="radiogroup"] [data-testid="stMarkdownContainer"] + div {
+div[role="radiogroup"] [data-testid="stMarkdownContainer"] + div {{
     accent-color: transparent !important;
-}
+}}
 
 /* 탭 아래 border 라인 */
 div[data-baseweb="tab-border"] {{
@@ -1047,11 +1047,11 @@ div[data-baseweb="tab-border"] {{
 }}
 
 /* 탭 밑줄 */
-div[data-baseweb="tab-highlight"] {
+div[data-baseweb="tab-highlight"] {{
     background: linear-gradient(90deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
     border-radius: 999px !important;
     height: 4px !important;
-}
+}}
 
 /* 진행바 바깥 트랙 */
 [data-testid="stProgress"] [data-baseweb="progress-bar"] > div {{
@@ -1869,6 +1869,7 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
