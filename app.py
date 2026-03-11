@@ -834,40 +834,31 @@ theme = THEMES[theme_name]
 
 st.markdown(f"""
 <style>
+/* ===== 폰트 ===== */
 html, body, [data-testid="stApp"], [data-testid="stAppViewContainer"],
-[data-testid="stSidebar"], div, p, span, label, input, textarea, button, li {{
+[data-testid="stSidebar"], div, p, span, label, li {{
     font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
 }}
 
-/* 입력창/텍스트영역/셀렉트 내부 폰트 강제 적용 */
 input,
 textarea,
 button,
 label,
-select {
-    font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
-}
-
+select,
 input[type="text"],
 input[type="number"],
-input[type="date"],
-textarea {
+input[type="date"] {{
     font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
-}
+}}
 
-/* streamlit text input / number input / date input 내부 */
 div[data-testid="stTextInput"] input,
 div[data-testid="stNumberInput"] input,
 div[data-testid="stDateInput"] input,
-div[data-testid="stTextArea"] textarea {
-    font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
-}
-
-/* selectbox 내부 표시 텍스트 */
+div[data-testid="stTextArea"] textarea,
 [data-baseweb="select"] *,
-div[data-testid="stSelectbox"] * {
+div[data-testid="stSelectbox"] * {{
     font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
-}
+}}
 
 html, body, [data-testid="stAppViewContainer"] {{
     background: linear-gradient(180deg, {theme["app_bg_1"]} 0%, {theme["app_bg_2"]} 100%) !important;
@@ -1899,6 +1890,7 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
