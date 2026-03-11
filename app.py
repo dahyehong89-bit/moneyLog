@@ -514,13 +514,6 @@ hr {
     border: 1px solid rgba(255,143,177,0.25);
 }
 
-div[data-testid="stExpander"] {
-    background: rgba(255,255,255,0.55);
-    border: 1px solid rgba(255,143,177,0.18);
-    border-radius: 16px;
-    padding: 4px 8px;
-}
-
 [data-testid="stForm"] {
     background: rgba(255,255,255,0.45);
     border: 1px solid rgba(255,143,177,0.15);
@@ -1438,4 +1431,5 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
