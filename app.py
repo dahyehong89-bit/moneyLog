@@ -1013,6 +1013,26 @@ div[role="radiogroup"] label:has(input:checked) {{
 div[role="radiogroup"] input[type="radio"] {{
     display: none !important;
 }}
+
+/* 탭 아래 border 라인 */
+div[data-baseweb="tab-border"] {{
+    background: {theme["table_head_border"]} !important;
+}}
+
+/* 진행바 바깥 트랙 */
+[data-testid="stProgress"] [data-baseweb="progress-bar"] > div {{
+    background: rgba(255,255,255,0.55) !important;
+    border: 1px solid {theme["metric_border"]} !important;
+    border-radius: 999px !important;
+    overflow: hidden !important;
+}}
+
+/* 진행바 채워지는 부분 */
+[data-testid="stProgress"] [role="progressbar"] div[style*="width"],
+[data-testid="stProgress"] [data-baseweb="progress-bar"] div div div {{
+    background: linear-gradient(90deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
+    border-radius: 999px !important;
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -1811,6 +1831,7 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
