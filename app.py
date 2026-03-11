@@ -921,13 +921,6 @@ hr {{
     border: 1px solid {theme["metric_border"]};
 }}
 
-div[data-testid="stExpander"] {{
-    background: rgba(255,255,255,0.55);
-    border: 1px solid {theme["expander_border"]};
-    border-radius: 16px;
-    padding: 4px 8px;
-}}
-
 [data-testid="stForm"] {{
     background: rgba(255,255,255,0.45);
     border: 1px solid {theme["form_border"]};
@@ -1890,6 +1883,7 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
