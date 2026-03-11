@@ -448,33 +448,24 @@ load_font()
 
 st.markdown("""
 <style>
-.block-container {
-    padding-top: 1.2rem;
-    max-width: 1400px;
-    background: rgba(255, 250, 253, 0.55);
-    border-radius: 24px;
-}
-
 html, body, [data-testid="stApp"], [data-testid="stAppViewContainer"],
 [data-testid="stSidebar"], div, p, span, label, input, textarea, button, li {
     font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
 }
 
 html, body, [data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #FFF7FB 0%, #FFF1F6 100%) !important;
+    background: linear-gradient(180deg, #FCF8F3 0%, #F7F0E8 100%) !important;
 }
 
 [data-testid="stAppViewContainer"] > .main {
     background: transparent !important;
 }
 
-input {
-    font-family: "LeeJieun" !important;
-}
-
-.material-symbols-rounded,
-span.material-symbols-rounded {
-    font-family: "Material Symbols Rounded" !important;
+.block-container {
+    padding-top: 1.2rem;
+    max-width: 1400px;
+    background: rgba(255, 252, 247, 0.65);
+    border-radius: 24px;
 }
 
 h1, h2, h3 {
@@ -484,23 +475,25 @@ h1, h2, h3 {
 
 input, textarea {
     border-radius: 14px !important;
-    border: 1px solid rgba(255,143,177,0.35) !important;
-    background: rgba(255,255,255,0.75) !important;
+    border: 1px solid rgba(181,153,120,0.30) !important;
+    background: rgba(255,255,255,0.82) !important;
 }
 
 [data-baseweb="select"] > div {
     border-radius: 14px !important;
-    border: 1px solid rgba(255,143,177,0.35) !important;
+    border: 1px solid rgba(181,153,120,0.30) !important;
+    background: rgba(255,255,255,0.82) !important;
     cursor: pointer !important;
 }
 
 button {
     border-radius: 16px !important;
-    border: 1px solid rgba(255,143,177,0.35) !important;
-    background: linear-gradient(180deg,#FFD1E1,#FFB6CF) !important;
-    color: #2E2A2B !important;
+    border: 1px solid rgba(181,153,120,0.30) !important;
+    background: linear-gradient(180deg, #F7E7D2, #EFD6B6) !important;
+    color: #4E3F33 !important;
     font-weight: 700 !important;
-    box-shadow: 0 10px 18px rgba(255,143,177,0.18) !important;
+    box-shadow: 0 10px 18px rgba(180,150,120,0.14) !important;
+    transition: all 0.15s ease !important;
 }
 
 button:hover {
@@ -510,37 +503,39 @@ button:hover {
 hr {
     border: none;
     height: 1px;
-    background: rgba(255,143,177,0.25);
+    background: rgba(181,153,120,0.22);
     margin: 1.1rem 0;
 }
 
 [data-testid="stMetric"] {
-    background: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.62);
     border-radius: 16px;
     padding: 10px;
-    border: 1px solid rgba(255,143,177,0.25);
+    border: 1px solid rgba(181,153,120,0.22);
 }
 
-[data-testid="stHorizontalBlock"] {
-    transition: all 0.15s ease;
-    padding: 6px;
-    border-radius: 12px;
+div[data-testid="stExpander"] {
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(181,153,120,0.18);
+    border-radius: 16px;
+    padding: 4px 8px;
 }
 
-[data-testid="stHorizontalBlock"]:hover {
-    background: rgba(255,143,177,0.08);
-    box-shadow: 0 4px 12px rgba(255,143,177,0.15);
-    transform: translateY(-1px);
+[data-testid="stForm"] {
+    background: rgba(255,255,255,0.45);
+    border: 1px solid rgba(181,153,120,0.15);
+    border-radius: 18px;
+    padding: 14px;
 }
 
 .table-head {
     font-weight: 800;
-    background: rgba(255, 209, 225, 0.65);
-    border: 1px solid rgba(255,143,177,0.25);
+    background: rgba(239,214,182,0.65);
+    border: 1px solid rgba(181,153,120,0.20);
     border-radius: 12px;
     padding: 8px 10px;
     text-align: center;
-    color: #7A4B5A;
+    color: #6B5443;
     margin-bottom: 4px;
 }
 
@@ -551,16 +546,17 @@ hr {
 }
 
 .row-box:hover {
-    background: rgba(255,143,177,0.08);
+    background: rgba(239,214,182,0.18);
 }
 
 .amount-text {
     font-weight: 800;
-    color: #C33B5E;
+    color: #A75A2A;
 }
 
 .cat-tag {
-    background: rgba(255,182,207,0.35);
+    background: rgba(239,214,182,0.45);
+    color: #6B5443;
     padding: 4px 10px;
     border-radius: 999px;
     font-weight: 700;
@@ -570,26 +566,26 @@ hr {
 
 .method-hyundai {
     background: rgba(200,200,200,0.35);
-    color:#4A4A4A;
-    padding:4px 10px;
-    border-radius:999px;
-    font-weight:700;
-    font-size:15px;
-    display:inline-block;
+    color: #4A4A4A;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 15px;
+    display: inline-block;
 }
 
 .method-shinhan {
     background: rgba(180,220,255,0.45);
-    color:#2F6F8F;
-    padding:4px 10px;
-    border-radius:999px;
-    font-weight:700;
-    font-size:15px;
-    display:inline-block;
+    color: #2F6F8F;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 15px;
+    display: inline-block;
 }
 
 .method-incident {
-    background: rgba(255, 225, 120, 0.45);
+    background: rgba(255,225,120,0.45);
     color: #8A6A00;
     padding: 4px 10px;
     border-radius: 999px;
@@ -608,32 +604,17 @@ div[data-testid="stButton"] button {
     min-height: 26px !important;
 }
 
-div[data-testid="stExpander"] {
-    background: rgba(255,255,255,0.55);
-    border: 1px solid rgba(255,143,177,0.18);
-    border-radius: 16px;
-    padding: 4px 8px;
-}
-
-[data-testid="stForm"] {
-    background: rgba(255,255,255,0.45);
-    border: 1px solid rgba(255,143,177,0.15);
-    border-radius: 18px;
-    padding: 14px;
-}
-
 label:has(input[type="checkbox"]) {
     font-weight: 700;
 }
 
-/* 기록 필터 radio를 버튼처럼 */
 div[role="radiogroup"] {
     gap: 8px !important;
 }
 
 div[role="radiogroup"] label {
-    background: rgba(255,255,255,0.8) !important;
-    border: 1px solid rgba(255,143,177,0.35) !important;
+    background: rgba(255,255,255,0.82) !important;
+    border: 1px solid rgba(181,153,120,0.30) !important;
     border-radius: 14px !important;
     padding: 8px 14px !important;
     min-height: 42px !important;
@@ -645,22 +626,19 @@ div[role="radiogroup"] label {
 }
 
 div[role="radiogroup"] label:hover {
-    background: rgba(255,209,225,0.25) !important;
+    background: rgba(239,214,182,0.22) !important;
     transform: translateY(-1px);
 }
 
-/* 선택된 항목 */
 div[role="radiogroup"] label:has(input:checked) {
-    background: linear-gradient(180deg,#FFD1E1,#FFB6CF) !important;
-    border: 1px solid rgba(255,143,177,0.55) !important;
-    box-shadow: 0 8px 16px rgba(255,143,177,0.18) !important;
+    background: linear-gradient(180deg, #F7E7D2, #EFD6B6) !important;
+    border: 1px solid rgba(181,153,120,0.45) !important;
+    box-shadow: 0 8px 16px rgba(180,150,120,0.16) !important;
 }
 
-/* 라디오 동그라미 숨김 */
 div[role="radiogroup"] input[type="radio"] {
     display: none !important;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -1456,5 +1434,6 @@ with tab2:
 
         if not method_sum.empty:
             st.bar_chart(method_sum)
+
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
