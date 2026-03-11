@@ -454,7 +454,7 @@ html, body, [data-testid="stApp"], [data-testid="stAppViewContainer"],
 }
 
 html, body, [data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #FCF8F3 0%, #F7F0E8 100%) !important;
+    background: linear-gradient(180deg, #FFF7FB 0%, #FFF1F6 100%) !important;
 }
 
 [data-testid="stAppViewContainer"] > .main {
@@ -464,7 +464,7 @@ html, body, [data-testid="stAppViewContainer"] {
 .block-container {
     padding-top: 1.2rem;
     max-width: 1400px;
-    background: rgba(255, 252, 247, 0.65);
+    background: rgba(255, 250, 253, 0.55);
     border-radius: 24px;
 }
 
@@ -475,24 +475,24 @@ h1, h2, h3 {
 
 input, textarea {
     border-radius: 14px !important;
-    border: 1px solid rgba(181,153,120,0.30) !important;
-    background: rgba(255,255,255,0.82) !important;
+    border: 1px solid rgba(255,143,177,0.35) !important;
+    background: rgba(255,255,255,0.78) !important;
 }
 
 [data-baseweb="select"] > div {
     border-radius: 14px !important;
-    border: 1px solid rgba(181,153,120,0.30) !important;
-    background: rgba(255,255,255,0.82) !important;
+    border: 1px solid rgba(255,143,177,0.35) !important;
+    background: rgba(255,255,255,0.78) !important;
     cursor: pointer !important;
 }
 
 button {
     border-radius: 16px !important;
-    border: 1px solid rgba(181,153,120,0.30) !important;
-    background: linear-gradient(180deg, #F7E7D2, #EFD6B6) !important;
-    color: #4E3F33 !important;
+    border: 1px solid rgba(255,143,177,0.35) !important;
+    background: linear-gradient(180deg, #FFD1E1, #FFB6CF) !important;
+    color: #2E2A2B !important;
     font-weight: 700 !important;
-    box-shadow: 0 10px 18px rgba(180,150,120,0.14) !important;
+    box-shadow: 0 10px 18px rgba(255,143,177,0.18) !important;
     transition: all 0.15s ease !important;
 }
 
@@ -503,39 +503,39 @@ button:hover {
 hr {
     border: none;
     height: 1px;
-    background: rgba(181,153,120,0.22);
+    background: rgba(255,143,177,0.25);
     margin: 1.1rem 0;
 }
 
 [data-testid="stMetric"] {
-    background: rgba(255,255,255,0.62);
+    background: rgba(255,255,255,0.60);
     border-radius: 16px;
     padding: 10px;
-    border: 1px solid rgba(181,153,120,0.22);
+    border: 1px solid rgba(255,143,177,0.25);
 }
 
 div[data-testid="stExpander"] {
     background: rgba(255,255,255,0.55);
-    border: 1px solid rgba(181,153,120,0.18);
+    border: 1px solid rgba(255,143,177,0.18);
     border-radius: 16px;
     padding: 4px 8px;
 }
 
 [data-testid="stForm"] {
     background: rgba(255,255,255,0.45);
-    border: 1px solid rgba(181,153,120,0.15);
+    border: 1px solid rgba(255,143,177,0.15);
     border-radius: 18px;
     padding: 14px;
 }
 
 .table-head {
     font-weight: 800;
-    background: rgba(239,214,182,0.65);
-    border: 1px solid rgba(181,153,120,0.20);
+    background: rgba(255,209,225,0.65);
+    border: 1px solid rgba(255,143,177,0.25);
     border-radius: 12px;
     padding: 8px 10px;
     text-align: center;
-    color: #6B5443;
+    color: #7A4B5A;
     margin-bottom: 4px;
 }
 
@@ -546,17 +546,17 @@ div[data-testid="stExpander"] {
 }
 
 .row-box:hover {
-    background: rgba(239,214,182,0.18);
+    background: rgba(255,143,177,0.08);
 }
 
 .amount-text {
     font-weight: 800;
-    color: #A75A2A;
+    color: #C33B5E;
 }
 
 .cat-tag {
-    background: rgba(239,214,182,0.45);
-    color: #6B5443;
+    background: rgba(255,182,207,0.35);
+    color: #7A4B5A;
     padding: 4px 10px;
     border-radius: 999px;
     font-weight: 700;
@@ -608,13 +608,14 @@ label:has(input[type="checkbox"]) {
     font-weight: 700;
 }
 
+/* 기록 필터 radio를 버튼처럼 */
 div[role="radiogroup"] {
     gap: 8px !important;
 }
 
 div[role="radiogroup"] label {
-    background: rgba(255,255,255,0.82) !important;
-    border: 1px solid rgba(181,153,120,0.30) !important;
+    background: rgba(255,255,255,0.80) !important;
+    border: 1px solid rgba(255,143,177,0.35) !important;
     border-radius: 14px !important;
     padding: 8px 14px !important;
     min-height: 42px !important;
@@ -626,14 +627,14 @@ div[role="radiogroup"] label {
 }
 
 div[role="radiogroup"] label:hover {
-    background: rgba(239,214,182,0.22) !important;
+    background: rgba(255,209,225,0.25) !important;
     transform: translateY(-1px);
 }
 
 div[role="radiogroup"] label:has(input:checked) {
-    background: linear-gradient(180deg, #F7E7D2, #EFD6B6) !important;
-    border: 1px solid rgba(181,153,120,0.45) !important;
-    box-shadow: 0 8px 16px rgba(180,150,120,0.16) !important;
+    background: linear-gradient(180deg, #FFD1E1, #FFB6CF) !important;
+    border: 1px solid rgba(255,143,177,0.55) !important;
+    box-shadow: 0 8px 16px rgba(255,143,177,0.18) !important;
 }
 
 div[role="radiogroup"] input[type="radio"] {
@@ -1437,3 +1438,4 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
