@@ -58,6 +58,192 @@ CHECKLIST_ITEMS = [
     "보험료2 : 60,712원",
 ]
 
+# -----------------------
+# 테마 설정
+# -----------------------
+THEMES = {
+    "strawberry": {
+        "app_bg_1": "#FFF7FB",
+        "app_bg_2": "#FFF1F6",
+        "container_bg": "rgba(255, 250, 253, 0.55)",
+        "input_border": "rgba(255,143,177,0.35)",
+        "input_bg": "rgba(255,255,255,0.78)",
+        "button_bg_1": "#FFD1E1",
+        "button_bg_2": "#FFB6CF",
+        "button_border": "rgba(255,143,177,0.35)",
+        "button_text": "#2E2A2B",
+        "button_shadow": "rgba(255,143,177,0.18)",
+        "line": "rgba(255,143,177,0.25)",
+        "metric_border": "rgba(255,143,177,0.25)",
+        "expander_border": "rgba(255,143,177,0.18)",
+        "form_border": "rgba(255,143,177,0.15)",
+        "table_head_bg": "rgba(255,209,225,0.65)",
+        "table_head_border": "rgba(255,143,177,0.25)",
+        "table_head_text": "#7A4B5A",
+        "row_hover": "rgba(255,143,177,0.08)",
+        "amount_text": "#C33B5E",
+        "cat_bg": "rgba(255,182,207,0.35)",
+        "cat_text": "#7A4B5A",
+        "filter_bg": "rgba(255,255,255,0.80)",
+        "filter_border": "rgba(255,143,177,0.35)",
+        "filter_hover": "rgba(255,209,225,0.25)",
+        "filter_active_1": "#FFD1E1",
+        "filter_active_2": "#FFB6CF",
+        "filter_active_border": "rgba(255,143,177,0.55)",
+        "filter_shadow": "rgba(255,143,177,0.18)",
+    },
+    "latte": {
+        "app_bg_1": "#FCF8F3",
+        "app_bg_2": "#F7F0E8",
+        "container_bg": "rgba(255, 252, 247, 0.65)",
+        "input_border": "rgba(181,153,120,0.30)",
+        "input_bg": "rgba(255,255,255,0.82)",
+        "button_bg_1": "#F7E7D2",
+        "button_bg_2": "#EFD6B6",
+        "button_border": "rgba(181,153,120,0.30)",
+        "button_text": "#4E3F33",
+        "button_shadow": "rgba(180,150,120,0.14)",
+        "line": "rgba(181,153,120,0.22)",
+        "metric_border": "rgba(181,153,120,0.22)",
+        "expander_border": "rgba(181,153,120,0.18)",
+        "form_border": "rgba(181,153,120,0.15)",
+        "table_head_bg": "rgba(239,214,182,0.65)",
+        "table_head_border": "rgba(181,153,120,0.20)",
+        "table_head_text": "#6B5443",
+        "row_hover": "rgba(239,214,182,0.18)",
+        "amount_text": "#A75A2A",
+        "cat_bg": "rgba(239,214,182,0.45)",
+        "cat_text": "#6B5443",
+        "filter_bg": "rgba(255,255,255,0.82)",
+        "filter_border": "rgba(181,153,120,0.30)",
+        "filter_hover": "rgba(239,214,182,0.22)",
+        "filter_active_1": "#F7E7D2",
+        "filter_active_2": "#EFD6B6",
+        "filter_active_border": "rgba(181,153,120,0.45)",
+        "filter_shadow": "rgba(180,150,120,0.16)",
+    },
+    "modern": {
+        "app_bg_1": "#F7F7F8",
+        "app_bg_2": "#EFEFF2",
+        "container_bg": "rgba(255,255,255,0.62)",
+        "input_border": "rgba(160,160,170,0.28)",
+        "input_bg": "rgba(255,255,255,0.88)",
+        "button_bg_1": "#EAEAEA",
+        "button_bg_2": "#D8D8DD",
+        "button_border": "rgba(160,160,170,0.30)",
+        "button_text": "#2E2E33",
+        "button_shadow": "rgba(120,120,130,0.10)",
+        "line": "rgba(160,160,170,0.20)",
+        "metric_border": "rgba(160,160,170,0.20)",
+        "expander_border": "rgba(160,160,170,0.18)",
+        "form_border": "rgba(160,160,170,0.14)",
+        "table_head_bg": "rgba(225,225,232,0.75)",
+        "table_head_border": "rgba(160,160,170,0.18)",
+        "table_head_text": "#555763",
+        "row_hover": "rgba(200,200,210,0.14)",
+        "amount_text": "#4E5968",
+        "cat_bg": "rgba(225,225,232,0.55)",
+        "cat_text": "#555763",
+        "filter_bg": "rgba(255,255,255,0.86)",
+        "filter_border": "rgba(160,160,170,0.28)",
+        "filter_hover": "rgba(225,225,232,0.30)",
+        "filter_active_1": "#EAEAEA",
+        "filter_active_2": "#D8D8DD",
+        "filter_active_border": "rgba(160,160,170,0.42)",
+        "filter_shadow": "rgba(120,120,130,0.12)",
+    },
+    "green": {
+        "app_bg_1": "#F5FFF8",
+        "app_bg_2": "#EAF7EE",
+        "container_bg": "rgba(250,255,251,0.68)",
+        "input_border": "rgba(124,181,139,0.30)",
+        "input_bg": "rgba(255,255,255,0.84)",
+        "button_bg_1": "#D7F2DD",
+        "button_bg_2": "#BDE8C7",
+        "button_border": "rgba(124,181,139,0.32)",
+        "button_text": "#2D5C38",
+        "button_shadow": "rgba(124,181,139,0.14)",
+        "line": "rgba(124,181,139,0.20)",
+        "metric_border": "rgba(124,181,139,0.20)",
+        "expander_border": "rgba(124,181,139,0.18)",
+        "form_border": "rgba(124,181,139,0.15)",
+        "table_head_bg": "rgba(189,232,199,0.65)",
+        "table_head_border": "rgba(124,181,139,0.20)",
+        "table_head_text": "#3D6E49",
+        "row_hover": "rgba(189,232,199,0.18)",
+        "amount_text": "#2F8A4B",
+        "cat_bg": "rgba(189,232,199,0.45)",
+        "cat_text": "#3D6E49",
+        "filter_bg": "rgba(255,255,255,0.84)",
+        "filter_border": "rgba(124,181,139,0.30)",
+        "filter_hover": "rgba(189,232,199,0.22)",
+        "filter_active_1": "#D7F2DD",
+        "filter_active_2": "#BDE8C7",
+        "filter_active_border": "rgba(124,181,139,0.45)",
+        "filter_shadow": "rgba(124,181,139,0.16)",
+    },
+    "blue": {
+        "app_bg_1": "#F5FAFF",
+        "app_bg_2": "#EAF3FF",
+        "container_bg": "rgba(250,252,255,0.68)",
+        "input_border": "rgba(126,170,220,0.30)",
+        "input_bg": "rgba(255,255,255,0.84)",
+        "button_bg_1": "#D9EBFF",
+        "button_bg_2": "#BCD8F8",
+        "button_border": "rgba(126,170,220,0.32)",
+        "button_text": "#2C527A",
+        "button_shadow": "rgba(126,170,220,0.14)",
+        "line": "rgba(126,170,220,0.20)",
+        "metric_border": "rgba(126,170,220,0.20)",
+        "expander_border": "rgba(126,170,220,0.18)",
+        "form_border": "rgba(126,170,220,0.15)",
+        "table_head_bg": "rgba(188,216,248,0.65)",
+        "table_head_border": "rgba(126,170,220,0.20)",
+        "table_head_text": "#416B96",
+        "row_hover": "rgba(188,216,248,0.18)",
+        "amount_text": "#2F6FAD",
+        "cat_bg": "rgba(188,216,248,0.45)",
+        "cat_text": "#416B96",
+        "filter_bg": "rgba(255,255,255,0.84)",
+        "filter_border": "rgba(126,170,220,0.30)",
+        "filter_hover": "rgba(188,216,248,0.22)",
+        "filter_active_1": "#D9EBFF",
+        "filter_active_2": "#BCD8F8",
+        "filter_active_border": "rgba(126,170,220,0.45)",
+        "filter_shadow": "rgba(126,170,220,0.16)",
+    },
+    "violet": {
+        "app_bg_1": "#FAF7FF",
+        "app_bg_2": "#F1EBFB",
+        "container_bg": "rgba(252,250,255,0.68)",
+        "input_border": "rgba(167,145,206,0.30)",
+        "input_bg": "rgba(255,255,255,0.84)",
+        "button_bg_1": "#E6D9FA",
+        "button_bg_2": "#D3C0F3",
+        "button_border": "rgba(167,145,206,0.32)",
+        "button_text": "#503A73",
+        "button_shadow": "rgba(167,145,206,0.14)",
+        "line": "rgba(167,145,206,0.20)",
+        "metric_border": "rgba(167,145,206,0.20)",
+        "expander_border": "rgba(167,145,206,0.18)",
+        "form_border": "rgba(167,145,206,0.15)",
+        "table_head_bg": "rgba(211,192,243,0.65)",
+        "table_head_border": "rgba(167,145,206,0.20)",
+        "table_head_text": "#6A548C",
+        "row_hover": "rgba(211,192,243,0.18)",
+        "amount_text": "#7B4FC9",
+        "cat_bg": "rgba(211,192,243,0.45)",
+        "cat_text": "#6A548C",
+        "filter_bg": "rgba(255,255,255,0.84)",
+        "filter_border": "rgba(167,145,206,0.30)",
+        "filter_hover": "rgba(211,192,243,0.22)",
+        "filter_active_1": "#E6D9FA",
+        "filter_active_2": "#D3C0F3",
+        "filter_active_border": "rgba(167,145,206,0.45)",
+        "filter_shadow": "rgba(167,145,206,0.16)",
+    },
+}
+
 @st.cache_resource
 def get_gspread_client():
     scopes = [
@@ -375,7 +561,6 @@ def load_font():
         unsafe_allow_html=True
     )
 
-
 def get_local_ip():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -446,118 +631,127 @@ st.set_page_config(page_title="빠른 가계부", layout="wide")
 df = load_df()
 load_font()
 
-st.markdown("""
+theme = THEMES["strawberry"]
+
+st.markdown(f"""
 <style>
 html, body, [data-testid="stApp"], [data-testid="stAppViewContainer"],
-[data-testid="stSidebar"], div, p, span, label, input, textarea, button, li {
+[data-testid="stSidebar"], div, p, span, label, input, textarea, button, li {{
     font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
-}
+}}
 
-html, body, [data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #FFF7FB 0%, #FFF1F6 100%) !important;
-}
+html, body, [data-testid="stAppViewContainer"] {{
+    background: linear-gradient(180deg, {theme["app_bg_1"]} 0%, {theme["app_bg_2"]} 100%) !important;
+}}
 
-[data-testid="stAppViewContainer"] > .main {
+[data-testid="stAppViewContainer"] > .main {{
     background: transparent !important;
-}
+}}
 
-.block-container {
+.block-container {{
     padding-top: 1.2rem;
     max-width: 1400px;
-    background: rgba(255, 250, 253, 0.55);
+    background: {theme["container_bg"]};
     border-radius: 24px;
-}
+}}
 
-h1, h2, h3 {
+h1, h2, h3 {{
     font-weight: 800;
     letter-spacing: -1px;
-}
+}}
 
-input, textarea {
+input, textarea {{
     border-radius: 14px !important;
-    border: 1px solid rgba(255,143,177,0.35) !important;
-    background: rgba(255,255,255,0.78) !important;
-}
+    border: 1px solid {theme["input_border"]} !important;
+    background: {theme["input_bg"]} !important;
+}}
 
-[data-baseweb="select"] > div {
+[data-baseweb="select"] > div {{
     border-radius: 14px !important;
-    border: 1px solid rgba(255,143,177,0.35) !important;
-    background: rgba(255,255,255,0.78) !important;
+    border: 1px solid {theme["input_border"]} !important;
+    background: {theme["input_bg"]} !important;
     cursor: pointer !important;
-}
+}}
 
-button {
+button {{
     border-radius: 16px !important;
-    border: 1px solid rgba(255,143,177,0.35) !important;
-    background: linear-gradient(180deg, #FFD1E1, #FFB6CF) !important;
-    color: #2E2A2B !important;
+    border: 1px solid {theme["button_border"]} !important;
+    background: linear-gradient(180deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
+    color: {theme["button_text"]} !important;
     font-weight: 700 !important;
-    box-shadow: 0 10px 18px rgba(255,143,177,0.18) !important;
+    box-shadow: 0 10px 18px {theme["button_shadow"]} !important;
     transition: all 0.15s ease !important;
-}
+}}
 
-button:hover {
+button:hover {{
     transform: translateY(-1px);
-}
+}}
 
-hr {
+hr {{
     border: none;
     height: 1px;
-    background: rgba(255,143,177,0.25);
+    background: {theme["line"]};
     margin: 1.1rem 0;
-}
+}}
 
-[data-testid="stMetric"] {
+[data-testid="stMetric"] {{
     background: rgba(255,255,255,0.60);
     border-radius: 16px;
     padding: 10px;
-    border: 1px solid rgba(255,143,177,0.25);
-}
+    border: 1px solid {theme["metric_border"]};
+}}
 
-[data-testid="stForm"] {
+div[data-testid="stExpander"] {{
+    background: rgba(255,255,255,0.55);
+    border: 1px solid {theme["expander_border"]};
+    border-radius: 16px;
+    padding: 4px 8px;
+}}
+
+[data-testid="stForm"] {{
     background: rgba(255,255,255,0.45);
-    border: 1px solid rgba(255,143,177,0.15);
+    border: 1px solid {theme["form_border"]};
     border-radius: 18px;
     padding: 14px;
-}
+}}
 
-.table-head {
+.table-head {{
     font-weight: 800;
-    background: rgba(255,209,225,0.65);
-    border: 1px solid rgba(255,143,177,0.25);
+    background: {theme["table_head_bg"]};
+    border: 1px solid {theme["table_head_border"]};
     border-radius: 12px;
     padding: 8px 10px;
     text-align: center;
-    color: #7A4B5A;
+    color: {theme["table_head_text"]};
     margin-bottom: 4px;
-}
+}}
 
-.row-box {
+.row-box {{
     padding: 6px;
     border-radius: 10px;
     text-align: center;
-}
+}}
 
-.row-box:hover {
-    background: rgba(255,143,177,0.08);
-}
+.row-box:hover {{
+    background: {theme["row_hover"]};
+}}
 
-.amount-text {
+.amount-text {{
     font-weight: 800;
-    color: #C33B5E;
-}
+    color: {theme["amount_text"]};
+}}
 
-.cat-tag {
-    background: rgba(255,182,207,0.35);
-    color: #7A4B5A;
+.cat-tag {{
+    background: {theme["cat_bg"]};
+    color: {theme["cat_text"]};
     padding: 4px 10px;
     border-radius: 999px;
     font-weight: 700;
     font-size: 15px;
     display: inline-block;
-}
+}}
 
-.method-hyundai {
+.method-hyundai {{
     background: rgba(200,200,200,0.35);
     color: #4A4A4A;
     padding: 4px 10px;
@@ -565,9 +759,9 @@ hr {
     font-weight: 700;
     font-size: 15px;
     display: inline-block;
-}
+}}
 
-.method-shinhan {
+.method-shinhan {{
     background: rgba(180,220,255,0.45);
     color: #2F6F8F;
     padding: 4px 10px;
@@ -575,9 +769,9 @@ hr {
     font-weight: 700;
     font-size: 15px;
     display: inline-block;
-}
+}}
 
-.method-incident {
+.method-incident {{
     background: rgba(255,225,120,0.45);
     color: #8A6A00;
     padding: 4px 10px;
@@ -585,30 +779,29 @@ hr {
     font-weight: 700;
     font-size: 15px;
     display: inline-block;
-}
+}}
 
-div[data-testid="stButton"] {
+div[data-testid="stButton"] {{
     margin-top: 0 !important;
     margin-bottom: 0 !important;
-}
+}}
 
-div[data-testid="stButton"] button {
+div[data-testid="stButton"] button {{
     padding: 2px 6px !important;
     min-height: 26px !important;
-}
+}}
 
-label:has(input[type="checkbox"]) {
+label:has(input[type="checkbox"]) {{
     font-weight: 700;
-}
+}}
 
-/* 기록 필터 radio를 버튼처럼 */
-div[role="radiogroup"] {
+div[role="radiogroup"] {{
     gap: 8px !important;
-}
+}}
 
-div[role="radiogroup"] label {
-    background: rgba(255,255,255,0.80) !important;
-    border: 1px solid rgba(255,143,177,0.35) !important;
+div[role="radiogroup"] label {{
+    background: {theme["filter_bg"]} !important;
+    border: 1px solid {theme["filter_border"]} !important;
     border-radius: 14px !important;
     padding: 8px 14px !important;
     min-height: 42px !important;
@@ -617,22 +810,22 @@ div[role="radiogroup"] label {
     justify-content: center !important;
     cursor: pointer !important;
     transition: all 0.15s ease !important;
-}
+}}
 
-div[role="radiogroup"] label:hover {
-    background: rgba(255,209,225,0.25) !important;
+div[role="radiogroup"] label:hover {{
+    background: {theme["filter_hover"]} !important;
     transform: translateY(-1px);
-}
+}}
 
-div[role="radiogroup"] label:has(input:checked) {
-    background: linear-gradient(180deg, #FFD1E1, #FFB6CF) !important;
-    border: 1px solid rgba(255,143,177,0.55) !important;
-    box-shadow: 0 8px 16px rgba(255,143,177,0.18) !important;
-}
+div[role="radiogroup"] label:has(input:checked) {{
+    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
+    border: 1px solid {theme["filter_active_border"]} !important;
+    box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
+}}
 
-div[role="radiogroup"] input[type="radio"] {
+div[role="radiogroup"] input[type="radio"] {{
     display: none !important;
-}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -1431,5 +1624,6 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
