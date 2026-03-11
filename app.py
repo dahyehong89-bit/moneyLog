@@ -91,6 +91,7 @@ THEMES = {
         "filter_active_2": "#FFB6CF",
         "filter_active_border": "rgba(255,143,177,0.55)",
         "filter_shadow": "rgba(255,143,177,0.18)",
+        "date_text": "#A85E74"
     },
     "latte": {
         "app_bg_1": "#FCF8F3",
@@ -121,6 +122,7 @@ THEMES = {
         "filter_active_2": "#EFD6B6",
         "filter_active_border": "rgba(181,153,120,0.45)",
         "filter_shadow": "rgba(180,150,120,0.16)",
+        "date_text": "#8B6B4A"
     },
     "modern": {
         "app_bg_1": "#F7F7F8",
@@ -151,6 +153,7 @@ THEMES = {
         "filter_active_2": "#D8D8DD",
         "filter_active_border": "rgba(160,160,170,0.42)",
         "filter_shadow": "rgba(120,120,130,0.12)",
+        "date_text": "#5B5E68"
     },
     "green": {
         "app_bg_1": "#F5FFF8",
@@ -181,6 +184,7 @@ THEMES = {
         "filter_active_2": "#BDE8C7",
         "filter_active_border": "rgba(124,181,139,0.45)",
         "filter_shadow": "rgba(124,181,139,0.16)",
+        "date_text": "#3D7A57"
     },
     "blue": {
         "app_bg_1": "#F5FAFF",
@@ -211,6 +215,7 @@ THEMES = {
         "filter_active_2": "#BCD8F8",
         "filter_active_border": "rgba(126,170,220,0.45)",
         "filter_shadow": "rgba(126,170,220,0.16)",
+        "date_text": "#416B96"
     },
     "violet": {
         "app_bg_1": "#FAF7FF",
@@ -241,6 +246,7 @@ THEMES = {
         "filter_active_2": "#D3C0F3",
         "filter_active_border": "rgba(167,145,206,0.45)",
         "filter_shadow": "rgba(167,145,206,0.16)",
+        "date_text": "#6A548C"
     },
     "mint": {
         "app_bg_1": "#F3FFFD",
@@ -271,6 +277,7 @@ THEMES = {
         "filter_active_2": "#AEEDE2",
         "filter_active_border": "rgba(130,210,195,0.45)",
         "filter_shadow": "rgba(130,210,195,0.16)",
+        "date_text": "#2B8F82"
     },
     "lemon": {
         "app_bg_1": "#FFFDEB",
@@ -301,6 +308,7 @@ THEMES = {
         "filter_active_2": "#FFE777",
         "filter_active_border": "rgba(230,210,120,0.45)",
         "filter_shadow": "rgba(230,210,120,0.16)",
+        "date_text": "#9A8B00"
     },
     "peach": {
         "app_bg_1": "#FFF6F1",
@@ -331,6 +339,7 @@ THEMES = {
         "filter_active_2": "#FFBEA8",
         "filter_active_border": "rgba(255,170,150,0.45)",
         "filter_shadow": "rgba(255,170,150,0.16)",
+        "date_text": "#C7654E"
     },
     "navy": {
         "app_bg_1": "#F4F6FA",
@@ -361,6 +370,7 @@ THEMES = {
         "filter_active_2": "#9FB2DE",
         "filter_active_border": "rgba(120,140,200,0.45)",
         "filter_shadow": "rgba(120,140,200,0.16)",
+        "date_text": "#3A4F8A"
     },
     "blackberry": {
         "app_bg_1": "#FBF7FF",
@@ -391,6 +401,7 @@ THEMES = {
         "filter_active_2": "#C6AFF2",
         "filter_active_border": "rgba(170,140,220,0.45)",
         "filter_shadow": "rgba(170,140,220,0.16)",
+        "date_text": "#6C48A6"
     },
     "rose_gold": {
         "app_bg_1": "#FFF7F5",
@@ -421,6 +432,7 @@ THEMES = {
         "filter_active_2": "#FFC1B6",
         "filter_active_border": "rgba(230,150,130,0.45)",
         "filter_shadow": "rgba(230,150,130,0.16)",
+        "date_text": "#B96A5C"
     },
 }
 
@@ -986,6 +998,10 @@ div[role="radiogroup"] {{
     gap: 8px !important;
 }}
 
+div[role="radiogroup"] * {
+    box-shadow: none !important;
+}
+
 div[role="radiogroup"] label {{
     background: {theme["filter_bg"]} !important;
     border: 1px solid {theme["filter_border"]} !important;
@@ -1008,16 +1024,34 @@ div[role="radiogroup"] label:has(input:checked) {{
     background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
     border: 1px solid {theme["filter_active_border"]} !important;
     box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
+    color: {theme["button_text"]} !important;
 }}
+
+div[role="radiogroup"] label > div:first-child {
+    display: none !important;
+}
 
 div[role="radiogroup"] input[type="radio"] {{
     display: none !important;
 }}
 
+div[role="radiogroup"] input[type="radio"],
+div[role="radiogroup"] input[type="radio"] + div,
+div[role="radiogroup"] [data-testid="stMarkdownContainer"] + div {
+    accent-color: transparent !important;
+}
+
 /* 탭 아래 border 라인 */
 div[data-baseweb="tab-border"] {{
     background: {theme["table_head_border"]} !important;
 }}
+
+/* 탭 밑줄 */
+div[data-baseweb="tab-highlight"] {
+    background: linear-gradient(90deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
+    border-radius: 999px !important;
+    height: 4px !important;
+}
 
 /* 진행바 바깥 트랙 */
 [data-testid="stProgress"] [data-baseweb="progress-bar"] > div {{
@@ -1052,8 +1086,12 @@ with title_right:
     st.markdown(
         f"""
         <div style="text-align:right;margin-top:10px;">
-            <div style="font-size:14px;color:#A85E74;font-weight:700;">오늘</div>
-            <div style="font-size:20px;font-weight:800;color:#A85E74;">{today_str}</div>
+            <div style="font-size:14px;color:{theme["date_text"]};font-weight:700;">
+                오늘
+            </div>
+            <div style="font-size:20px;font-weight:800;color:{theme["date_text"]};">
+                {today_str}
+            </div>
         </div>
         """,
         unsafe_allow_html=True
@@ -1831,6 +1869,7 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
