@@ -1569,6 +1569,44 @@ with tab1:
             "#D6D6D6",
             "#4A4A4A"
         )
+
+        hyundai_detail_html = f"""
+    <div style="
+        margin-top:10px;
+        background:rgba(255,255,255,0.45);
+        border:1px solid {theme["form_border"]};
+        border-radius:16px;
+        padding:12px 14px;
+        font-size:14px;
+        color:{theme["button_text"]};
+    ">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🛒 쇼핑</span>
+            <span><b>{hyundai_shopping:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🍚 외식</span>
+            <span><b>{hyundai_eatout:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🛵 배달</span>
+            <span><b>{hyundai_delivery:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>☕ 커피</span>
+            <span><b>{hyundai_coffee:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>📌 고정비</span>
+            <span><b>{hyundai_fixed:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+            <span>🧾 기타</span>
+            <span><b>{hyundai_other:,}원</b></span>
+        </div>
+    </div>
+    """
+        st.markdown(hyundai_detail_html, unsafe_allow_html=True)
     
     with card_col2:
         render_budget_card(
