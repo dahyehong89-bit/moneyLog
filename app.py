@@ -1896,7 +1896,12 @@ with tab2:
         view = view[(view["method"] == "사건비통장") & (view["amount"] > 0)]
     
     filtered_total = int(view["amount"].abs().sum()) if not view.empty else 0
-    st.caption(f"현재 보기: {record_filter} · 총금액: {filtered_total:,}원")
+    st.markdown(
+        f"<div style='text-align:right; font-size:13px; opacity:0.75;'>"
+        f"현재 보기: {record_filter} · 총금액: {filtered_total:,}원"
+        f"</div>",
+        unsafe_allow_html=True
+    )
     
     if view.empty:
         st.write("표시할 기록이 없어요.")
@@ -1925,7 +1930,12 @@ with tab2:
 
         st.markdown("<br>", unsafe_allow_html=True)
         
-        st.caption(f"총 {total_rows}건")
+        st.markdown(
+            f"<div style='text-align:right; font-size:13px; opacity:0.75;'>"
+            f"총 {total_rows}건"
+            f"</div>",
+            unsafe_allow_html=True
+        )
     
         h0, h1, h2, h3, h4, h5, h6, h7 = st.columns([0.6, 1.1, 1.2, 2.2, 1.2, 1.1, 0.8, 0.8])
         h0.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
@@ -2081,6 +2091,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
