@@ -1097,15 +1097,41 @@ div[role="radiogroup"] [data-testid="stMarkdownContainer"] + div {{
     accent-color: transparent !important;
 }}
 
-/* ===== 탭 ===== */
+/* ===== 탭 전체 영역 ===== */
+button[data-baseweb="tab"] {{
+    background: {theme["filter_bg"]} !important;
+    border: 1px solid {theme["filter_border"]} !important;
+    border-radius: 14px !important;
+    color: {theme["button_text"]} !important;
+    font-weight: 700 !important;
+    padding: 10px 18px !important;
+    height: auto !important;
+    transition: all 0.15s ease !important;
+    box-shadow: none !important;
+    margin-right: 8px !important;
+}}
+
+/* 탭 hover */
+button[data-baseweb="tab"]:hover {{
+    background: {theme["filter_hover"]} !important;
+    transform: translateY(-1px);
+}}
+
+/* 선택된 탭 */
+button[data-baseweb="tab"][aria-selected="true"] {{
+    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
+    border: 1px solid {theme["filter_active_border"]} !important;
+    color: {theme["button_text"]} !important;
+    box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
+}}
+
+/* 기본 밑줄/라인 숨기기 */
 div[data-baseweb="tab-border"] {{
-    background: {theme["table_head_border"]} !important;
+    background: transparent !important;
 }}
 
 div[data-baseweb="tab-highlight"] {{
-    background: linear-gradient(90deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
-    border-radius: 999px !important;
-    height: 4px !important;
+    background: transparent !important;
 }}
 
 /* ===== 진행바 ===== */
@@ -1202,7 +1228,6 @@ total_amount = hyundai_amount + shinhan_amount + incident_amount
 
 # 탭
 tab1, tab2 = st.tabs(["🏠 메인", "📊 내역"])
-st.write("")
 
 # -------------------
 # 수정 모달
