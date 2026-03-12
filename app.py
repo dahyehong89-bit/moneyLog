@@ -1278,19 +1278,15 @@ def quick_add_dialog():
 
     with st.form("quick_add_edit_form"):
         q1, q2 = st.columns(2)
-
+    
         with q1:
-            d = st.date_input("날짜", value=item["date"], key="quick_edit_date")
             category = st.selectbox("카테고리", CATEGORY_OPTIONS, index=cat_index, key="quick_edit_cat")
             method = st.selectbox("결제수단", METHOD_OPTIONS, index=method_index, key="quick_edit_method")
-
+            d = st.date_input("날짜", value=item["date"], key="quick_edit_date")
+    
         with q2:
             memo = st.text_input("메모", value=base_memo, key="quick_edit_memo")
-            amount_text = st.text_input(
-                "금액",
-                value=f"{abs(int(item['amount'])):,}",
-                key="quick_edit_amount"
-            )
+            amount_text = st.text_input("금액", value=f"{abs(int(item['amount'])):,}", key="quick_edit_amount")
             fuel_price = st.text_input(
                 "리터당 가격",
                 value=base_fuel_price,
@@ -1304,7 +1300,7 @@ def quick_add_dialog():
             canceled = st.form_submit_button("취소", use_container_width=True)
         
         with col_save:
-            saved = st.form_submit_button("등록", use_container_width=True)
+            saved = st.form_submit_button("💾 저장", use_container_width=True)
 
     if saved:
         amount_clean = amount_text.replace(",", "").strip()
@@ -1989,6 +1985,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
