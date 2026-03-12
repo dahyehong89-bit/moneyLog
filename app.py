@@ -1794,7 +1794,7 @@ with tab2:
     if "record_filter" not in st.session_state:
         st.session_state["record_filter"] = "전체"
     
-    filters = ["전체", "현대", "신한", "주유", "사건비", "환급"]
+    filters = ["전체", "💳현대", "💳신한", "⛽주유", "📂사건비", "💰환급"]
     
     cols = st.columns(len(filters))
     
@@ -1993,6 +1993,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
