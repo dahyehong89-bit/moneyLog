@@ -1199,6 +1199,35 @@ card_raw_sum = month_df.groupby("method")["amount"].sum()
 hyundai_amount = abs(int(card_raw_sum.get("현대카드", 0)))
 shinhan_amount = abs(int(card_raw_sum.get("신한카드", 0)))
 
+# 현대카드 세부내역
+hyundai_df = month_df[month_df["method"] == "현대카드"].copy()
+
+hyundai_shopping = abs(int(
+    hyundai_df[hyundai_df["category"] == "쇼핑"]["amount"].sum()
+))
+hyundai_eatout = abs(int(
+    hyundai_df[hyundai_df["category"] == "외식"]["amount"].sum()
+))
+hyundai_delivery = abs(int(
+    hyundai_df[hyundai_df["category"] == "배달"]["amount"].sum()
+))
+hyundai_coffee = abs(int(
+    hyundai_df[hyundai_df["category"] == "커피"]["amount"].sum()
+))
+hyundai_fixed = abs(int(
+    hyundai_df[hyundai_df["category"] == "고정비"]["amount"].sum()
+))
+
+hyundai_known_total = (
+    hyundai_shopping
+    + hyundai_eatout
+    + hyundai_delivery
+    + hyundai_coffee
+    + hyundai_fixed
+)
+
+hyundai_other = max(hyundai_amount - hyundai_known_total, 0)
+
 # 사건비통장: 지출 / 환급 / 순금액
 incident_df = month_df[month_df["method"] == "사건비통장"].copy()
 incident_spent = abs(int(incident_df[incident_df["amount"] < 0]["amount"].sum()))
