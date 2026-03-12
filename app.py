@@ -1424,7 +1424,13 @@ with tab1:
         render_budget_card("신한카드", f"{shinhan_amount:,}원", "#F2FBFF", "#BFE8F7", "#3E7C91")
 
     with card_col3:
-        render_budget_card("사건비통장", f"{incident_amount:,}원", "#FFF8CC", "#F2E18B", "#8A6A00")
+        render_budget_card(
+            "사건비통장",
+            f"{incident_spent:,} - {incident_refund:,} = {incident_amount:,}원",
+            "#FFF8CC",
+            "#F2E18B",
+            "#8A6A00"
+        )
 
     with card_col4:
         render_budget_card("이번달 총 지출", f"{total_amount:,}원", "#FFEFF6", "#FFC4D6", "#A85E74")
@@ -1950,4 +1956,5 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
