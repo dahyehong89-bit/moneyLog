@@ -1038,6 +1038,7 @@ div[data-testid="stButton"] {{
 div[data-testid="stButton"] button {{
     padding: 2px 6px !important;
     min-height: 26px !important;
+    border-radius:16px;
 }}
 
 /* ===== 체크박스 ===== */
@@ -2038,6 +2039,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
