@@ -1566,8 +1566,11 @@ with tab1:
                 placeholder="4500 스타벅스 @현대카드",
                 key="quick_input_text"
             )
-
-            submitted_quick = st.form_submit_button("저장 (Enter)")
+            
+            spacer, btn = st.columns([6,1])
+            
+            with btn:
+                submitted_manual = st.form_submit_button("저장 (Enter)", use_container_width=True)
 
         if submitted_quick:
             try:
@@ -1988,6 +1991,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
