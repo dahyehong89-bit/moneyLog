@@ -1672,106 +1672,106 @@ with tab2:
             key="search_text"
         )
 
-    with top_filter_right:
-        download_month = st.selectbox(
-            "다운로드할 월 선택",
-            month_options,
-            key="download_month"
-        )    
+        with top_filter_right:
+            download_month = st.selectbox(
+                "다운로드할 월 선택",
+                month_options,
+                key="download_month"
+            )    
+        
+        # 다운로드용 데이터
+        download_view = df.copy()
+        download_view["date_dt"] = pd.to_datetime(download_view["date"], errors="coerce")
     
-    # 다운로드용 데이터
-    download_view = df.copy()
-    download_view["date_dt"] = pd.to_datetime(download_view["date"], errors="coerce")
-
-    try:
-        dy, dm = download_month.split("-")
-        download_view = download_view[
-            (download_view["date_dt"].dt.year == int(dy)) &
-            (download_view["date_dt"].dt.month == int(dm))
-        ]
-    except Exception:
-        download_view = download_view.iloc[0:0]
-
-    if download_view.empty:
-        st.caption("선택한 월의 다운로드할 내역이 없어요.")
-    else:
-        download_df = download_view.drop(columns=["date_dt"], errors="ignore").copy()
-        download_df = download_df.sort_values(by="date")
-        download_df["amount_num"] = download_df["amount"].abs()
-        download_df["amount"] = download_df["amount_num"].apply(lambda x: f"{x:,}원")
-
-        download_df = download_df.rename(columns={
-            "date": "날짜",
-            "amount": "금액",
-            "category": "카테고리",
-            "method": "결제수단",
-            "memo": "메모"
-        })
-
-        download_df = download_df[["날짜", "카테고리", "메모", "금액", "결제수단", "amount_num"]]
-
-        buffer = BytesIO()
-
-        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-            download_df.drop(columns=["amount_num"]).to_excel(
-                writer,
-                index=False,
-                sheet_name="가계부"
+        try:
+            dy, dm = download_month.split("-")
+            download_view = download_view[
+                (download_view["date_dt"].dt.year == int(dy)) &
+                (download_view["date_dt"].dt.month == int(dm))
+            ]
+        except Exception:
+            download_view = download_view.iloc[0:0]
+    
+        if download_view.empty:
+            st.caption("선택한 월의 다운로드할 내역이 없어요.")
+        else:
+            download_df = download_view.drop(columns=["date_dt"], errors="ignore").copy()
+            download_df = download_df.sort_values(by="date")
+            download_df["amount_num"] = download_df["amount"].abs()
+            download_df["amount"] = download_df["amount_num"].apply(lambda x: f"{x:,}원")
+    
+            download_df = download_df.rename(columns={
+                "date": "날짜",
+                "amount": "금액",
+                "category": "카테고리",
+                "method": "결제수단",
+                "memo": "메모"
+            })
+    
+            download_df = download_df[["날짜", "카테고리", "메모", "금액", "결제수단", "amount_num"]]
+    
+            buffer = BytesIO()
+    
+            with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+                download_df.drop(columns=["amount_num"]).to_excel(
+                    writer,
+                    index=False,
+                    sheet_name="가계부"
+                )
+    
+                worksheet = writer.sheets["가계부"]
+                from openpyxl.styles import Font, Alignment
+    
+                header_font = Font(bold=True)
+    
+                for cell in worksheet[1]:
+                    cell.font = header_font
+    
+                column_widths = [12, 12, 25, 12, 12]
+                for i, width in enumerate(column_widths, start=1):
+                    worksheet.column_dimensions[chr(64 + i)].width = width
+    
+                for row in worksheet.iter_rows(min_row=2, min_col=4, max_col=4):
+                    for cell in row:
+                        cell.alignment = Alignment(horizontal="right")
+    
+                total_row = len(download_df) + 2
+                worksheet[f"C{total_row}"] = "총합"
+                worksheet[f"D{total_row}"] = f"{download_df['amount_num'].sum():,}원"
+    
+                category_sum = (
+                    download_df
+                    .groupby("카테고리")["amount_num"]
+                    .sum()
+                    .reset_index()
+                )
+    
+                category_sum["합계"] = category_sum["amount_num"].apply(lambda x: f"{x:,}원")
+                category_sum = category_sum[["카테고리", "합계"]]
+    
+                category_sum.to_excel(
+                    writer,
+                    index=False,
+                    sheet_name="카테고리합계"
+                )
+    
+                sheet2 = writer.sheets["카테고리합계"]
+    
+                for cell in sheet2[1]:
+                    cell.font = header_font
+    
+                sheet2.column_dimensions["A"].width = 15
+                sheet2.column_dimensions["B"].width = 15
+    
+            excel_data = buffer.getvalue()
+    
+            st.download_button(
+                label=f"📥 {download_month} 가계부 다운로드",
+                data=excel_data,
+                file_name=f"{download_month}_가계부.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
             )
-
-            worksheet = writer.sheets["가계부"]
-            from openpyxl.styles import Font, Alignment
-
-            header_font = Font(bold=True)
-
-            for cell in worksheet[1]:
-                cell.font = header_font
-
-            column_widths = [12, 12, 25, 12, 12]
-            for i, width in enumerate(column_widths, start=1):
-                worksheet.column_dimensions[chr(64 + i)].width = width
-
-            for row in worksheet.iter_rows(min_row=2, min_col=4, max_col=4):
-                for cell in row:
-                    cell.alignment = Alignment(horizontal="right")
-
-            total_row = len(download_df) + 2
-            worksheet[f"C{total_row}"] = "총합"
-            worksheet[f"D{total_row}"] = f"{download_df['amount_num'].sum():,}원"
-
-            category_sum = (
-                download_df
-                .groupby("카테고리")["amount_num"]
-                .sum()
-                .reset_index()
-            )
-
-            category_sum["합계"] = category_sum["amount_num"].apply(lambda x: f"{x:,}원")
-            category_sum = category_sum[["카테고리", "합계"]]
-
-            category_sum.to_excel(
-                writer,
-                index=False,
-                sheet_name="카테고리합계"
-            )
-
-            sheet2 = writer.sheets["카테고리합계"]
-
-            for cell in sheet2[1]:
-                cell.font = header_font
-
-            sheet2.column_dimensions["A"].width = 15
-            sheet2.column_dimensions["B"].width = 15
-
-        excel_data = buffer.getvalue()
-
-        st.download_button(
-            label=f"📥 {download_month} 가계부 다운로드",
-            data=excel_data,
-            file_name=f"{download_month}_가계부.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
 
     st.divider()
 
@@ -1985,6 +1985,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
