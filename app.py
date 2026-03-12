@@ -2093,9 +2093,9 @@ with tab2:
         st.markdown("<br>", unsafe_allow_html=True)
         
         st.markdown(
-            f"<div style='text-align:right; font-size:13px; opacity:0.75;'>"
+            f"<p style='text-align:right; font-size:13px; opacity:0.75;'>"
             f"총 {total_rows}건"
-            f"</div>",
+            f"</p>",
             unsafe_allow_html=True
         )
 
