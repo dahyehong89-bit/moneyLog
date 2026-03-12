@@ -907,6 +907,32 @@ button:hover {{
     transform: translateY(-1px);
 }}
 
+button[kind="secondary"] {
+    background: {theme["filter_bg"]} !important;
+    border: 1px solid {theme["filter_border"]} !important;
+    color: {theme["button_text"]} !important;
+    box-shadow: none !important;
+}
+
+button[kind="secondary"]:hover {
+    background: {theme["filter_hover"]} !important;
+    border: 1px solid {theme["filter_active_border"]} !important;
+    transform: translateY(-1px);
+}
+
+button[kind="primary"] {
+    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
+    border: 1px solid {theme["filter_active_border"]} !important;
+    color: {theme["button_text"]} !important;
+    box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
+    font-weight: 800 !important;
+}
+
+button[kind="primary"]:hover {
+    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
+    border: 1px solid {theme["filter_active_border"]} !important;
+}
+
 hr {{
     border: none;
     height: 1px;
@@ -2002,6 +2028,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
