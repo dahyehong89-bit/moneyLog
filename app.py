@@ -1010,6 +1010,8 @@ label:has(input[type="checkbox"]) {{
 
 div[role="radiogroup"] {{
     gap: 8px !important;
+    padding-left: 0px !important;
+    margin-left: 0px !important;
 }}
 
 div[role="radiogroup"] * {{
@@ -1027,6 +1029,7 @@ div[role="radiogroup"] label {{
     justify-content: center !important;
     cursor: pointer !important;
     transition: all 0.15s ease !important;
+    margin-left: 0px !important;
 }}
 
 div[role="radiogroup"] label:hover {{
@@ -1790,15 +1793,17 @@ with tab2:
 
     if "record_filter" not in st.session_state:
         st.session_state["record_filter"] = "전체"
-
-    record_filter = st.radio(
-        "필터 선택",
-        ["전체", "현대", "신한", "주유", "사건비", "환급"],
-        index=["전체", "현대", "신한", "주유", "사건비", "환급"].index(st.session_state["record_filter"]),
-        horizontal=True,
-        label_visibility="collapsed",
-        key="record_filter_radio"
-    )
+    
+    spacer, radio_col = st.columns([3,1])
+    
+    with radio_col:
+        record_filter = st.radio(
+            "",
+            ["전체", "현대", "신한", "주유", "사건비", "환급"],
+            index=["전체", "현대", "신한", "주유", "사건비", "환급"].index(st.session_state["record_filter"]),
+            horizontal=True,
+            key="record_filter_radio"
+        )
 
     st.session_state["record_filter"] = record_filter
 
@@ -1985,6 +1990,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
