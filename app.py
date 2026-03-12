@@ -1626,7 +1626,7 @@ with tab1:
             <span><b>{hyundai_coffee:,}원</b></span>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>☕🏪 편의점</span>
+            <span>🏪 편의점</span>
             <span><b>{hyundai_convenience:,}원</b></span>
         </div>
         <div style="display:flex; justify-content:space-between;">
