@@ -1790,30 +1790,39 @@ with tab2:
     # 기록 보기 필터
     # =========================
     st.subheader("🧾 기록 보기 / 필터")
-
+    
     if "record_filter" not in st.session_state:
         st.session_state["record_filter"] = "전체"
     
-    filters = ["전체", "💳현대", "💳신한", "⛽주유", "📂사건비", "💰환급"]
+    filter_items = [
+        ("전체", "전체"),
+        ("💳현대", "현대"),
+        ("💳신한", "신한"),
+        ("⛽주유", "주유"),
+        ("📂사건비", "사건비"),
+        ("💰환급", "환급"),
+    ]
     
-    cols = st.columns(len(filters))
+    cols = st.columns(len(filter_items))
     
-    for i, f in enumerate(filters):
+    for i, (label, value) in enumerate(filter_items):
         with cols[i]:
             if st.button(
-                f,
+                label,
                 use_container_width=True,
-                key=f"filter_{f}",
-                type="primary" if st.session_state["record_filter"] == f else "secondary"
+                key=f"filter_{value}",
+                type="primary" if st.session_state["record_filter"] == value else "secondary"
             ):
-                st.session_state["record_filter"] = f
+                st.session_state["record_filter"] = value
+                st.session_state["record_page"] = 1
+                st.rerun()
     
     record_filter = st.session_state["record_filter"]
-
+    
     # 보기용 데이터
     view = df.copy()
     view["date_dt"] = pd.to_datetime(view["date"], errors="coerce")
-
+    
     try:
         y, m = month.split("-")
         view = view[
@@ -1822,7 +1831,7 @@ with tab2:
         ]
     except Exception:
         pass
-
+    
     if q.strip():
         qq = q.strip().lower()
         mask = (
@@ -1831,78 +1840,54 @@ with tab2:
             | view["method"].astype(str).str.lower().str.contains(qq, na=False)
         )
         view = view[mask]
-
+    
     view = view.sort_values(by=["date_dt"], ascending=False)
-
-    record_filter = st.session_state.get("record_filter", "전체")
-
+    
     if record_filter == "현대":
         view = view[view["method"] == "현대카드"]
-
+    
     elif record_filter == "신한":
         view = view[view["method"] == "신한카드"]
-
+    
     elif record_filter == "주유":
         view = view[view["memo"].astype(str).str.contains("주유", na=False)]
-
+    
     elif record_filter == "사건비":
-        view = view[view["category"] == "사건비"]    
-
+        view = view[view["category"] == "사건비"]
+    
     elif record_filter == "환급":
         view = view[(view["method"] == "사건비통장") & (view["amount"] > 0)]
     
     filtered_total = int(view["amount"].abs().sum()) if not view.empty else 0
     st.caption(f"현재 보기: {record_filter} · 총금액: {filtered_total:,}원")
-
+    
     if view.empty:
         st.write("표시할 기록이 없어요.")
     else:
         view_with_idx = view.copy()
         view_with_idx["row_id"] = view_with_idx.index
         view_with_idx = view_with_idx.reset_index(drop=True)
-
+    
         total_rows = len(view_with_idx)
         total_pages = (total_rows - 1) // PAGE_SIZE + 1
-
+    
         if "record_page" not in st.session_state:
             st.session_state["record_page"] = 1
-
+    
         # 페이지 범위 보정
         if st.session_state["record_page"] > total_pages:
             st.session_state["record_page"] = total_pages
         if st.session_state["record_page"] < 1:
             st.session_state["record_page"] = 1
-
-        page_col1, page_col2, page_col3 = st.columns([1, 2, 1])
-
-        with page_col1:
-            if st.button("◀ 이전", use_container_width=True, key="prev_page"):
-                if st.session_state["record_page"] > 1:
-                    st.session_state["record_page"] -= 1
-                    st.rerun()
-
-        with page_col2:
-            st.markdown(
-                f"<div style='text-align:center;font-weight:700;padding-top:8px;'>"
-                f"{st.session_state['record_page']} / {total_pages} 페이지"
-                f"</div>",
-                unsafe_allow_html=True
-            )
-
-        with page_col3:
-            if st.button("다음 ▶", use_container_width=True, key="next_page"):
-                if st.session_state["record_page"] < total_pages:
-                    st.session_state["record_page"] += 1
-                    st.rerun()
-
+    
         start_idx = (st.session_state["record_page"] - 1) * PAGE_SIZE
         end_idx = start_idx + PAGE_SIZE
-
+    
         page_view = view_with_idx.iloc[start_idx:end_idx].copy()
         page_view["no"] = range(start_idx + 1, min(end_idx, total_rows) + 1)
-
+    
         st.caption(f"총 {total_rows}건")
-
+    
         h0, h1, h2, h3, h4, h5, h6, h7 = st.columns([0.6, 1.1, 1.2, 2.2, 1.2, 1.1, 0.8, 0.8])
         h0.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
         h1.markdown("<div class='table-head'>날짜</div>", unsafe_allow_html=True)
@@ -1912,23 +1897,23 @@ with tab2:
         h5.markdown("<div class='table-head'>결제수단</div>", unsafe_allow_html=True)
         h6.markdown("<div class='table-head'>삭제</div>", unsafe_allow_html=True)
         h7.markdown("<div class='table-head'>수정</div>", unsafe_allow_html=True)
-
+    
         for _, r in page_view.iterrows():
             c0, c1, c2, c3, c4, c5, c6, c7 = st.columns([0.6, 1.1, 1.2, 2.2, 1.2, 1.1, 0.8, 0.8])
-
+    
             c0.markdown(f"<div class='row-box'>{r['no']}</div>", unsafe_allow_html=True)
             c1.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
             c2.markdown(f"<div class='row-box'><span class='cat-tag'>{r['category']}</span></div>", unsafe_allow_html=True)
             c3.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
-
+    
             amount_display = f"{abs(int(r['amount'])):,}원"
             if int(r["amount"]) > 0:
                 amount_html = f"<div class='row-box amount-text'>➕ {amount_display}</div>"
             else:
                 amount_html = f"<div class='row-box amount-text'>💸 {amount_display}</div>"
-
+    
             c4.markdown(amount_html, unsafe_allow_html=True)
-
+    
             method = str(r["method"])
             if method == "신한카드":
                 method_html = f"<span class='method-shinhan'>{method}</span>"
@@ -1936,22 +1921,46 @@ with tab2:
                 method_html = f"<span class='method-incident'>{method}</span>"
             else:
                 method_html = f"<span class='method-hyundai'>{method}</span>"
-
+    
             c5.markdown(f"<div class='row-box'>{method_html}</div>", unsafe_allow_html=True)
-
+    
             rid = int(r["row_id"])
-
+    
             with c6:
                 if st.button("🗑", key=f"del_{rid}", use_container_width=True):
                     df = df.drop(index=rid).reset_index(drop=True)
                     save_df(df)
                     st.success("삭제 완료!")
                     st.rerun()
-
+    
             with c7:
                 if st.button("✏", key=f"edit_{rid}", use_container_width=True):
                     edit_dialog(rid)
-
+    
+        st.markdown("<br>", unsafe_allow_html=True)
+    
+        page_col1, page_col2, page_col3 = st.columns([1, 2, 1])
+    
+        with page_col1:
+            if st.button("◀ 이전", use_container_width=True, key="prev_page"):
+                if st.session_state["record_page"] > 1:
+                    st.session_state["record_page"] -= 1
+                    st.rerun()
+    
+        with page_col2:
+            st.markdown(
+                f"<div style='text-align:center;font-weight:700;padding-top:8px;'>"
+                f"{st.session_state['record_page']} / {total_pages} 페이지"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+    
+        with page_col3:
+            if st.button("다음 ▶", use_container_width=True, key="next_page"):
+                if st.session_state["record_page"] < total_pages:
+                    st.session_state["record_page"] += 1
+                    st.rerun()
+                
     st.divider()
 
     # =========================
@@ -1993,6 +2002,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
