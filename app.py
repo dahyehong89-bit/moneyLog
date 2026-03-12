@@ -1491,7 +1491,10 @@ with tab1:
                 key="manual_method"
             )
 
-        submitted_manual = st.form_submit_button("추가")
+        spacer, btn = st.columns([5,1])
+
+        with btn:
+            submitted_manual = st.form_submit_button("추가")
 
     if submitted_manual:
         amount_clean = amount_text.replace(",", "").strip()
@@ -1985,6 +1988,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
