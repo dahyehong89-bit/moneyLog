@@ -1611,7 +1611,7 @@ with tab1:
         with top_right:
             st.subheader("📌 신한카드 고정비")
 
-            fix1, fix2, fix3 = st.columns(3)
+            fix1, fix2, fix3, fix4 = st.columns(4)
 
             with fix1:
                 if st.button("📱 통신비", use_container_width=True, key="btn_phone"):
@@ -1981,6 +1981,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
