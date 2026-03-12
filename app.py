@@ -1785,24 +1785,23 @@ with tab1:
         with top_right:
             st.subheader("📌 신한카드 고정비")
 
-            fix1, fix2 = st.columns(2)
-            fix3, fix4 = st.columns(2)
+            shinhan_fixed_buttons = [
+                ("📱 통신비", 103490, "통신비"),
+                ("🌐 인터넷", 26400, "인터넷"),
+                ("📦 쿠팡와우", 7890, "쿠팡와우"),
+                ("💬 이모티콘", 3900, "이모티콘"),
+                ("⛽ 주유", 65000, "주유"),
+            ]
 
+            cols_per_row = 2
 
-            with fix1:
-                if st.button("📱 통신비", use_container_width=True, key="btn_phone"):
-                    open_quick_edit(129890, "고정비", "통신비", "신한카드")
+            for i in range(0, len(shinhan_fixed_buttons), cols_per_row):
+                cols = st.columns(cols_per_row)
 
-            with fix2:
-                if st.button("📦 쿠팡와우", use_container_width=True, key="btn_wow"):
-                    open_quick_edit(7890, "고정비", "쿠팡와우", "신한카드")
-
-            with fix3:
-                if st.button("💬 이모티콘", use_container_width=True, key="btn_emoji"):
-                    open_quick_edit(3900, "고정비", "이모티콘", "신한카드")
-            with fix4:
-                if st.button("⛽ 주유", use_container_width=True, key="btn_fuel"):
-                    open_quick_edit(65000, "고정비", "주유", "신한카드")
+                for j, (label, amount, memo) in enumerate(shinhan_fixed_buttons[i:i+cols_per_row]):
+                    with cols[j]:
+                        if st.button(label, use_container_width=True, key=f"btn_{memo}"):
+                            open_quick_edit(amount, "고정비", memo, "신한카드")
 
     # -------------------
     # 폰에서도 쓰기 안내
