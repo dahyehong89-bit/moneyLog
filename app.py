@@ -1975,13 +1975,27 @@ with tab2:
                     edit_dialog(rid)
     
         st.markdown("<br>", unsafe_allow_html=True)
-    
-        p1, p2, p3 = st.columns([1, 3, 1])
+        
+        p1, p2, p3 = st.columns([1.2, 5, 1.2])
+        
+        current_page = st.session_state["record_page"]
+        
+        # 표시할 페이지 번호 계산
+        pages_to_show = []
+        
+        if total_pages <= 10:
+            pages_to_show = list(range(1, total_pages + 1))
+        else:
+            if current_page <= 4:
+                pages_to_show = [1, 2, 3, 4, 5, "...", total_pages]
+            elif current_page >= total_pages - 3:
+                pages_to_show = [1, "...", total_pages - 4, total_pages - 3, total_pages - 2, total_pages - 1, total_pages]
+            else:
+                pages_to_show = [1, "...", current_page - 1, current_page, current_page + 1, "...", total_pages]
         
         # 이전 버튼
         with p1:
-            prev_disabled = st.session_state["record_page"] <= 1
-        
+            prev_disabled = current_page <= 1
             if st.button(
                 "◀ 이전",
                 use_container_width=True,
@@ -1993,25 +2007,28 @@ with tab2:
         
         # 숫자 페이지
         with p2:
-            page_cols = st.columns(total_pages)
+            page_cols = st.columns(len(pages_to_show))
         
-            for i in range(total_pages):
-                page_num = i + 1
-        
+            for i, page_item in enumerate(pages_to_show):
                 with page_cols[i]:
-                    if st.button(
-                        str(page_num),
-                        use_container_width=True,
-                        key=f"page_{page_num}",
-                        type="primary" if st.session_state["record_page"] == page_num else "secondary"
-                    ):
-                        st.session_state["record_page"] = page_num
-                        st.rerun()
+                    if page_item == "...":
+                        st.markdown(
+                            "<div style='text-align:center; padding-top:8px; font-weight:700;'>...</div>",
+                            unsafe_allow_html=True
+                        )
+                    else:
+                        if st.button(
+                            str(page_item),
+                            use_container_width=True,
+                            key=f"page_{page_item}",
+                            type="primary" if current_page == page_item else "secondary"
+                        ):
+                            st.session_state["record_page"] = page_item
+                            st.rerun()
         
         # 다음 버튼
         with p3:
-            next_disabled = st.session_state["record_page"] >= total_pages
-        
+            next_disabled = current_page >= total_pages
             if st.button(
                 "다음 ▶",
                 use_container_width=True,
@@ -2062,6 +2079,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
