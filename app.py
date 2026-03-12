@@ -1883,16 +1883,3 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
-
-
-
-
-
-
-
-
-
-
-
-
-
