@@ -1453,6 +1453,7 @@ with tab1:
 
     with card_col3:
         render_budget_card("사건비통장", f"{incident_amount:,}원", "#FFF8CC", "#F2E18B", "#8A6A00")
+        st.write("")
         st.caption(f"지출 {incident_spent:,}원 - 환급 {incident_refund:,}원 = 총 {incident_amount:,}원")
 
     with card_col4:
@@ -1984,6 +1985,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
