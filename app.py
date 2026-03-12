@@ -14,7 +14,7 @@ FILE = "money.csv"
 CHECKLIST_FILE = "checklist.csv"
 COLUMNS = ["date", "amount", "category", "method", "memo"]
 
-CATEGORY_OPTIONS = ["쇼핑", "외식", "배달", "커피", "고정비", "사건비"]
+CATEGORY_OPTIONS = ["쇼핑", "외식", "배달", "커피", "편의점", "고정비", "사건비"]
 METHOD_OPTIONS = ["현대카드", "신한카드", "사건비통장"]
 DEFAULT_METHOD = "현대카드"
 MONTHLY_BUDGET = 600000
@@ -34,6 +34,7 @@ AUTO_CATEGORY = {
     "편의점": "쇼핑",
     "마트": "쇼핑",
     "우유": "쇼핑",
+    "편의점": "편의점",
 }
 
 AUTO_SHINHAN = [
@@ -1215,7 +1216,7 @@ hyundai_coffee = abs(int(
     hyundai_df[hyundai_df["category"] == "커피"]["amount"].sum()
 ))
 hyundai_convenience = abs(int(
-    hyundai_df[hyundai_df["memo"].astype(str).str.contains("편의점", na=False)]["amount"].sum()
+    hyundai_df[hyundai_df["category"] == "편의점"]["amount"].sum()
 ))
 
 hyundai_known_total = (
