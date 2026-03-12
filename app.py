@@ -1898,7 +1898,8 @@ with tab2:
     filtered_total = int(view["amount"].abs().sum()) if not view.empty else 0
     st.markdown(
         f"<div style='text-align:right; font-size:13px; opacity:0.75;'>"
-        f"현재 보기: {record_filter} · 총금액: {filtered_total:,}원"
+        f"🔎 현재 보기: <b>{record_filter}</b> &nbsp;&nbsp; | &nbsp;&nbsp; "
+        f"💰 총금액: <b>{filtered_total:,}원</b>"
         f"</div>",
         unsafe_allow_html=True
     )
@@ -2091,6 +2092,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
