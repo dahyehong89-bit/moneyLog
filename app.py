@@ -1248,8 +1248,12 @@ def edit_dialog(rid: int):
     cat_index = CATEGORY_OPTIONS.index(current_cat) if current_cat in CATEGORY_OPTIONS else 0
 
     with st.form(f"edit_form_{rid}"):
-        d = st.date_input("날짜", value=pd.to_datetime(row["date"], errors="coerce"), key=f"edit_date_{rid}")
-        category = st.selectbox("카테고리", CATEGORY_OPTIONS, index=cat_index, key=f"edit_cat_{rid}")
+        category = st.selectbox(
+            "카테고리",
+            CATEGORY_OPTIONS,
+            index=cat_index,
+            key=f"edit_cat_{rid}"
+        )
 
         base_memo, base_fuel_price = split_fuel_memo(str(row["memo"]))
         memo = st.text_input("메모", value=base_memo, key=f"edit_memo_{rid}")
@@ -1263,11 +1267,27 @@ def edit_dialog(rid: int):
 
         current_method = str(row["method"]).strip() if str(row["method"]).strip() else DEFAULT_METHOD
         method_index = METHOD_OPTIONS.index(current_method) if current_method in METHOD_OPTIONS else 0
-        method = st.selectbox("결제수단", METHOD_OPTIONS, index=method_index, key=f"edit_method_{rid}")
+        method = st.selectbox(
+            "결제수단",
+            METHOD_OPTIONS,
+            index=method_index,
+            key=f"edit_method_{rid}"
+        )
 
-        col_a, col_b = st.columns(2)
-        saved = col_a.form_submit_button("저장")
-        canceled = col_b.form_submit_button("취소")
+        # 날짜를 아래쪽으로 내려서 모달 열릴 때 달력 자동 오픈 방지
+        d = st.date_input(
+            "날짜",
+            value=pd.to_datetime(row["date"], errors="coerce"),
+            key=f"edit_date_{rid}"
+        )
+
+        col_cancel, col_save = st.columns(2)
+
+        with col_cancel:
+            canceled = st.form_submit_button("취소", use_container_width=True)
+
+        with col_save:
+            saved = st.form_submit_button("💾 저장", use_container_width=True)
 
     if saved:
         amount_clean = amount.replace(",", "").strip()
