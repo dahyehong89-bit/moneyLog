@@ -1794,18 +1794,21 @@ with tab2:
     if "record_filter" not in st.session_state:
         st.session_state["record_filter"] = "전체"
     
-    spacer, radio_col = st.columns([3,1])
+    filters = ["전체", "현대", "신한", "주유", "사건비", "환급"]
     
-    with radio_col:
-        record_filter = st.radio(
-            "",
-            ["전체", "현대", "신한", "주유", "사건비", "환급"],
-            index=["전체", "현대", "신한", "주유", "사건비", "환급"].index(st.session_state["record_filter"]),
-            horizontal=True,
-            key="record_filter_radio"
-        )
-
-    st.session_state["record_filter"] = record_filter
+    cols = st.columns(len(filters))
+    
+    for i, f in enumerate(filters):
+        with cols[i]:
+            if st.button(
+                f,
+                use_container_width=True,
+                key=f"filter_{f}",
+                type="primary" if st.session_state["record_filter"] == f else "secondary"
+            ):
+                st.session_state["record_filter"] = f
+    
+    record_filter = st.session_state["record_filter"]
 
     # 보기용 데이터
     view = df.copy()
@@ -1990,6 +1993,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
