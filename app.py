@@ -1599,6 +1599,7 @@ with tab1:
             """,
             unsafe_allow_html=True
         )
+    
     with card_col4:
         render_budget_card(
             "이번달 총 지출",
@@ -2201,6 +2202,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
