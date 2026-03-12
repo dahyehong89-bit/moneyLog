@@ -1513,13 +1513,13 @@ with tab1:
         )
     
     with card_col2:
-    render_budget_card(
-        "신한카드",
-        f"{shinhan_amount:,}원",
-        "#F2FBFF",
-        "#BFE8F7",
-        "#3E7C91"
-    )
+        render_budget_card(
+            "신한카드",
+            f"{shinhan_amount:,}원",
+            "#F2FBFF",
+            "#BFE8F7",
+            "#3E7C91"
+        )
 
     shinhan_detail_html = f"""
 <div style="
@@ -1556,13 +1556,13 @@ with tab1:
     st.markdown(shinhan_detail_html, unsafe_allow_html=True)
     
     with card_col3:
-    render_budget_card(
-        "사건비통장",
-        f"{incident_amount:,}원",
-        "#FFF8CC",
-        "#F2E18B",
-        "#8A6A00"
-    )
+        render_budget_card(
+            "사건비통장",
+            f"{incident_amount:,}원",
+            "#FFF8CC",
+            "#F2E18B",
+            "#8A6A00"
+        )
 
     incident_detail_html = f"""
 <div style="
