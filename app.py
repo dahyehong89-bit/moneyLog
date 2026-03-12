@@ -1173,12 +1173,30 @@ card_raw_sum = month_df.groupby("method")["amount"].sum()
 hyundai_amount = abs(int(card_raw_sum.get("현대카드", 0)))
 shinhan_amount = abs(int(card_raw_sum.get("신한카드", 0)))
 
-# 사건비통장: 지출 / 환급 / 순금액 분리
+# 사건비통장: 지출 / 환급 / 순금액
 incident_df = month_df[month_df["method"] == "사건비통장"].copy()
+incident_spent = abs(int(incident_df[incident_df["amount"] < 0]["amount"].sum()))
+incident_refund = int(incident_df[incident_df["amount"] > 0]["amount"].sum())
+incident_amount = incident_spent - incident_refund
 
-incident_spent = abs(int(incident_df[incident_df["amount"] < 0]["amount"].sum()))   # 쓴 금액
-incident_refund = int(incident_df[incident_df["amount"] > 0]["amount"].sum())       # 환급 금액
-incident_amount = incident_spent - incident_refund                                    # 총금액(순지출)
+# 신한카드 세부내역
+shinhan_df = month_df[month_df["method"] == "신한카드"].copy()
+
+shinhan_fuel = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("주유", na=False)]["amount"].sum()
+))
+shinhan_phone = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("통신비", na=False)]["amount"].sum()
+))
+shinhan_wow = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("쿠팡와우", na=False)]["amount"].sum()
+))
+shinhan_emoji = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("이모티콘", na=False)]["amount"].sum()
+))
+
+shinhan_known_total = shinhan_fuel + shinhan_phone + shinhan_wow + shinhan_emoji
+shinhan_other = max(shinhan_amount - shinhan_known_total, 0)
 
 total_amount = hyundai_amount + shinhan_amount + incident_amount
 
@@ -1482,22 +1500,86 @@ with tab1:
     # 카드별 이번달 사용
     # -------------------
     st.subheader("💳 카드별 이번달 사용")
-
+    
     card_col1, card_col2, card_col3, card_col4 = st.columns(4)
-
+    
     with card_col1:
-        render_budget_card("현대카드", f"{hyundai_amount:,}원", "#F4F4F4", "#D6D6D6", "#4A4A4A")
-
+        render_budget_card(
+            "현대카드",
+            f"{hyundai_amount:,}원",
+            "#F4F4F4",
+            "#D6D6D6",
+            "#4A4A4A"
+        )
+    
     with card_col2:
-        render_budget_card("신한카드", f"{shinhan_amount:,}원", "#F2FBFF", "#BFE8F7", "#3E7C91")
-
+        render_budget_card(
+            "신한카드",
+            f"{shinhan_amount:,}원",
+            "#F2FBFF",
+            "#BFE8F7",
+            "#3E7C91"
+        )
+    
+        st.markdown(
+            f"""
+            <div style="
+                margin-top:10px;
+                background:rgba(255,255,255,0.45);
+                border:1px solid {theme["form_border"]};
+                border-radius:16px;
+                padding:12px 14px;
+                line-height:1.9;
+                color:{theme["button_text"]};
+                font-size:14px;
+            ">
+                <div><b>주유</b> {shinhan_fuel:,}원</div>
+                <div><b>통신비</b> {shinhan_phone:,}원</div>
+                <div><b>쿠팡와우</b> {shinhan_wow:,}원</div>
+                <div><b>이모티콘</b> {shinhan_emoji:,}원</div>
+                <div><b>기타</b> {shinhan_other:,}원</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
     with card_col3:
-        render_budget_card("사건비통장", f"{incident_amount:,}원", "#FFF8CC", "#F2E18B", "#8A6A00")
-        st.write("")
-        st.caption(f"지출 {incident_spent:,}원 - 환급 {incident_refund:,}원 = 총 {incident_amount:,}원")
-
+        render_budget_card(
+            "사건비통장",
+            f"{incident_amount:,}원",
+            "#FFF8CC",
+            "#F2E18B",
+            "#8A6A00"
+        )
+    
+        st.markdown(
+            f"""
+            <div style="
+                margin-top:10px;
+                background:rgba(255,255,255,0.45);
+                border:1px solid {theme["form_border"]};
+                border-radius:16px;
+                padding:12px 14px;
+                line-height:1.9;
+                color:{theme["button_text"]};
+                font-size:14px;
+            ">
+                <div><b>지출</b> {incident_spent:,}원</div>
+                <div><b>환급</b> {incident_refund:,}원</div>
+                <div><b>순금액</b> {incident_amount:,}원</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
     with card_col4:
-        render_budget_card("이번달 총 지출", f"{total_amount:,}원", "#FFEFF6", "#FFC4D6", "#A85E74")
+        render_budget_card(
+            "이번달 총 지출",
+            f"{total_amount:,}원",
+            "#FFEFF6",
+            "#FFC4D6",
+            "#A85E74"
+        )
 
     st.divider()
 
@@ -2092,6 +2174,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
