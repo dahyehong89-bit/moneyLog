@@ -1214,16 +1214,12 @@ hyundai_delivery = abs(int(
 hyundai_coffee = abs(int(
     hyundai_df[hyundai_df["category"] == "커피"]["amount"].sum()
 ))
-hyundai_fixed = abs(int(
-    hyundai_df[hyundai_df["category"] == "고정비"]["amount"].sum()
-))
 
 hyundai_known_total = (
     hyundai_shopping
     + hyundai_eatout
     + hyundai_delivery
     + hyundai_coffee
-    + hyundai_fixed
 )
 
 hyundai_other = max(hyundai_amount - hyundai_known_total, 0)
@@ -1624,10 +1620,6 @@ with tab1:
         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
             <span>☕ 커피</span>
             <span><b>{hyundai_coffee:,}원</b></span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>📌 고정비</span>
-            <span><b>{hyundai_fixed:,}원</b></span>
         </div>
         <div style="display:flex; justify-content:space-between;">
             <span>🧾 기타</span>
