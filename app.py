@@ -1482,7 +1482,7 @@ with tab1:
 
             with fix1:
                 if st.button("📱 통신비", use_container_width=True, key="btn_phone"):
-                    add_quick(89000, "고정비", "통신비", "신한카드")
+                    add_quick(129890, "고정비", "통신비", "신한카드")
 
             with fix2:
                 if st.button("📦 쿠팡와우", use_container_width=True, key="btn_wow"):
@@ -1883,6 +1883,7 @@ with tab2:
 
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
