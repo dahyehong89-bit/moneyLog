@@ -1529,15 +1529,34 @@ with tab1:
                 border:1px solid {theme["form_border"]};
                 border-radius:16px;
                 padding:12px 14px;
-                line-height:1.9;
-                color:{theme["button_text"]};
                 font-size:14px;
             ">
-                <div><b>주유</b> {shinhan_fuel:,}원</div>
-                <div><b>통신비</b> {shinhan_phone:,}원</div>
-                <div><b>쿠팡와우</b> {shinhan_wow:,}원</div>
-                <div><b>이모티콘</b> {shinhan_emoji:,}원</div>
-                <div><b>기타</b> {shinhan_other:,}원</div>
+        
+                <div style="display:flex; justify-content:space-between;">
+                    <span>⛽ 주유</span>
+                    <span><b>{shinhan_fuel:,}원</b></span>
+                </div>
+        
+                <div style="display:flex; justify-content:space-between;">
+                    <span>📱 통신비</span>
+                    <span><b>{shinhan_phone:,}원</b></span>
+                </div>
+        
+                <div style="display:flex; justify-content:space-between;">
+                    <span>📦 쿠팡와우</span>
+                    <span><b>{shinhan_wow:,}원</b></span>
+                </div>
+        
+                <div style="display:flex; justify-content:space-between;">
+                    <span>💬 이모티콘</span>
+                    <span><b>{shinhan_emoji:,}원</b></span>
+                </div>
+        
+                <div style="display:flex; justify-content:space-between;">
+                    <span>🧾 기타</span>
+                    <span><b>{shinhan_other:,}원</b></span>
+                </div>
+        
             </div>
             """,
             unsafe_allow_html=True
@@ -1560,13 +1579,24 @@ with tab1:
                 border:1px solid {theme["form_border"]};
                 border-radius:16px;
                 padding:12px 14px;
-                line-height:1.9;
-                color:{theme["button_text"]};
                 font-size:14px;
             ">
-                <div><b>지출</b> {incident_spent:,}원</div>
-                <div><b>환급</b> {incident_refund:,}원</div>
-                <div><b>순금액</b> {incident_amount:,}원</div>
+        
+                <div style="display:flex; justify-content:space-between;">
+                    <span>💸 지출</span>
+                    <span><b>{incident_spent:,}원</b></span>
+                </div>
+        
+                <div style="display:flex; justify-content:space-between;">
+                    <span>💰 환급</span>
+                    <span><b>{incident_refund:,}원</b></span>
+                </div>
+        
+                <div style="display:flex; justify-content:space-between;">
+                    <span>🧮 순금액</span>
+                    <span><b>{incident_amount:,}원</b></span>
+                </div>
+        
             </div>
             """,
             unsafe_allow_html=True
@@ -2174,6 +2204,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
