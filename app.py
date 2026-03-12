@@ -1624,6 +1624,9 @@ with tab1:
             with fix3:
                 if st.button("💬 이모티콘", use_container_width=True, key="btn_emoji"):
                     open_quick_edit(3900, "고정비", "이모티콘", "신한카드")
+            with fix4:
+                if st.button("⛽ 주유", use_container_width=True, key="btn_fuel"):
+                    open_quick_edit(50000, "고정비", "주유", "신한카드")
 
     # -------------------
     # 폰에서도 쓰기 안내
@@ -1978,6 +1981,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
