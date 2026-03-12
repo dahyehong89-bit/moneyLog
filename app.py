@@ -860,6 +860,7 @@ div[data-testid="stSelectbox"] * {{
     font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
 }}
 
+/* ===== 배경 ===== */
 html, body, [data-testid="stAppViewContainer"] {{
     background: linear-gradient(180deg, {theme["app_bg_1"]} 0%, {theme["app_bg_2"]} 100%) !important;
 }}
@@ -875,11 +876,13 @@ html, body, [data-testid="stAppViewContainer"] {{
     border-radius: 24px;
 }}
 
+/* ===== 타이틀 ===== */
 h1, h2, h3 {{
     font-weight: 800;
     letter-spacing: -1px;
 }}
 
+/* ===== 입력창 ===== */
 input, textarea {{
     border-radius: 14px !important;
     border: 1px solid {theme["input_border"]} !important;
@@ -893,6 +896,7 @@ input, textarea {{
     cursor: pointer !important;
 }}
 
+/* ===== 기본 버튼 ===== */
 button:not([kind="primary"]) {{
     border-radius: 16px !important;
     border: 1px solid {theme["button_border"]} !important;
@@ -907,6 +911,7 @@ button:hover {{
     transform: translateY(-1px);
 }}
 
+/* ===== 필터 버튼 상태 ===== */
 button[kind="secondary"] {{
     background: {theme["filter_bg"]} !important;
     border: 1px solid {theme["filter_border"]} !important;
@@ -933,6 +938,7 @@ button[kind="primary"]:hover {{
     border: 1px solid {theme["filter_active_border"]} !important;
 }}
 
+/* ===== 구분선 ===== */
 hr {{
     border: none;
     height: 1px;
@@ -940,6 +946,7 @@ hr {{
     margin: 1.1rem 0;
 }}
 
+/* ===== metric / form ===== */
 [data-testid="stMetric"] {{
     background: rgba(255,255,255,0.60);
     border-radius: 16px;
@@ -954,6 +961,7 @@ hr {{
     padding: 14px;
 }}
 
+/* ===== 테이블 ===== */
 .table-head {{
     font-weight: 800;
     background: {theme["table_head_bg"]};
@@ -980,6 +988,7 @@ hr {{
     color: {theme["amount_text"]};
 }}
 
+/* ===== 태그 ===== */
 .cat-tag {{
     background: {theme["cat_bg"]};
     color: {theme["cat_text"]};
@@ -1020,6 +1029,7 @@ hr {{
     display: inline-block;
 }}
 
+/* ===== 버튼 간격 ===== */
 div[data-testid="stButton"] {{
     margin-top: 0 !important;
     margin-bottom: 0 !important;
@@ -1030,10 +1040,12 @@ div[data-testid="stButton"] button {{
     min-height: 26px !important;
 }}
 
+/* ===== 체크박스 ===== */
 label:has(input[type="checkbox"]) {{
     font-weight: 700;
 }}
 
+/* ===== radio group ===== */
 div[role="radiogroup"] {{
     gap: 8px !important;
     padding-left: 0px !important;
@@ -1084,19 +1096,18 @@ div[role="radiogroup"] [data-testid="stMarkdownContainer"] + div {{
     accent-color: transparent !important;
 }}
 
-/* 탭 아래 border 라인 */
+/* ===== 탭 ===== */
 div[data-baseweb="tab-border"] {{
     background: {theme["table_head_border"]} !important;
 }}
 
-/* 탭 밑줄 */
 div[data-baseweb="tab-highlight"] {{
     background: linear-gradient(90deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
     border-radius: 999px !important;
     height: 4px !important;
 }}
 
-/* 진행바 바깥 트랙 */
+/* ===== 진행바 ===== */
 [data-testid="stProgress"] [data-baseweb="progress-bar"] > div {{
     background: rgba(255,255,255,0.55) !important;
     border: 1px solid {theme["metric_border"]} !important;
@@ -1104,7 +1115,6 @@ div[data-baseweb="tab-highlight"] {{
     overflow: hidden !important;
 }}
 
-/* 진행바 채워지는 부분 */
 [data-testid="stProgress"] [role="progressbar"] div[style*="width"],
 [data-testid="stProgress"] [data-baseweb="progress-bar"] div div div {{
     background: linear-gradient(90deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
@@ -2028,6 +2038,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
