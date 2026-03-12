@@ -1530,33 +1530,32 @@ with tab1:
                 border-radius:16px;
                 padding:12px 14px;
                 font-size:14px;
+                color:{theme["button_text"]};
             ">
-        
-                <div style="display:flex; justify-content:space-between;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                     <span>⛽ 주유</span>
                     <span><b>{shinhan_fuel:,}원</b></span>
                 </div>
-        
-                <div style="display:flex; justify-content:space-between;">
+    
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                     <span>📱 통신비</span>
                     <span><b>{shinhan_phone:,}원</b></span>
                 </div>
-        
-                <div style="display:flex; justify-content:space-between;">
+    
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                     <span>📦 쿠팡와우</span>
                     <span><b>{shinhan_wow:,}원</b></span>
                 </div>
-        
-                <div style="display:flex; justify-content:space-between;">
+    
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                     <span>💬 이모티콘</span>
                     <span><b>{shinhan_emoji:,}원</b></span>
                 </div>
-        
+    
                 <div style="display:flex; justify-content:space-between;">
                     <span>🧾 기타</span>
                     <span><b>{shinhan_other:,}원</b></span>
                 </div>
-        
             </div>
             """,
             unsafe_allow_html=True
@@ -1580,28 +1579,26 @@ with tab1:
                 border-radius:16px;
                 padding:12px 14px;
                 font-size:14px;
+                color:{theme["button_text"]};
             ">
-        
-                <div style="display:flex; justify-content:space-between;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                     <span>💸 지출</span>
                     <span><b>{incident_spent:,}원</b></span>
                 </div>
-        
-                <div style="display:flex; justify-content:space-between;">
+    
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                     <span>💰 환급</span>
                     <span><b>{incident_refund:,}원</b></span>
                 </div>
-        
+    
                 <div style="display:flex; justify-content:space-between;">
                     <span>🧮 순금액</span>
                     <span><b>{incident_amount:,}원</b></span>
                 </div>
-        
             </div>
             """,
             unsafe_allow_html=True
         )
-    
     with card_col4:
         render_budget_card(
             "이번달 총 지출",
@@ -2204,6 +2201,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
