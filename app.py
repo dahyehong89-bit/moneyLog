@@ -1923,7 +1923,7 @@ with tab2:
         page_view = view_with_idx.iloc[start_idx:end_idx].copy()
         page_view["no"] = range(start_idx + 1, min(end_idx, total_rows) + 1)
 
-        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
         
         st.caption(f"총 {total_rows}건")
     
@@ -2081,6 +2081,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
