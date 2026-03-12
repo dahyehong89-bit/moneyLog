@@ -893,7 +893,7 @@ input, textarea {{
     cursor: pointer !important;
 }}
 
-button:not([kind="primary"]) {
+button:not([kind="primary"]) {{
     border-radius: 16px !important;
     border: 1px solid {theme["button_border"]} !important;
     background: linear-gradient(180deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
@@ -2028,6 +2028,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
