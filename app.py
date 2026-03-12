@@ -1351,13 +1351,40 @@ with tab1:
     # -------------------
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        render_budget_card("이번달 예산", f"{MONTHLY_BUDGET:,}원", "#FFF7FB", "#FFC4D6", "#A85E74")
+        render_budget_card(
+            "이번달 예산",
+            f"{MONTHLY_BUDGET:,}원",
+            theme["container_bg"],
+            theme["metric_border"],
+            theme["button_text"]
+        )
+    
     with c2:
-        render_budget_card("지금까지 사용", f"{spent:,}원", "#FFF7FB", "#FFC4D6", "#A85E74")
+        render_budget_card(
+            "지금까지 사용",
+            f"{spent:,}원",
+            theme["container_bg"],
+            theme["metric_border"],
+            theme["button_text"]
+        )
+    
     with c3:
-        render_budget_card("남은 금액", f"{remaining:,}원", "#FFF7FB", "#FFC4D6", "#A85E74")
+        render_budget_card(
+            "남은 금액",
+            f"{remaining:,}원",
+            theme["container_bg"],
+            theme["metric_border"],
+            theme["button_text"]
+        )
+    
     with c4:
-        render_budget_card("예산 상태", status["label"], status["bg"], status["border"], status["text"])
+        render_budget_card(
+            "예산 상태",
+            status["label"],
+            status["bg"],
+            status["border"],
+            status["text"]
+        )
 
     st.progress(percent)
 
@@ -1951,6 +1978,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
