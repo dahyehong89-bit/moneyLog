@@ -1229,25 +1229,16 @@ hyundai_known_total = (
 
 hyundai_other = max(hyundai_amount - hyundai_known_total, 0)
 
-# 기타 카테고리 목록
-hyundai_other_df = hyundai_df[
-    ~hyundai_df["category"].isin(["쇼핑", "외식", "배달", "커피", "편의점"])
-]
+# 기타 표시 블록 (0원일 때 숨김)
+other_block = ""
 
-hyundai_other_list = hyundai_other_df["memo"].dropna().unique().tolist()
-
-# 최대 2개 미리보기
-hyundai_other_preview = hyundai_other_list[:2]
-hyundai_other_extra = max(len(hyundai_other_list) - 2, 0)
-
-# 기타 표시 문자열 생성
-other_lines = ""
-
-for item in hyundai_other_preview:
-    other_lines += f'<div style="font-size:13px; opacity:0.8;">- {item}</div>'
-
-if hyundai_other_extra > 0:
-    other_lines += f'<div style="font-size:13px; opacity:0.6;">+ {hyundai_other_extra}건</div>'
+if hyundai_other > 0:
+    other_block = f"""
+    <div style="display:flex; justify-content:space-between;">
+        <span>🧾 기타</span>
+        <span><b>{hyundai_other:,}원</b></span>
+    </div>
+    """
 
 # 사건비통장: 지출 / 환급 / 순금액
 incident_df = month_df[month_df["method"] == "사건비통장"].copy()
@@ -1650,11 +1641,7 @@ with tab1:
             <span>🏪 편의점</span>
             <span><b>{hyundai_convenience:,}원</b></span>
         </div>
-        <div style="display:flex; justify-content:space-between;">
-            <span>🧾 기타</span>
-            <span><b>{hyundai_other:,}원</b></span>
-        </div>
-        {other_lines}        
+        {other_block}   
     </div>
     """
         st.markdown(hyundai_detail_html, unsafe_allow_html=True)
