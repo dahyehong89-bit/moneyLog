@@ -2098,6 +2098,8 @@ with tab2:
             f"</div>",
             unsafe_allow_html=True
         )
+
+        st.markdown("<br>", unsafe_allow_html=True)
     
         h0, h1, h2, h3, h4, h5, h6, h7 = st.columns([0.6, 1.1, 1.2, 2.2, 1.2, 1.1, 0.8, 0.8])
         h0.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
