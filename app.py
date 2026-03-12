@@ -1976,9 +1976,10 @@ with tab2:
     
         st.markdown("<br>", unsafe_allow_html=True)
     
-        page_col1, page_col2, page_col3 = st.columns([1, 2, 1])
-    
-        with page_col1:
+        p1, p2, p3 = st.columns([1, 3, 1])
+        
+        # 이전 버튼
+        with p1:
             prev_disabled = st.session_state["record_page"] <= 1
         
             if st.button(
@@ -1989,16 +1990,26 @@ with tab2:
             ):
                 st.session_state["record_page"] -= 1
                 st.rerun()
-    
-        with page_col2:
-            st.markdown(
-                f"<div style='text-align:center;font-weight:700;padding-top:8px;'>"
-                f"{st.session_state['record_page']} / {total_pages} 페이지"
-                f"</div>",
-                unsafe_allow_html=True
-            )
-    
-        with page_col3:
+        
+        # 숫자 페이지
+        with p2:
+            page_cols = st.columns(total_pages)
+        
+            for i in range(total_pages):
+                page_num = i + 1
+        
+                with page_cols[i]:
+                    if st.button(
+                        str(page_num),
+                        use_container_width=True,
+                        key=f"page_{page_num}",
+                        type="primary" if st.session_state["record_page"] == page_num else "secondary"
+                    ):
+                        st.session_state["record_page"] = page_num
+                        st.rerun()
+        
+        # 다음 버튼
+        with p3:
             next_disabled = st.session_state["record_page"] >= total_pages
         
             if st.button(
@@ -2051,6 +2062,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
