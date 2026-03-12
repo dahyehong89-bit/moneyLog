@@ -1979,10 +1979,16 @@ with tab2:
         page_col1, page_col2, page_col3 = st.columns([1, 2, 1])
     
         with page_col1:
-            if st.button("◀ 이전", use_container_width=True, key="prev_page"):
-                if st.session_state["record_page"] > 1:
-                    st.session_state["record_page"] -= 1
-                    st.rerun()
+            prev_disabled = st.session_state["record_page"] <= 1
+        
+            if st.button(
+                "◀ 이전",
+                use_container_width=True,
+                key="prev_page",
+                disabled=prev_disabled
+            ):
+                st.session_state["record_page"] -= 1
+                st.rerun()
     
         with page_col2:
             st.markdown(
@@ -1993,10 +1999,16 @@ with tab2:
             )
     
         with page_col3:
-            if st.button("다음 ▶", use_container_width=True, key="next_page"):
-                if st.session_state["record_page"] < total_pages:
-                    st.session_state["record_page"] += 1
-                    st.rerun()
+            next_disabled = st.session_state["record_page"] >= total_pages
+        
+            if st.button(
+                "다음 ▶",
+                use_container_width=True,
+                key="next_page",
+                disabled=next_disabled
+            ):
+                st.session_state["record_page"] += 1
+                st.rerun()
                 
     st.divider()
 
@@ -2039,6 +2051,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
