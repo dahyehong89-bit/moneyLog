@@ -1247,39 +1247,50 @@ def edit_dialog(rid: int):
     current_cat = str(row["category"])
     cat_index = CATEGORY_OPTIONS.index(current_cat) if current_cat in CATEGORY_OPTIONS else 0
 
+    current_method = str(row["method"]).strip() if str(row["method"]).strip() else DEFAULT_METHOD
+    method_index = METHOD_OPTIONS.index(current_method) if current_method in METHOD_OPTIONS else 0
+
+    base_memo, base_fuel_price = split_fuel_memo(str(row["memo"]))
+
     with st.form(f"edit_form_{rid}"):
-        category = st.selectbox(
-            "카테고리",
-            CATEGORY_OPTIONS,
-            index=cat_index,
-            key=f"edit_cat_{rid}"
-        )
+        q1, q2 = st.columns(2)
 
-        base_memo, base_fuel_price = split_fuel_memo(str(row["memo"]))
-        memo = st.text_input("메모", value=base_memo, key=f"edit_memo_{rid}")
-        amount = st.text_input("금액", value=f"{abs(int(row['amount'])):,}", key=f"edit_amount_{rid}")
-        fuel_price = st.text_input(
-            "리터당 가격",
-            value=base_fuel_price,
-            placeholder="주유일 때만 입력",
-            key=f"edit_fuel_price_{rid}"
-        )
+        with q1:
+            category = st.selectbox(
+                "카테고리",
+                CATEGORY_OPTIONS,
+                index=cat_index,
+                key=f"edit_cat_{rid}"
+            )
+            method = st.selectbox(
+                "결제수단",
+                METHOD_OPTIONS,
+                index=method_index,
+                key=f"edit_method_{rid}"
+            )
+            d = st.date_input(
+                "날짜",
+                value=pd.to_datetime(row["date"], errors="coerce"),
+                key=f"edit_date_{rid}"
+            )
 
-        current_method = str(row["method"]).strip() if str(row["method"]).strip() else DEFAULT_METHOD
-        method_index = METHOD_OPTIONS.index(current_method) if current_method in METHOD_OPTIONS else 0
-        method = st.selectbox(
-            "결제수단",
-            METHOD_OPTIONS,
-            index=method_index,
-            key=f"edit_method_{rid}"
-        )
-
-        # 날짜를 아래쪽으로 내려서 모달 열릴 때 달력 자동 오픈 방지
-        d = st.date_input(
-            "날짜",
-            value=pd.to_datetime(row["date"], errors="coerce"),
-            key=f"edit_date_{rid}"
-        )
+        with q2:
+            memo = st.text_input(
+                "메모",
+                value=base_memo,
+                key=f"edit_memo_{rid}"
+            )
+            amount = st.text_input(
+                "금액",
+                value=f"{abs(int(row['amount'])):,}",
+                key=f"edit_amount_{rid}"
+            )
+            fuel_price = st.text_input(
+                "리터당 가격",
+                value=base_fuel_price,
+                placeholder="주유일 때만 입력",
+                key=f"edit_fuel_price_{rid}"
+            )
 
         col_cancel, col_save = st.columns(2)
 
@@ -1324,7 +1335,6 @@ def edit_dialog(rid: int):
 
     if canceled:
         st.rerun()
-
 
 if "pending_quick_entry" not in st.session_state:
     st.session_state.pending_quick_entry = None
