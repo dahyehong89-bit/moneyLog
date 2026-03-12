@@ -1133,8 +1133,12 @@ card_raw_sum = month_df.groupby("method")["amount"].sum()
 hyundai_amount = abs(int(card_raw_sum.get("현대카드", 0)))
 shinhan_amount = abs(int(card_raw_sum.get("신한카드", 0)))
 
-incident_net = int(card_raw_sum.get("사건비통장", 0))
-incident_amount = abs(incident_net)
+# 사건비통장: 지출 / 환급 / 순금액 분리
+incident_df = month_df[month_df["method"] == "사건비통장"].copy()
+
+incident_spent = abs(int(incident_df[incident_df["amount"] < 0]["amount"].sum()))   # 쓴 금액
+incident_refund = int(incident_df[incident_df["amount"] > 0]["amount"].sum())       # 환급 금액
+incident_amount = incident_spent - incident_refund                                    # 총금액(순지출)
 
 total_amount = hyundai_amount + shinhan_amount + incident_amount
 
@@ -1946,3 +1950,4 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
