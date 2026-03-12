@@ -1491,10 +1491,7 @@ with tab1:
                 key="manual_method"
             )
 
-        spacer, btn = st.columns([3,1])
-
-        with btn:
-            submitted_manual = st.form_submit_button("추가", use_container_width=True)
+        submitted_manual = st.form_submit_button("추가", use_container_width=True)
 
     if submitted_manual:
         amount_clean = amount_text.replace(",", "").strip()
@@ -1567,10 +1564,10 @@ with tab1:
                 key="quick_input_text"
             )
         
-            spacer, btn = st.columns([2, 1])
-        
-            with btn:
-                submitted_quick = st.form_submit_button("저장 (Enter)", use_container_width=True)
+            submitted_quick = st.form_submit_button(
+                "저장 (Enter)",
+                use_container_width=True
+            )
 
         if submitted_quick:
             try:
@@ -1991,6 +1988,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
