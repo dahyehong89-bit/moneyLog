@@ -1215,6 +1215,10 @@ def edit_dialog(rid: int):
         st.rerun()
 
 
+if "pending_quick_entry" not in st.session_state:
+    st.session_state.pending_quick_entry = None
+
+
 def add_quick(amount: int, category: str, memo: str = "", method: str = DEFAULT_METHOD):
     global df
 
@@ -1239,6 +1243,103 @@ def add_quick(amount: int, category: str, memo: str = "", method: str = DEFAULT_
     st.success("✅ 저장 완료!")
     st.rerun()
 
+
+def open_quick_edit(amount: int, category: str, memo: str = "", method: str = DEFAULT_METHOD):
+    st.session_state.pending_quick_entry = {
+        "date": date.today(),
+        "amount": abs(int(amount)),
+        "category": category,
+        "method": method,
+        "memo": memo,
+    }
+    quick_add_dialog()
+
+
+@st.dialog("📝 빠른 입력 수정")
+def quick_add_dialog():
+    item = st.session_state.get("pending_quick_entry")
+
+    if not item:
+        st.warning("등록할 항목이 없어요.")
+        return
+
+    current_cat = str(item["category"])
+    cat_index = CATEGORY_OPTIONS.index(current_cat) if current_cat in CATEGORY_OPTIONS else 0
+
+    current_method = str(item["method"]).strip() if str(item["method"]).strip() else DEFAULT_METHOD
+    method_index = METHOD_OPTIONS.index(current_method) if current_method in METHOD_OPTIONS else 0
+
+    base_memo, base_fuel_price = split_fuel_memo(str(item["memo"]))
+
+    with st.form("quick_add_edit_form"):
+        q1, q2 = st.columns(2)
+
+        with q1:
+            d = st.date_input("날짜", value=item["date"], key="quick_edit_date")
+            category = st.selectbox("카테고리", CATEGORY_OPTIONS, index=cat_index, key="quick_edit_cat")
+            method = st.selectbox("결제수단", METHOD_OPTIONS, index=method_index, key="quick_edit_method")
+
+        with q2:
+            memo = st.text_input("메모", value=base_memo, key="quick_edit_memo")
+            amount_text = st.text_input(
+                "금액",
+                value=f"{abs(int(item['amount'])):,}",
+                key="quick_edit_amount"
+            )
+            fuel_price = st.text_input(
+                "리터당 가격",
+                value=base_fuel_price,
+                placeholder="주유일 때만 입력",
+                key="quick_edit_fuel_price"
+            )
+
+        col_a, col_b = st.columns(2)
+        saved = col_a.form_submit_button("등록")
+        canceled = col_b.form_submit_button("취소")
+
+    if saved:
+        amount_clean = amount_text.replace(",", "").strip()
+        fuel_price_clean = fuel_price.replace(",", "").strip()
+
+        if not amount_clean:
+            st.error("금액을 입력해줘.")
+        elif not re.fullmatch(r"\d+", amount_clean):
+            st.error("금액은 숫자만 입력해줘.")
+        elif fuel_price_clean and not re.fullmatch(r"\d+", fuel_price_clean):
+            st.error("리터당 가격은 숫자만 입력해줘.")
+        else:
+            final_memo = build_fuel_memo(memo, fuel_price_clean, amount_clean)
+            final_category, final_method = auto_card_and_category(
+                final_memo,
+                category,
+                method or DEFAULT_METHOD
+            )
+
+            amount_value = int(amount_clean)
+            if is_incident_income(final_method, final_memo):
+                final_amount = amount_value
+            else:
+                final_amount = -amount_value
+
+            row = {
+                "date": str(d),
+                "amount": final_amount,
+                "category": final_category,
+                "method": final_method,
+                "memo": final_memo,
+            }
+
+            current_df = load_df()
+            current_df = pd.concat([current_df, pd.DataFrame([row])], ignore_index=True)
+            save_df(current_df)
+
+            st.session_state.pending_quick_entry = None
+            st.success("✅ 저장 완료!")
+            st.rerun()
+
+    if canceled:
+        st.session_state.pending_quick_entry = None
+        st.rerun()
 
 with tab1:
     # -------------------
@@ -1456,78 +1557,41 @@ with tab1:
         with top_left:
             st.subheader("⚡ 자주 쓰는 버튼")
 
-            b1, b2 = st.columns(2)
-            b3, b4 = st.columns(2)
+		    b1, b2 = st.columns(2)
+		    b3, b4 = st.columns(2)
 
-            with b1:
-                if st.button("☕ 커피 4,500", use_container_width=True, key="btn_coffee"):
-                    add_quick(4500, "커피")
+		    with b1:
+		        if st.button("☕ 커피 4,500", use_container_width=True, key="btn_coffee"):
+		            open_quick_edit(4500, "커피")
 
-            with b2:
-                if st.button("🍚 외식 12,000", use_container_width=True, key="btn_eatout"):
-                    add_quick(12000, "외식")
+		    with b2:
+		        if st.button("🍚 외식 12,000", use_container_width=True, key="btn_eatout"):
+		            open_quick_edit(12000, "외식")
 
-            with b3:
-                if st.button("🛵 배달 18,000", use_container_width=True, key="btn_delivery"):
-                    add_quick(18000, "배달")
+		    with b3:
+		        if st.button("🛵 배달 18,000", use_container_width=True, key="btn_delivery"):
+		            open_quick_edit(18000, "배달")
 
-            with b4:
-                if st.button("🛒 쇼핑 30,000", use_container_width=True, key="btn_shopping"):
-                    add_quick(30000, "쇼핑")
+		    with b4:
+		        if st.button("🛒 쇼핑 30,000", use_container_width=True, key="btn_shopping"):
+		            open_quick_edit(30000, "쇼핑")
 
-        with top_right:
-            st.subheader("📌 신한카드 고정비")
+		with top_right:
+		    st.subheader("📌 신한카드 고정비")
 
-            fix1, fix2, fix3 = st.columns(3)
+		    fix1, fix2, fix3 = st.columns(3)
 
-            with fix1:
-                if st.button("📱 통신비", use_container_width=True, key="btn_phone"):
-                    add_quick(129890, "고정비", "통신비", "신한카드")
+		    with fix1:
+		        if st.button("📱 통신비", use_container_width=True, key="btn_phone"):
+		            open_quick_edit(129890, "고정비", "통신비", "신한카드")
 
-            with fix2:
-                if st.button("📦 쿠팡와우", use_container_width=True, key="btn_wow"):
-                    add_quick(7900, "고정비", "쿠팡와우", "신한카드")
+		    with fix2:
+		        if st.button("📦 쿠팡와우", use_container_width=True, key="btn_wow"):
+		            open_quick_edit(7900, "고정비", "쿠팡와우", "신한카드")
 
-            with fix3:
-                if st.button("💬 이모티콘", use_container_width=True, key="btn_emoji"):
-                    add_quick(3900, "고정비", "이모티콘", "신한카드")
-
-            st.caption("⛽ 주유 기록")
-
-            fuel_col1, fuel_col2, fuel_col3 = st.columns([1, 1, 1])
-
-            with fuel_col1:
-                fuel_price = st.text_input(
-                    "리터당 가격",
-                    value="",
-                    placeholder="예: 1650",
-                    key="fuel_price"
-                )
-
-            with fuel_col2:
-                fuel_amount = st.text_input(
-                    "주유금액",
-                    value="",
-                    placeholder="예: 85000",
-                    key="fuel_amount"
-                )
-
-            with fuel_col3:
-                st.write("")
-                st.write("")
-                if st.button("주유 기록", use_container_width=True, key="btn_fuel"):
-                    price_clean = fuel_price.replace(",", "").strip()
-                    amount_clean = fuel_amount.replace(",", "").strip()
-
-                    if not amount_clean:
-                        st.error("주유금액을 입력해줘.")
-                    elif not re.fullmatch(r"\d+", amount_clean):
-                        st.error("주유금액은 숫자만 입력해줘.")
-                    elif price_clean and not re.fullmatch(r"\d+", price_clean):
-                        st.error("리터당 가격은 숫자만 입력해줘.")
-                    else:
-                        fuel_memo = build_fuel_memo("주유", price_clean, amount_clean)
-                        add_quick(int(amount_clean), "고정비", fuel_memo, "신한카드")
+		    with fix3:
+		        if st.button("💬 이모티콘", use_container_width=True, key="btn_emoji"):
+		            open_quick_edit(3900, "고정비", "이모티콘", "신한카드")
 
     # -------------------
     # 폰에서도 쓰기 안내
@@ -1880,6 +1944,5 @@ with tab2:
 
         if not method_sum.empty:
             st.bar_chart(method_sum)
-
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
