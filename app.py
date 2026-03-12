@@ -1298,9 +1298,13 @@ def quick_add_dialog():
                 key="quick_edit_fuel_price"
             )
 
-        col_a, col_b = st.columns(2)
-        saved = col_a.form_submit_button("등록")
-        canceled = col_b.form_submit_button("취소")
+        col_cancel, col_save = st.columns(2)
+
+        with col_cancel:
+            canceled = st.form_submit_button("취소", use_container_width=True)
+        
+        with col_save:
+            saved = st.form_submit_button("등록", use_container_width=True)
 
     if saved:
         amount_clean = amount_text.replace(",", "").strip()
@@ -1985,6 +1989,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
