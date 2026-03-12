@@ -1214,6 +1214,9 @@ shinhan_fuel = abs(int(
 shinhan_phone = abs(int(
     shinhan_df[shinhan_df["memo"].astype(str).str.contains("통신비", na=False)]["amount"].sum()
 ))
+shinhan_internet = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("인터넷", na=False)]["amount"].sum()
+))
 shinhan_wow = abs(int(
     shinhan_df[shinhan_df["memo"].astype(str).str.contains("쿠팡와우", na=False)]["amount"].sum()
 ))
@@ -1221,7 +1224,7 @@ shinhan_emoji = abs(int(
     shinhan_df[shinhan_df["memo"].astype(str).str.contains("이모티콘", na=False)]["amount"].sum()
 ))
 
-shinhan_known_total = shinhan_fuel + shinhan_phone + shinhan_wow + shinhan_emoji
+shinhan_known_total = shinhan_fuel + shinhan_phone + shinhan_internet + shinhan_wow + shinhan_emoji
 shinhan_other = max(shinhan_amount - shinhan_known_total, 0)
 
 total_amount = hyundai_amount + shinhan_amount + incident_amount
@@ -1563,6 +1566,10 @@ with tab1:
         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
             <span>📱 통신비</span>
             <span><b>{shinhan_phone:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🌐 인터넷</span>
+            <span><b>{shinhan_internet:,}원</b></span>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
             <span>📦 쿠팡와우</span>
