@@ -1612,6 +1612,7 @@ with tab1:
             st.subheader("📌 신한카드 고정비")
 
             fix1, fix2 = st.columns(2)
+            st.write("")
             fix3, fix4 = st.columns(2)
 
 
@@ -1983,6 +1984,7 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
 
 
