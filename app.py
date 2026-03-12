@@ -1557,41 +1557,41 @@ with tab1:
         with top_left:
             st.subheader("⚡ 자주 쓰는 버튼")
 
-		    b1, b2 = st.columns(2)
-		    b3, b4 = st.columns(2)
+            b1, b2 = st.columns(2)
+            b3, b4 = st.columns(2)
 
-		    with b1:
-		        if st.button("☕ 커피 4,500", use_container_width=True, key="btn_coffee"):
-		            open_quick_edit(4500, "커피")
+            with b1:
+                if st.button("☕ 커피 4,500", use_container_width=True, key="btn_coffee"):
+                    open_quick_edit(4500, "커피")
 
-		    with b2:
-		        if st.button("🍚 외식 12,000", use_container_width=True, key="btn_eatout"):
-		            open_quick_edit(12000, "외식")
+            with b2:
+                if st.button("🍚 외식 12,000", use_container_width=True, key="btn_eatout"):
+                    open_quick_edit(12000, "외식")
 
-		    with b3:
-		        if st.button("🛵 배달 18,000", use_container_width=True, key="btn_delivery"):
-		            open_quick_edit(18000, "배달")
+            with b3:
+                if st.button("🛵 배달 18,000", use_container_width=True, key="btn_delivery"):
+                    open_quick_edit(18000, "배달")
 
-		    with b4:
-		        if st.button("🛒 쇼핑 30,000", use_container_width=True, key="btn_shopping"):
-		            open_quick_edit(30000, "쇼핑")
+            with b4:
+                if st.button("🛒 쇼핑 30,000", use_container_width=True, key="btn_shopping"):
+                    open_quick_edit(30000, "쇼핑")
 
-		with top_right:
-		    st.subheader("📌 신한카드 고정비")
+        with top_right:
+            st.subheader("📌 신한카드 고정비")
 
-		    fix1, fix2, fix3 = st.columns(3)
+            fix1, fix2, fix3 = st.columns(3)
 
-		    with fix1:
-		        if st.button("📱 통신비", use_container_width=True, key="btn_phone"):
-		            open_quick_edit(129890, "고정비", "통신비", "신한카드")
+            with fix1:
+                if st.button("📱 통신비", use_container_width=True, key="btn_phone"):
+                    open_quick_edit(129890, "고정비", "통신비", "신한카드")
 
-		    with fix2:
-		        if st.button("📦 쿠팡와우", use_container_width=True, key="btn_wow"):
-		            open_quick_edit(7900, "고정비", "쿠팡와우", "신한카드")
+            with fix2:
+                if st.button("📦 쿠팡와우", use_container_width=True, key="btn_wow"):
+                    open_quick_edit(7900, "고정비", "쿠팡와우", "신한카드")
 
-		    with fix3:
-		        if st.button("💬 이모티콘", use_container_width=True, key="btn_emoji"):
-		            open_quick_edit(3900, "고정비", "이모티콘", "신한카드")
+            with fix3:
+                if st.button("💬 이모티콘", use_container_width=True, key="btn_emoji"):
+                    open_quick_edit(3900, "고정비", "이모티콘", "신한카드")
 
     # -------------------
     # 폰에서도 쓰기 안내
