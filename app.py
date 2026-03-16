@@ -482,7 +482,6 @@ def load_df() -> pd.DataFrame:
 
         df = pd.DataFrame(values).fillna("")
 
-        # 한글 헤더 -> 내부 컬럼명 매핑
         rename_map = {
             "날짜": "date",
             "금액": "amount",
@@ -493,9 +492,11 @@ def load_df() -> pd.DataFrame:
 
         df = df.rename(columns=rename_map)
 
-        # 번호 컬럼은 저장용 표시만 하고 내부에서는 무시
         if "번호" in df.columns:
             df = df.drop(columns=["번호"])
+
+        if "구분" in df.columns:
+            df = df.drop(columns=["구분"])
 
         for c in COLUMNS:
             if c not in df.columns:
@@ -509,12 +510,8 @@ def load_df() -> pd.DataFrame:
             .str.replace(",", "", regex=False)
             .str.replace("원", "", regex=False)
         )
-        df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0).astype(int)
 
-        df["date"] = df["date"].astype(str)
-        df["category"] = df["category"].astype(str)
-        df["method"] = df["method"].astype(str)
-        df["memo"] = df["memo"].astype(str)
+        df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0).astype(int)
 
         return df
 
@@ -526,29 +523,44 @@ def save_df(df: pd.DataFrame) -> None:
 
     save_data = df[COLUMNS].copy().fillna("")
 
-    # 날짜 역순 정렬
+    # 날짜 정렬용
     save_data["date_dt"] = pd.to_datetime(save_data["date"], errors="coerce")
-    save_data = save_data.sort_values(by=["date_dt", "date"], ascending=[False, False]).drop(columns=["date_dt"])
 
-    # 번호 생성
-    save_data = save_data.reset_index(drop=True)
-    save_data.insert(0, "번호", range(1, len(save_data) + 1))
+    save_data = save_data.sort_values(
+        by=["date_dt", "date"],
+        ascending=[False, False]
+    ).drop(columns=["date_dt"])
 
-    # 금액 표시 형식
-    save_data["금액"] = save_data["amount"].apply(lambda x: f"{abs(int(x)):,}원")
+    # 지출 / 환급 구분
+    save_data["구분"] = save_data["amount"].apply(
+        lambda x: "환급" if int(x) > 0 else "지출"
+    )
 
-    # 한글 컬럼으로 저장
+    # 금액 표시
+    save_data["금액"] = save_data["amount"].apply(
+        lambda x: f"{abs(int(x)):,}원"
+    )
+
+    # 한글 컬럼 생성
     save_data["날짜"] = save_data["date"]
     save_data["카테고리"] = save_data["category"]
     save_data["결제수단"] = save_data["method"]
     save_data["메모"] = save_data["memo"]
 
-    save_data = save_data[["번호", "날짜", "카테고리", "메모", "금액", "결제수단"]]
+    # 번호 생성
+    save_data = save_data.reset_index(drop=True)
+    save_data.insert(0, "번호", range(1, len(save_data) + 1))
+
+    # 최종 컬럼 순서
+    save_data = save_data[
+        ["번호", "날짜", "구분", "카테고리", "메모", "금액", "결제수단"]
+    ]
 
     rows = [save_data.columns.tolist()] + save_data.values.tolist()
 
     ws.clear()
     ws.update(rows)
+
     load_df.clear()
 
 def get_month_sheet(gc, month_key):
