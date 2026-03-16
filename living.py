@@ -7,7 +7,7 @@ import streamlit as st
 
 LIVING_COLUMNS = ["date", "amount", "category", "method", "memo"]
 
-LIVING_CATEGORY_OPTIONS = [
+LIVING_EXPENSE_CATEGORY_OPTIONS = [
     "식비",
     "영양식품",
     "주거비",
@@ -23,16 +23,15 @@ LIVING_CATEGORY_OPTIONS = [
     "기타",
 ]
 
-LIVING_METHOD_OPTIONS = [
-    "생활비통장",
-    "현대카드",
-    "신한카드",
-    "현금",
+LIVING_INCOME_CATEGORY_OPTIONS = [
+    "정기입금",
+    "추가수입",
+    "환급",
 ]
 
 LIVING_TYPE_OPTIONS = ["지출", "입금"]
 LIVING_DEFAULT_METHOD = "생활비통장"
-
+LIVING_PAGE_SIZE = 10
 
 @st.cache_data(ttl=60)
 def load_living_df(_get_worksheet_func) -> pd.DataFrame:
@@ -180,7 +179,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     st.subheader("✍ 생활비 입력")
 
     with st.form("living_add_form", clear_on_submit=True):
-        f1, f2, f3 = st.columns(3)
+        f1, f2, f3, f4, f5 = st.columns(5)
 
         with f1:
             living_date = st.date_input(
@@ -188,29 +187,8 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 value=date.today(),
                 key="living_date"
             )
-            living_category = st.selectbox(
-                "카테고리",
-                LIVING_CATEGORY_OPTIONS,
-                index=0,
-                key="living_category"
-            )
 
         with f2:
-            living_memo = st.text_input(
-                "메모",
-                value="",
-                key="living_memo"
-            )
-            living_amount_text = st.text_input(
-                "금액",
-                value="",
-                placeholder="금액 입력",
-                key="living_amount"
-            )
-
-        with f3:
-            living_method = "생활비통장"
-            
             living_type = st.selectbox(
                 "구분",
                 LIVING_TYPE_OPTIONS,
@@ -218,10 +196,38 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 key="living_type"
             )
 
-        living_saved = st.form_submit_button(
-            "➕ 생활비 저장",
-            use_container_width=True
-        )
+        with f3:
+            if living_type == "입금":
+                living_category = st.selectbox(
+                    "카테고리",
+                    LIVING_INCOME_CATEGORY_OPTIONS,
+                    index=0,
+                    key="living_category"
+                )
+            else:
+                living_category = st.selectbox(
+                    "카테고리",
+                    LIVING_EXPENSE_CATEGORY_OPTIONS,
+                    index=0,
+                    key="living_category"
+                )
+
+        with f4:
+            living_memo = st.text_input(
+                "메모",
+                value="",
+                key="living_memo"
+            )
+
+        with f5:
+            living_amount_text = st.text_input(
+                "금액",
+                value="",
+                placeholder="금액 입력",
+                key="living_amount"
+            )
+
+        living_saved = st.form_submit_button("➕ 생활비 저장", use_container_width=True)
 
     if living_saved:
         amount_clean = living_amount_text.replace(",", "").strip()
@@ -238,7 +244,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 "date": str(living_date),
                 "amount": final_amount,
                 "category": living_category,
-                "method": living_method,
+                "method": LIVING_DEFAULT_METHOD,
                 "memo": living_memo,
             }
 
@@ -250,47 +256,193 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             st.rerun()
 
     st.divider()
-
     st.subheader("🧾 생활비 내역")
+
+    living_month_df = living_df.copy()
+    living_month_df["date_dt"] = pd.to_datetime(living_month_df["date"], errors="coerce")
+
+    living_month_options = sorted(
+        {
+            m.strftime("%Y-%m")
+            for m in living_month_df["date_dt"].dropna().dt.to_period("M").dt.to_timestamp()
+        },
+        reverse=True
+    )
+
+    current_month = datetime.today().strftime("%Y-%m")
+    if current_month not in living_month_options:
+        living_month_options.insert(0, current_month)
+
+    if not living_month_options:
+        living_month_options = [current_month]
+
+    top_left, top_right = st.columns([1, 1])
+
+    with top_left:
+        if "living_selected_month" not in st.session_state or st.session_state["living_selected_month"] not in living_month_options:
+            st.session_state["living_selected_month"] = current_month
+
+        living_month = st.selectbox(
+            "월 선택",
+            living_month_options,
+            key="living_selected_month"
+        )
+
+    with top_right:
+        living_q = st.text_input(
+            "검색(카테고리/메모/구분)",
+            placeholder="예: 식비 / 관리비 / 입금",
+            key="living_search_text"
+        )
 
     living_view = living_df.copy()
     living_view["date_dt"] = pd.to_datetime(living_view["date"], errors="coerce")
-    living_view = living_view.sort_values(by=["date_dt"], ascending=False)
+
+    try:
+        y, m = living_month.split("-")
+        living_view = living_view[
+            (living_view["date_dt"].dt.year == int(y)) &
+            (living_view["date_dt"].dt.month == int(m))
+        ]
+    except Exception:
+        pass
+
+    if living_q.strip():
+        qq = living_q.strip().lower()
+        row_type_series = living_view["amount"].apply(lambda x: "입금" if int(x) > 0 else "지출")
+        mask = (
+            living_view["category"].astype(str).str.lower().str.contains(qq, na=False)
+            | living_view["memo"].astype(str).str.lower().str.contains(qq, na=False)
+            | row_type_series.astype(str).str.lower().str.contains(qq, na=False)
+        )
+        living_view = living_view[mask]
+
+    living_view = living_view.sort_values(by=["date_dt", "date"], ascending=False)
+
+    living_total = int(living_view["amount"].abs().sum()) if not living_view.empty else 0
+    st.markdown(
+        f"<div style='text-align:right; font-size:13px; opacity:0.75;'>현재 보기: {living_month} · 총금액: {living_total:,}원</div>",
+        unsafe_allow_html=True
+    )
+
+    living_view = living_view.reset_index(drop=True)
 
     if living_view.empty:
         st.write("생활비 내역이 없어요.")
     else:
-        living_view = living_view.reset_index(drop=True)
-        living_view["번호"] = range(1, len(living_view) + 1)
+        total_rows = len(living_view)
+        total_pages = (total_rows - 1) // LIVING_PAGE_SIZE + 1
 
-        h1, h2, h3, h4, h5, h6, h7 = st.columns([0.7, 1.1, 1.0, 1.2, 2.4, 1.2, 1.2])
+        if "living_record_page" not in st.session_state:
+            st.session_state["living_record_page"] = 1
+
+        living_view_key = f"{living_month}|{living_q}"
+        if "living_last_view_key" not in st.session_state:
+            st.session_state["living_last_view_key"] = living_view_key
+
+        if st.session_state["living_last_view_key"] != living_view_key:
+            st.session_state["living_record_page"] = 1
+            st.session_state["living_last_view_key"] = living_view_key
+
+        if st.session_state["living_record_page"] > total_pages:
+            st.session_state["living_record_page"] = total_pages
+        if st.session_state["living_record_page"] < 1:
+            st.session_state["living_record_page"] = 1
+
+        start_idx = (st.session_state["living_record_page"] - 1) * LIVING_PAGE_SIZE
+        end_idx = start_idx + LIVING_PAGE_SIZE
+
+        page_view = living_view.iloc[start_idx:end_idx].copy()
+        page_view["번호"] = range(start_idx + 1, min(end_idx, total_rows) + 1)
+
+        st.markdown(
+            f"<div style='text-align:right; font-size:13px; opacity:0.75;'>총 {total_rows}건</div>",
+            unsafe_allow_html=True
+        )
+
+        h1, h2, h3, h4, h5, h6 = st.columns([0.7, 1.2, 1.0, 1.2, 2.8, 1.2])
         h1.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
         h2.markdown("<div class='table-head'>날짜</div>", unsafe_allow_html=True)
         h3.markdown("<div class='table-head'>구분</div>", unsafe_allow_html=True)
         h4.markdown("<div class='table-head'>카테고리</div>", unsafe_allow_html=True)
         h5.markdown("<div class='table-head'>메모</div>", unsafe_allow_html=True)
         h6.markdown("<div class='table-head'>금액</div>", unsafe_allow_html=True)
-        h7.markdown("<div class='table-head'>결제수단</div>", unsafe_allow_html=True)
 
-        for _, r in living_view.iterrows():
-            c1, c2, c3, c4, c5, c6, c7 = st.columns([0.7, 1.1, 1.0, 1.2, 2.4, 1.2, 1.2])
+        for _, r in page_view.iterrows():
+            c1, c2, c3, c4, c5, c6 = st.columns([0.7, 1.2, 1.0, 1.2, 2.8, 1.2])
 
             row_type = "입금" if int(r["amount"]) > 0 else "지출"
+            amount_display = f"{abs(int(r['amount'])):,}원"
+            amount_html = (
+                f"<div class='row-box amount-text'>➕ {amount_display}</div>"
+                if int(r["amount"]) > 0
+                else f"<div class='row-box amount-text'>💸 {amount_display}</div>"
+            )
 
             c1.markdown(f"<div class='row-box'>{r['번호']}</div>", unsafe_allow_html=True)
             c2.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
             c3.markdown(f"<div class='row-box'>{row_type}</div>", unsafe_allow_html=True)
             c4.markdown(f"<div class='row-box'><span class='cat-tag'>{r['category']}</span></div>", unsafe_allow_html=True)
             c5.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
-
-            amount_display = f"{abs(int(r['amount'])):,}원"
-            if int(r["amount"]) > 0:
-                amount_html = f"<div class='row-box amount-text'>➕ {amount_display}</div>"
-            else:
-                amount_html = f"<div class='row-box amount-text'>💸 {amount_display}</div>"
-
             c6.markdown(amount_html, unsafe_allow_html=True)
-            c7.markdown(f"<div class='row-box'>{r['method']}</div>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        p1, p2, p3 = st.columns([1.2, 5, 1.2])
+
+        current_page = st.session_state["living_record_page"]
+
+        pages_to_show = []
+        if total_pages <= 10:
+            pages_to_show = list(range(1, total_pages + 1))
+        else:
+            if current_page <= 4:
+                pages_to_show = [1, 2, 3, 4, 5, "...", total_pages]
+            elif current_page >= total_pages - 3:
+                pages_to_show = [1, "...", total_pages - 4, total_pages - 3, total_pages - 2, total_pages - 1, total_pages]
+            else:
+                pages_to_show = [1, "...", current_page - 1, current_page, current_page + 1, "...", total_pages]
+
+        with p1:
+            prev_disabled = current_page <= 1
+            if st.button(
+                "◀ 이전",
+                use_container_width=True,
+                key="living_prev_page",
+                disabled=prev_disabled
+            ):
+                st.session_state["living_record_page"] -= 1
+                st.rerun()
+
+        with p2:
+            page_cols = st.columns(len(pages_to_show))
+            for i, page_item in enumerate(pages_to_show):
+                with page_cols[i]:
+                    if page_item == "...":
+                        st.markdown(
+                            "<div style='text-align:center; padding-top:8px; font-weight:700;'>...</div>",
+                            unsafe_allow_html=True
+                        )
+                    else:
+                        if st.button(
+                            str(page_item),
+                            use_container_width=True,
+                            key=f"living_page_{page_item}",
+                            type="primary" if current_page == page_item else "secondary"
+                        ):
+                            st.session_state["living_record_page"] = page_item
+                            st.rerun()
+
+        with p3:
+            next_disabled = current_page >= total_pages
+            if st.button(
+                "다음 ▶",
+                use_container_width=True,
+                key="living_next_page",
+                disabled=next_disabled
+            ):
+                st.session_state["living_record_page"] += 1
+                st.rerun()
 
     st.divider()
     st.subheader("🏠 최근 1년 관리비 내역")
