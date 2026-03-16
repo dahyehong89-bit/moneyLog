@@ -209,12 +209,8 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             )
 
         with f3:
-            living_method = st.selectbox(
-                "결제수단",
-                LIVING_METHOD_OPTIONS,
-                index=LIVING_METHOD_OPTIONS.index(LIVING_DEFAULT_METHOD),
-                key="living_method"
-            )
+            living_method = "생활비통장"
+            
             living_type = st.selectbox(
                 "구분",
                 LIVING_TYPE_OPTIONS,
