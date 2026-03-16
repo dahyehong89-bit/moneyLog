@@ -29,9 +29,9 @@ LIVING_DEFAULT_METHOD = "생활비통장"
 
 
 @st.cache_data(ttl=60)
-def load_living_df(get_worksheet_func) -> pd.DataFrame:
+def load_living_df(_get_worksheet_func) -> pd.DataFrame:
     try:
-        ws = get_worksheet_func("living")
+        ws = _get_worksheet_func("living")
         values = ws.get_all_records()
 
         if not values:
