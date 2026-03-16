@@ -183,7 +183,11 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         f1, f2, f3 = st.columns(3)
 
         with f1:
-            living_date = st.date_input("날짜", value=date.today(), key="living_date")
+            living_date = st.date_input(
+                "날짜",
+                value=date.today(),
+                key="living_date"
+            )
             living_category = st.selectbox(
                 "카테고리",
                 LIVING_CATEGORY_OPTIONS,
@@ -192,7 +196,11 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             )
 
         with f2:
-            living_memo = st.text_input("메모", value="", key="living_memo")
+            living_memo = st.text_input(
+                "메모",
+                value="",
+                key="living_memo"
+            )
             living_amount_text = st.text_input(
                 "금액",
                 value="",
@@ -214,7 +222,10 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 key="living_type"
             )
 
-        living_saved = st.form_submit_button("➕ 생활비 저장", use_container_width=True)
+        living_saved = st.form_submit_button(
+            "➕ 생활비 저장",
+            use_container_width=True
+        )
 
     if living_saved:
         amount_clean = living_amount_text.replace(",", "").strip()
