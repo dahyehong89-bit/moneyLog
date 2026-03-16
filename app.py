@@ -488,6 +488,7 @@ def load_df() -> pd.DataFrame:
             "카테고리": "category",
             "결제수단": "method",
             "메모": "memo",
+            "구분": "type",
         }
 
         df = df.rename(columns=rename_map)
@@ -495,14 +496,12 @@ def load_df() -> pd.DataFrame:
         if "번호" in df.columns:
             df = df.drop(columns=["번호"])
 
-        if "구분" in df.columns:
-            df = df.drop(columns=["구분"])
-
-        for c in COLUMNS:
+        for c in ["date", "amount", "category", "method", "memo"]:
             if c not in df.columns:
                 df[c] = ""
 
-        df = df[COLUMNS].copy()
+        if "type" not in df.columns:
+            df["type"] = ""
 
         df["amount"] = (
             df["amount"]
@@ -510,10 +509,21 @@ def load_df() -> pd.DataFrame:
             .str.replace(",", "", regex=False)
             .str.replace("원", "", regex=False)
         )
-
         df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0).astype(int)
 
-        return df
+        # 구분 기준으로 부호 복원
+        df["type"] = df["type"].astype(str).str.strip()
+        df["amount"] = df.apply(
+            lambda row: abs(int(row["amount"])) if row["type"] == "환급" else -abs(int(row["amount"])),
+            axis=1
+        )
+
+        df["date"] = df["date"].astype(str)
+        df["category"] = df["category"].astype(str)
+        df["method"] = df["method"].astype(str)
+        df["memo"] = df["memo"].astype(str)
+
+        return df[COLUMNS].copy()
 
     except Exception:
         return pd.DataFrame(columns=COLUMNS)
