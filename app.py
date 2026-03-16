@@ -64,6 +64,7 @@ INCIDENT_CATEGORY_KEYWORDS = {
     "약값": ["약국", "처방", "약값", "약"],
     "검진": ["검진", "건강검진", "초음파", "엑스레이", "x-ray", "mri", "ct"],
     "선물": ["선물", "생선", "생일선물", "축의", "축하", "꽃", "케이크"],
+    "경조사": ["조의금","부의금","축의금","결혼식","장례식","부고","상가"]
 }
 
 # -----------------------
@@ -1288,11 +1289,16 @@ incident_gift = abs(int(
     incident_expense_df[incident_expense_df["detail_category"] == "선물"]["amount"].sum()
 ))
 
+incident_event = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "경조사"]["amount"].sum()
+))
+
 incident_known_total = (
     incident_hospital
     + incident_medicine
     + incident_checkup
     + incident_gift
+    + incident_event
 )
 
 incident_other = max(incident_spent - incident_known_total, 0)
@@ -1781,6 +1787,10 @@ with tab1:
         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
             <span>🎁 선물</span>
             <span><b>{incident_gift:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🙏 경조사</span>
+            <span><b>{incident_event:,}원</b></span>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
             <span>🧾 기타</span>
@@ -2395,4 +2405,5 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
 
