@@ -283,6 +283,14 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     st.subheader("✍ 생활비 입력")
 
+    if st.session_state.get("living_form_reset"):
+        st.session_state["living_date"] = date.today()
+        st.session_state["living_type"] = "지출"
+        st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
+        st.session_state["living_memo"] = ""
+        st.session_state["living_amount"] = ""
+        st.session_state["living_form_reset"] = False
+
     f1, f2, f3, f4, f5 = st.columns(5)
 
     with f1:
@@ -370,12 +378,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             save_living_df(current_df, get_worksheet_func)
 
             st.success("✅ 생활비 저장 완료!")
-
-            st.session_state["living_memo"] = ""
-            st.session_state["living_amount"] = ""
-            st.session_state["living_type"] = "지출"
-            st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
-
+            st.session_state["living_form_reset"] = True
             st.rerun()
 
     # -------------------
