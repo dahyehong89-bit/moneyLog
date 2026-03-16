@@ -4,6 +4,7 @@ import base64
 import socket
 from io import BytesIO
 from datetime import date, datetime
+from living import render_living_tab
 
 import pandas as pd
 import streamlit as st
@@ -1439,7 +1440,7 @@ shinhan_other = max(shinhan_amount - shinhan_known_total, 0)
 total_amount = hyundai_amount + shinhan_amount + incident_amount
 
 # 탭
-tab1, tab2 = st.tabs(["🏠 메인", "📊 내역"])
+tab1, tab2, tab3 = st.tabs(["🏠 개인 가계부", "📊 내역", "🏦 생활비 통장"])
 
 # -------------------
 # 수정 모달
@@ -2628,3 +2629,6 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
+with tab3:
+    render_living_tab(get_worksheet, render_budget_card)
