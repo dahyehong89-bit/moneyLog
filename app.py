@@ -1818,34 +1818,7 @@ with tab1:
         font-size:14px;
         color:{theme["button_text"]};
         ">
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>🏥 병원비</span>
-            <span><b>{incident_hospital:,}원</b></span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>💊 약값</span>
-            <span><b>{incident_medicine:,}원</b></span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>🩺 검진</span>
-            <span><b>{incident_checkup:,}원</b></span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>🎁 선물</span>
-            <span><b>{incident_gift:,}원</b></span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>🙏 경조사</span>
-            <span><b>{incident_event:,}원</b></span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>🧾 기타</span>
-            <span><b>{incident_other:,}원</b></span>
-        </div>
-        <div style="display:flex; justify-content:space-between;">
-            <span>💰 환급</span>
-            <span><b>{incident_refund:,}원</b></span>
-        </div>
+        
         {''.join(incident_lines)}
         </div>
         """
