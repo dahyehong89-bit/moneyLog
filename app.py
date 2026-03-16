@@ -1869,7 +1869,7 @@ with tab1:
             <span>💰 환급</span>
             <span><b>{incident_refund:,}원</b></span>
         </div>
-        {incident_lines}
+    {incident_lines}
     </div>
     """
         st.markdown(incident_detail_html, unsafe_allow_html=True)
@@ -2475,3 +2475,4 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
+
