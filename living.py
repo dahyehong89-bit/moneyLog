@@ -283,63 +283,62 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     st.subheader("✍ 생활비 입력")
 
-    with st.form("living_add_form", clear_on_submit=True):
-        f1, f2, f3, f4, f5 = st.columns(5)
+    f1, f2, f3, f4, f5 = st.columns(5)
 
-        with f1:
-            living_date = st.date_input(
-                "날짜",
-                value=date.today(),
-                key="living_date"
-            )
+    with f1:
+        living_date = st.date_input(
+            "날짜",
+            value=date.today(),
+            key="living_date"
+        )
 
-        with f2:
-            living_type = st.selectbox(
-                "구분",
-                LIVING_TYPE_OPTIONS,
+    with f2:
+        living_type = st.selectbox(
+            "구분",
+            LIVING_TYPE_OPTIONS,
+            index=0,
+            key="living_type"
+        )
+
+    with f3:
+        if living_type == "입금":
+            living_category = st.selectbox(
+                "카테고리",
+                LIVING_INCOME_CATEGORY_OPTIONS,
                 index=0,
-                key="living_type"
+                key="living_category"
+            )
+        elif living_type == "비상금":
+            living_category = st.selectbox(
+                "카테고리",
+                LIVING_EMERGENCY_CATEGORY_OPTIONS,
+                index=0,
+                key="living_category"
+            )
+        else:
+            living_category = st.selectbox(
+                "카테고리",
+                LIVING_EXPENSE_CATEGORY_OPTIONS,
+                index=0,
+                key="living_category"
             )
 
-        with f3:
-            if living_type == "입금":
-                living_category = st.selectbox(
-                    "카테고리",
-                    LIVING_INCOME_CATEGORY_OPTIONS,
-                    index=0,
-                    key="living_category"
-                )
-            elif living_type == "비상금":
-                living_category = st.selectbox(
-                    "카테고리",
-                    LIVING_EMERGENCY_CATEGORY_OPTIONS,
-                    index=0,
-                    key="living_category"
-                )
-            else:
-                living_category = st.selectbox(
-                    "카테고리",
-                    LIVING_EXPENSE_CATEGORY_OPTIONS,
-                    index=0,
-                    key="living_category"
-                )
+    with f4:
+        living_memo = st.text_input(
+            "메모",
+            value="",
+            key="living_memo"
+        )
 
-        with f4:
-            living_memo = st.text_input(
-                "메모",
-                value="",
-                key="living_memo"
-            )
+    with f5:
+        living_amount_text = st.text_input(
+            "금액",
+            value="",
+            placeholder="금액 입력",
+            key="living_amount"
+        )
 
-        with f5:
-            living_amount_text = st.text_input(
-                "금액",
-                value="",
-                placeholder="금액 입력",
-                key="living_amount"
-            )
-
-        living_saved = st.form_submit_button("➕ 생활비 저장", use_container_width=True)
+    living_saved = st.button("➕ 생활비 저장", use_container_width=True)
 
     if living_saved:
         amount_clean = living_amount_text.replace(",", "").strip()
@@ -371,6 +370,12 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             save_living_df(current_df, get_worksheet_func)
 
             st.success("✅ 생활비 저장 완료!")
+
+            st.session_state["living_memo"] = ""
+            st.session_state["living_amount"] = ""
+            st.session_state["living_type"] = "지출"
+            st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
+
             st.rerun()
 
     # -------------------
