@@ -1762,6 +1762,75 @@ with tab1:
             "#8A6A00"
         )
 
+        # -------------------------
+        # 사건비 표시 라인 생성
+        # -------------------------
+        incident_lines = ""
+
+        if incident_hospital > 0:
+            incident_lines += f"""
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🏥 병원비</span>
+            <span><b>{incident_hospital:,}원</b></span>
+            </div>
+            """
+
+        if incident_medicine > 0:
+            incident_lines += f"""
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>💊 약값</span>
+            <span><b>{incident_medicine:,}원</b></span>
+            </div>
+            """
+
+        if incident_checkup > 0:
+            incident_lines += f"""
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🩺 검진</span>
+            <span><b>{incident_checkup:,}원</b></span>
+            </div>
+            """
+
+        if incident_gift > 0:
+            incident_lines += f"""
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🎁 선물</span>
+            <span><b>{incident_gift:,}원</b></span>
+            </div>
+            """
+
+        if incident_event > 0:
+            incident_lines += f"""
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🙏 경조사</span>
+            <span><b>{incident_event:,}원</b></span>
+            </div>
+            """
+
+        if incident_other > 0:
+            incident_lines += f"""
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🧾 기타</span>
+            <span><b>{incident_other:,}원</b></span>
+            </div>
+            """
+
+        if incident_refund > 0:
+            incident_lines += f"""
+            <div style="display:flex; justify-content:space-between;">
+            <span>💰 환급</span>
+            <span><b>{incident_refund:,}원</b></span>
+            </div>
+            """
+
+        if incident_lines == "":
+            incident_lines = """
+            <div style="text-align:center; opacity:0.6; font-size:13px;">
+            이번달 사건비 사용 내역 없음
+            </div>
+            """
+
+
         incident_detail_html = f"""
     <div style="
         margin-top:10px;
@@ -1800,9 +1869,10 @@ with tab1:
             <span>💰 환급</span>
             <span><b>{incident_refund:,}원</b></span>
         </div>
+        {incident_lines}
     </div>
     """
-        st.markdown(incident_detail_html, unsafe_allow_html=True)
+            st.markdown(incident_detail_html, unsafe_allow_html=True)
     
     with card_col4:
         render_budget_card(
@@ -2405,5 +2475,3 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
-
-
