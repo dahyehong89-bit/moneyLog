@@ -9,12 +9,17 @@ LIVING_COLUMNS = ["date", "amount", "category", "method", "memo"]
 
 LIVING_CATEGORY_OPTIONS = [
     "식비",
-    "장보기",
+    "영양식품",
+    "주거비",
     "생활용품",
-    "공과금",
-    "주거/관리비",
-    "교통",
-    "경조사",
+    "가족용돈",
+    "자동차관련",
+    "쇼핑",
+    "여행관련",
+    "카페/간식",
+    "선물",
+    "문화활동",
+    "병원/건강",
     "기타",
 ]
 
@@ -78,7 +83,7 @@ def load_living_df(_get_worksheet_func) -> pd.DataFrame:
             typ = row["type"]
             raw = str(row.get("_raw_amount", "")).strip()
 
-            if typ == "환급":
+            if typ == "입금":
                 return amt
             elif typ == "지출":
                 return -amt
@@ -117,7 +122,7 @@ def save_living_df(df: pd.DataFrame, _get_worksheet_func) -> None:
     ).drop(columns=["date_dt"])
 
     save_data["구분"] = save_data["amount"].apply(
-        lambda x: "환급" if int(x) > 0 else "지출"
+        lambda x: "입금" if int(x) > 0 else "지출"
     )
 
     save_data["금액"] = save_data["amount"].apply(
@@ -165,7 +170,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     with c1:
         render_budget_card("이번달 지출", f"{living_spent:,}원", "#F8FBF7", "#D9E8D4", "#4D6B50")
     with c2:
-        render_budget_card("이번달 환급", f"{living_refund:,}원", "#F3F8FF", "#D8E6F8", "#4A6688")
+        render_budget_card("이번달 입금", f"{living_refund:,}원", "#F3F8FF", "#D8E6F8", "#4A6688")
     with c3:
         render_budget_card("순지출", f"{living_net:,}원", "#FFF7F5", "#F2D9D2", "#8A5A4A")
 
@@ -203,7 +208,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             )
             living_type = st.selectbox(
                 "구분",
-                ["지출", "환급"],
+                LIVING_TYPE_OPTIONS,
                 index=0,
                 key="living_type"
             )
@@ -219,7 +224,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             st.error("금액은 숫자만 입력해줘.")
         else:
             amount_value = int(amount_clean)
-            final_amount = amount_value if living_type == "환급" else -amount_value
+            final_amount = amount_value if living_type == "입금" else -amount_value
 
             new_row = {
                 "date": str(living_date),
@@ -263,7 +268,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     for _, r in living_view.iterrows():
         c1, c2, c3, c4, c5, c6, c7 = st.columns([0.7, 1.1, 1.0, 1.2, 2.4, 1.2, 1.2])
 
-        row_type = "환급" if int(r["amount"]) > 0 else "지출"
+        row_type = "입금" if int(r["amount"]) > 0 else "지출"
 
         c1.markdown(f"<div class='row-box'>{r['번호']}</div>", unsafe_allow_html=True)
         c2.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
