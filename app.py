@@ -59,6 +59,13 @@ CHECKLIST_ITEMS = [
     "보험료2 : 60,712원",
 ]
 
+INCIDENT_CATEGORY_KEYWORDS = {
+    "병원비": ["이비인후과", "내과", "소아과", "정형외과", "치과", "피부과", "안과", "산부인과", "병원", "의원", "진료", "외래"],
+    "약값": ["약국", "처방", "약값", "약"],
+    "검진": ["검진", "건강검진", "초음파", "엑스레이", "x-ray", "mri", "ct"],
+    "선물": ["선물", "생선", "생일선물", "축의", "축하", "꽃", "케이크"],
+}
+
 # -----------------------
 # 테마 설정
 # -----------------------
@@ -656,6 +663,15 @@ def build_fuel_memo(memo: str, fuel_price_clean: str, amount_clean: str) -> str:
 
     return final_memo
 
+def classify_incident_memo(memo: str) -> str:
+    memo_text = (memo or "").strip()
+
+    for category, keywords in INCIDENT_CATEGORY_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in memo_text:
+                return category
+
+    return "기타"
 
 def parse_quick_input(text: str, default_category: str, default_method: str) -> dict:
     text = (text or "").strip()
@@ -1242,8 +1258,46 @@ if hyundai_other > 0:
 
 # 사건비통장: 지출 / 환급 / 순금액
 incident_df = month_df[month_df["method"] == "사건비통장"].copy()
+
 incident_spent = abs(int(incident_df[incident_df["amount"] < 0]["amount"].sum()))
 incident_refund = int(incident_df[incident_df["amount"] > 0]["amount"].sum())
+
+# -----------------------------
+# 사건비통장 세부 분류
+# -----------------------------
+incident_expense_df = incident_df[incident_df["amount"] < 0].copy()
+
+if not incident_expense_df.empty:
+    incident_expense_df["detail_category"] = incident_expense_df["memo"].apply(classify_incident_memo)
+else:
+    incident_expense_df["detail_category"] = []
+
+incident_hospital = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "병원비"]["amount"].sum()
+))
+
+incident_medicine = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "약값"]["amount"].sum()
+))
+
+incident_checkup = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "검진"]["amount"].sum()
+))
+
+incident_gift = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "선물"]["amount"].sum()
+))
+
+incident_known_total = (
+    incident_hospital
+    + incident_medicine
+    + incident_checkup
+    + incident_gift
+)
+
+incident_other = max(incident_spent - incident_known_total, 0)
+
+# 순금액
 incident_amount = incident_spent - incident_refund
 
 # 신한카드 세부내역
@@ -1713,16 +1767,28 @@ with tab1:
         color:{theme["button_text"]};
     ">
         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>💸 지출</span>
-            <span><b>{incident_spent:,}원</b></span>
+            <span>🏥 병원비</span>
+            <span><b>{incident_hospital:,}원</b></span>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>💰 환급</span>
-            <span><b>{incident_refund:,}원</b></span>
+            <span>💊 약값</span>
+            <span><b>{incident_medicine:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🩺 검진</span>
+            <span><b>{incident_checkup:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🎁 선물</span>
+            <span><b>{incident_gift:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🧾 기타</span>
+            <span><b>{incident_other:,}원</b></span>
         </div>
         <div style="display:flex; justify-content:space-between;">
-            <span>🧮 순금액</span>
-            <span><b>{incident_amount:,}원</b></span>
+            <span>💰 환급</span>
+            <span><b>{incident_refund:,}원</b></span>
         </div>
     </div>
     """
