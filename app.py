@@ -64,7 +64,15 @@ INCIDENT_CATEGORY_KEYWORDS = {
     "약값": ["약국", "처방", "약값", "약"],
     "검진": ["검진", "건강검진", "초음파", "엑스레이", "x-ray", "mri", "ct"],
     "선물": ["선물", "생선", "생일선물", "축의", "축하", "꽃", "케이크"],
-    "경조사": ["조의금","부의금","축의금","결혼식","장례식","부고","상가"]
+    "경조사": ["조의금", "부의금", "축의금", "결혼식", "장례식", "부고", "상가", "근조", "화환"],
+}
+
+INCIDENT_EXPENSE_KEYWORDS = {
+    "병원비": ["이비인후과", "내과", "소아과", "정형외과", "외과", "유방외과", "치과", "피부과", "안과", "산부인과", "병원", "의원", "진료", "외래", "감기"],
+    "약값": ["약국", "처방", "약값", "약"],
+    "검진": ["검진", "건강검진", "초음파", "엑스레이", "x-ray", "mri", "ct"],
+    "선물": ["선물", "생일선물", "생선", "꽃", "케이크"],
+    "경조사": ["조의금", "부의금", "축의금", "결혼식", "장례식", "부고", "상가", "근조", "화환"],
 }
 
 # -----------------------
@@ -618,13 +626,26 @@ def auto_category_from_text(text: str, fallback: str = "쇼핑") -> str:
 def auto_card_and_category(text: str, default_category: str, default_method: str):
     t = (text or "").strip()
 
+    # 신한카드 고정비 우선
     for k in AUTO_SHINHAN:
         if k in t:
             return "고정비", "신한카드"
 
+    # 사건비통장 자동 분류
+    if is_incident_expense_text(t):
+        return "사건비", "사건비통장"
+
     category = auto_category_from_text(t, default_category)
     return category, default_method
 
+def is_incident_expense_text(text: str) -> bool:
+    t = (text or "").strip()
+
+    for keywords in INCIDENT_EXPENSE_KEYWORDS.values():
+        for keyword in keywords:
+            if keyword in t:
+                return True
+    return False
 
 def split_fuel_memo(memo: str):
     memo = (memo or "").strip()
@@ -2425,4 +2446,3 @@ with tab2:
             st.bar_chart(method_sum)
 
     st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
-
