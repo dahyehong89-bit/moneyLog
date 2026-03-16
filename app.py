@@ -503,20 +503,42 @@ def load_df() -> pd.DataFrame:
         if "type" not in df.columns:
             df["type"] = ""
 
+        # 원본 amount 문자열 보존
+        raw_amount = df["amount"].astype(str).str.strip()
+
+        # 숫자 추출
         df["amount"] = (
-            df["amount"]
-            .astype(str)
+            raw_amount
             .str.replace(",", "", regex=False)
             .str.replace("원", "", regex=False)
         )
         df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0).astype(int)
 
-        # 구분 기준으로 부호 복원
+        # 구분 정리
         df["type"] = df["type"].astype(str).str.strip()
-        df["amount"] = df.apply(
-            lambda row: abs(int(row["amount"])) if row["type"] == "환급" else -abs(int(row["amount"])),
-            axis=1
-        )
+
+        # 구분이 있으면 구분 기준 복원, 없으면 기존 부호 유지
+        def restore_amount(row):
+            amt = int(row["amount"])
+            typ = row["type"]
+
+            if typ == "환급":
+                return abs(amt)
+            elif typ == "지출":
+                return -abs(amt)
+            else:
+                # 예전 데이터 대응: 구분이 없으면 원래 부호를 최대한 유지
+                raw = str(row.get("_raw_amount", "")).strip()
+                if raw.startswith("-"):
+                    return -abs(amt)
+                elif raw.startswith("+"):
+                    return abs(amt)
+                else:
+                    return amt
+
+        df["_raw_amount"] = raw_amount
+        df["amount"] = df.apply(restore_amount, axis=1)
+        df = df.drop(columns=["_raw_amount"])
 
         df["date"] = df["date"].astype(str)
         df["category"] = df["category"].astype(str)
