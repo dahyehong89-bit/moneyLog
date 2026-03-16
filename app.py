@@ -503,10 +503,8 @@ def load_df() -> pd.DataFrame:
         if "type" not in df.columns:
             df["type"] = ""
 
-        # 원본 amount 문자열 보존
         raw_amount = df["amount"].astype(str).str.strip()
 
-        # 숫자 추출
         df["amount"] = (
             raw_amount
             .str.replace(",", "", regex=False)
@@ -514,27 +512,36 @@ def load_df() -> pd.DataFrame:
         )
         df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0).astype(int)
 
-        # 구분 정리
         df["type"] = df["type"].astype(str).str.strip()
+        df["method"] = df["method"].astype(str).str.strip()
+        df["memo"] = df["memo"].astype(str).str.strip()
 
-        # 구분이 있으면 구분 기준 복원, 없으면 기존 부호 유지
         def restore_amount(row):
-            amt = int(row["amount"])
+            amt = abs(int(row["amount"]))
             typ = row["type"]
+            method = row["method"]
+            memo = row["memo"]
+            raw = str(row.get("_raw_amount", "")).strip()
 
-            if typ == "환급":
-                return abs(amt)
-            elif typ == "지출":
-                return -abs(amt)
-            else:
-                # 예전 데이터 대응: 구분이 없으면 원래 부호를 최대한 유지
-                raw = str(row.get("_raw_amount", "")).strip()
-                if raw.startswith("-"):
-                    return -abs(amt)
-                elif raw.startswith("+"):
-                    return abs(amt)
-                else:
+            # 사건비통장은 메모 키워드 기준으로 우선 복원
+            if method == "사건비통장":
+                if any(k in memo for k in INCIDENT_INCOME_KEYWORDS):
                     return amt
+                return -amt
+
+            # 그 외는 구분 기준 복원
+            if typ == "환급":
+                return amt
+            elif typ == "지출":
+                return -amt
+
+            # 예전 데이터 대응: 구분이 없으면 원래 부호 최대한 유지
+            if raw.startswith("-"):
+                return -amt
+            elif raw.startswith("+"):
+                return amt
+            else:
+                return -amt if method != "사건비통장" else amt
 
         df["_raw_amount"] = raw_amount
         df["amount"] = df.apply(restore_amount, axis=1)
