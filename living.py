@@ -30,6 +30,7 @@ LIVING_METHOD_OPTIONS = [
     "현금",
 ]
 
+LIVING_TYPE_OPTIONS = ["지출", "입금"]
 LIVING_DEFAULT_METHOD = "생활비통장"
 
 
@@ -162,15 +163,15 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     ]
 
     living_spent = abs(int(month_df[month_df["amount"] < 0]["amount"].sum()))
-    living_refund = int(month_df[month_df["amount"] > 0]["amount"].sum())
-    living_net = living_spent - living_refund
+    living_income = int(month_df[month_df["amount"] > 0]["amount"].sum())
+    living_net = living_spent - living_income
 
     c1, c2, c3 = st.columns(3)
 
     with c1:
         render_budget_card("이번달 지출", f"{living_spent:,}원", "#F8FBF7", "#D9E8D4", "#4D6B50")
     with c2:
-        render_budget_card("이번달 입금", f"{living_refund:,}원", "#F3F8FF", "#D8E6F8", "#4A6688")
+        render_budget_card("이번달 입금", f"{living_income:,}원", "#F3F8FF", "#D8E6F8", "#4A6688")
     with c3:
         render_budget_card("순지출", f"{living_net:,}원", "#FFF7F5", "#F2D9D2", "#8A5A4A")
 
@@ -251,36 +252,89 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     if living_view.empty:
         st.write("생활비 내역이 없어요.")
-        return
+    else:
+        living_view = living_view.reset_index(drop=True)
+        living_view["번호"] = range(1, len(living_view) + 1)
 
-    living_view = living_view.reset_index(drop=True)
-    living_view["번호"] = range(1, len(living_view) + 1)
+        h1, h2, h3, h4, h5, h6, h7 = st.columns([0.7, 1.1, 1.0, 1.2, 2.4, 1.2, 1.2])
+        h1.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
+        h2.markdown("<div class='table-head'>날짜</div>", unsafe_allow_html=True)
+        h3.markdown("<div class='table-head'>구분</div>", unsafe_allow_html=True)
+        h4.markdown("<div class='table-head'>카테고리</div>", unsafe_allow_html=True)
+        h5.markdown("<div class='table-head'>메모</div>", unsafe_allow_html=True)
+        h6.markdown("<div class='table-head'>금액</div>", unsafe_allow_html=True)
+        h7.markdown("<div class='table-head'>결제수단</div>", unsafe_allow_html=True)
 
-    h1, h2, h3, h4, h5, h6, h7 = st.columns([0.7, 1.1, 1.0, 1.2, 2.4, 1.2, 1.2])
-    h1.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
-    h2.markdown("<div class='table-head'>날짜</div>", unsafe_allow_html=True)
-    h3.markdown("<div class='table-head'>구분</div>", unsafe_allow_html=True)
-    h4.markdown("<div class='table-head'>카테고리</div>", unsafe_allow_html=True)
-    h5.markdown("<div class='table-head'>메모</div>", unsafe_allow_html=True)
-    h6.markdown("<div class='table-head'>금액</div>", unsafe_allow_html=True)
-    h7.markdown("<div class='table-head'>결제수단</div>", unsafe_allow_html=True)
+        for _, r in living_view.iterrows():
+            c1, c2, c3, c4, c5, c6, c7 = st.columns([0.7, 1.1, 1.0, 1.2, 2.4, 1.2, 1.2])
 
-    for _, r in living_view.iterrows():
-        c1, c2, c3, c4, c5, c6, c7 = st.columns([0.7, 1.1, 1.0, 1.2, 2.4, 1.2, 1.2])
+            row_type = "입금" if int(r["amount"]) > 0 else "지출"
 
-        row_type = "입금" if int(r["amount"]) > 0 else "지출"
+            c1.markdown(f"<div class='row-box'>{r['번호']}</div>", unsafe_allow_html=True)
+            c2.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
+            c3.markdown(f"<div class='row-box'>{row_type}</div>", unsafe_allow_html=True)
+            c4.markdown(f"<div class='row-box'><span class='cat-tag'>{r['category']}</span></div>", unsafe_allow_html=True)
+            c5.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
 
-        c1.markdown(f"<div class='row-box'>{r['번호']}</div>", unsafe_allow_html=True)
-        c2.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
-        c3.markdown(f"<div class='row-box'>{row_type}</div>", unsafe_allow_html=True)
-        c4.markdown(f"<div class='row-box'><span class='cat-tag'>{r['category']}</span></div>", unsafe_allow_html=True)
-        c5.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
+            amount_display = f"{abs(int(r['amount'])):,}원"
+            if int(r["amount"]) > 0:
+                amount_html = f"<div class='row-box amount-text'>➕ {amount_display}</div>"
+            else:
+                amount_html = f"<div class='row-box amount-text'>💸 {amount_display}</div>"
 
-        amount_display = f"{abs(int(r['amount'])):,}원"
-        if int(r["amount"]) > 0:
-            amount_html = f"<div class='row-box amount-text'>➕ {amount_display}</div>"
-        else:
-            amount_html = f"<div class='row-box amount-text'>💸 {amount_display}</div>"
+            c6.markdown(amount_html, unsafe_allow_html=True)
+            c7.markdown(f"<div class='row-box'>{r['method']}</div>", unsafe_allow_html=True)
 
-        c6.markdown(amount_html, unsafe_allow_html=True)
-        c7.markdown(f"<div class='row-box'>{r['method']}</div>", unsafe_allow_html=True)
+    st.divider()
+    st.subheader("🏠 최근 1년 관리비 내역")
+
+    today_dt = pd.Timestamp.today()
+    one_year_ago = today_dt - pd.DateOffset(months=12)
+
+    management_df = living_df.copy()
+    management_df["date_dt"] = pd.to_datetime(management_df["date"], errors="coerce")
+
+    management_df = management_df[
+        (management_df["date_dt"] >= one_year_ago) &
+        (management_df["category"] == "주거비") &
+        (management_df["memo"].astype(str).str.contains("관리비", na=False))
+    ].copy()
+
+    management_df = management_df.sort_values(by="date_dt", ascending=False)
+
+    management_spent = abs(int(management_df[management_df["amount"] < 0]["amount"].sum())) if not management_df.empty else 0
+
+    st.markdown(
+        f"<div style='text-align:right; font-size:13px; opacity:0.75;'>최근 1년 관리비 합계: {management_spent:,}원</div>",
+        unsafe_allow_html=True
+    )
+
+    if management_df.empty:
+        st.write("최근 1년 관리비 내역이 없어요.")
+    else:
+        management_df = management_df.reset_index(drop=True)
+        management_df["번호"] = range(1, len(management_df) + 1)
+
+        h1, h2, h3, h4, h5 = st.columns([0.7, 1.2, 1.2, 2.8, 1.2])
+        h1.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
+        h2.markdown("<div class='table-head'>날짜</div>", unsafe_allow_html=True)
+        h3.markdown("<div class='table-head'>구분</div>", unsafe_allow_html=True)
+        h4.markdown("<div class='table-head'>메모</div>", unsafe_allow_html=True)
+        h5.markdown("<div class='table-head'>금액</div>", unsafe_allow_html=True)
+
+        for _, r in management_df.iterrows():
+            c1, c2, c3, c4, c5 = st.columns([0.7, 1.2, 1.2, 2.8, 1.2])
+
+            row_type = "입금" if int(r["amount"]) > 0 else "지출"
+            amount_display = f"{abs(int(r['amount'])):,}원"
+            amount_html = (
+                f"<div class='row-box amount-text'>➕ {amount_display}</div>"
+                if int(r["amount"]) > 0
+                else f"<div class='row-box amount-text'>💸 {amount_display}</div>"
+            )
+
+            c1.markdown(f"<div class='row-box'>{r['번호']}</div>", unsafe_allow_html=True)
+            c2.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
+            c3.markdown(f"<div class='row-box'>{row_type}</div>", unsafe_allow_html=True)
+            c4.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
+            c5.markdown(amount_html, unsafe_allow_html=True)
