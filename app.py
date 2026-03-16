@@ -2215,25 +2215,96 @@ with tab2:
                     )
 
                     worksheet = writer.sheets["가계부"]
-                    from openpyxl.styles import Font, Alignment
 
-                    header_font = Font(bold=True)
+                    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
+                    # 스타일 정의
+                    header_font = Font(bold=True, color="FFFFFF")
+                    bold_font = Font(bold=True)
+
+                    header_fill = PatternFill("solid", fgColor="B96A5C")
+                    summary_fill = PatternFill("solid", fgColor="FDECEC")
+                    refund_fill = PatternFill("solid", fgColor="EAF4FF")
+                    expense_fill = PatternFill("solid", fgColor="FFF4F4")
+
+                    thin_border = Border(
+                        left=Side(style="thin", color="E5D6D1"),
+                        right=Side(style="thin", color="E5D6D1"),
+                        top=Side(style="thin", color="E5D6D1"),
+                        bottom=Side(style="thin", color="E5D6D1"),
+                    )
+
+                    center_align = Alignment(horizontal="center", vertical="center")
+                    right_align = Alignment(horizontal="right", vertical="center")
+                    left_align = Alignment(horizontal="left", vertical="center")
+
+                    # 헤더 스타일
                     for cell in worksheet[1]:
                         cell.font = header_font
+                        cell.fill = header_fill
+                        cell.alignment = center_align
+                        cell.border = thin_border
 
-                    column_widths = [8, 12, 10, 12, 25, 12, 12]
+                    # 열 너비
+                    column_widths = [8, 12, 10, 12, 28, 12, 12]  # 번호, 날짜, 구분, 카테고리, 메모, 금액, 결제수단
                     for i, width in enumerate(column_widths, start=1):
                         worksheet.column_dimensions[chr(64 + i)].width = width
 
-                    for row in worksheet.iter_rows(min_row=2, min_col=6, max_col=6):
-                        for cell in row:
-                            cell.alignment = Alignment(horizontal="right")
+                    # 본문 스타일
+                    data_row_count = len(download_df)
+                    for row_idx in range(2, data_row_count + 2):
+                        row_type = worksheet[f"C{row_idx}"].value  # 구분 컬럼
 
-                    total_row = len(download_df) + 2
-                    worksheet[f"E{total_row}"] = "총합"
-                    worksheet[f"F{total_row}"] = f"{download_df['amount_num'].sum():,}원"
+                        for col_idx in range(1, 8):
+                            cell = worksheet.cell(row=row_idx, column=col_idx)
+                            cell.border = thin_border
 
+                            if col_idx in [1, 2, 3, 4, 7]:
+                                cell.alignment = center_align
+                            elif col_idx == 6:
+                                cell.alignment = right_align
+                            else:
+                                cell.alignment = left_align
+
+                        # 지출 / 환급 행 색상
+                        if row_type == "환급":
+                            for col_idx in range(1, 8):
+                                worksheet.cell(row=row_idx, column=col_idx).fill = refund_fill
+                        else:
+                            for col_idx in range(1, 8):
+                                worksheet.cell(row=row_idx, column=col_idx).fill = expense_fill
+
+                    # 합계 계산
+                    spent_total = download_df.loc[download_df["구분"] == "지출", "amount_num"].sum()
+                    refund_total = download_df.loc[download_df["구분"] == "환급", "amount_num"].sum()
+                    net_total = spent_total - refund_total
+
+                    start_row = len(download_df) + 3
+
+                    summary_rows = [
+                        ("지출 합계", f"{spent_total:,}원"),
+                        ("환급 합계", f"{refund_total:,}원"),
+                        ("순지출", f"{net_total:,}원"),
+                    ]
+
+                    for i, (label, value) in enumerate(summary_rows):
+                        row_no = start_row + i
+                        worksheet[f"E{row_no}"] = label
+                        worksheet[f"F{row_no}"] = value
+
+                        worksheet[f"E{row_no}"].font = bold_font
+                        worksheet[f"F{row_no}"].font = bold_font
+
+                        worksheet[f"E{row_no}"].fill = summary_fill
+                        worksheet[f"F{row_no}"].fill = summary_fill
+
+                        worksheet[f"E{row_no}"].alignment = center_align
+                        worksheet[f"F{row_no}"].alignment = right_align
+
+                        worksheet[f"E{row_no}"].border = thin_border
+                        worksheet[f"F{row_no}"].border = thin_border
+
+                    # 카테고리 합계 시트
                     category_sum = (
                         download_df
                         .groupby("카테고리")["amount_num"]
@@ -2252,11 +2323,21 @@ with tab2:
 
                     sheet2 = writer.sheets["카테고리합계"]
 
+                    # 카테고리합계 헤더 스타일
                     for cell in sheet2[1]:
                         cell.font = header_font
+                        cell.fill = header_fill
+                        cell.alignment = center_align
+                        cell.border = thin_border
 
                     sheet2.column_dimensions["A"].width = 15
                     sheet2.column_dimensions["B"].width = 15
+
+                    for row in sheet2.iter_rows(min_row=2, max_col=2):
+                        row[0].alignment = center_align
+                        row[1].alignment = right_align
+                        row[0].border = thin_border
+                        row[1].border = thin_border
 
                 excel_data = buffer.getvalue()
 
