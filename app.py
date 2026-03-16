@@ -1872,7 +1872,7 @@ with tab1:
         {incident_lines}
     </div>
     """
-            st.markdown(incident_detail_html, unsafe_allow_html=True)
+        st.markdown(incident_detail_html, unsafe_allow_html=True)
     
     with card_col4:
         render_budget_card(
