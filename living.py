@@ -105,8 +105,8 @@ def load_living_df(_get_worksheet_func) -> pd.DataFrame:
         return pd.DataFrame(columns=LIVING_COLUMNS)
 
 
-def save_living_df(df: pd.DataFrame, get_worksheet_func) -> None:
-    ws = get_worksheet_func("living")
+def save_living_df(df: pd.DataFrame, _get_worksheet_func) -> None:
+    ws = _get_worksheet_func("living")
 
     save_data = df[LIVING_COLUMNS].copy().fillna("")
 
