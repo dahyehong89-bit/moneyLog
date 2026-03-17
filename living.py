@@ -4,7 +4,6 @@ from datetime import date, datetime
 import pandas as pd
 import streamlit as st
 
-
 LIVING_COLUMNS = ["date", "amount", "category", "method", "memo"]
 
 LIVING_EXPENSE_CATEGORY_OPTIONS = [
@@ -881,6 +880,38 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             c3.markdown(f"<div class='row-box'>{row_type}</div>", unsafe_allow_html=True)
             c4.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
             c5.markdown(amount_html, unsafe_allow_html=True)
+
+    # 👉 월별로 묶기
+    if not management_df.empty:
+        chart_df = management_df.copy()
+        chart_df["month"] = chart_df["date_dt"].dt.strftime("%Y-%m")
+
+        monthly_sum = (
+            chart_df.groupby("month")["amount"]
+            .sum()
+            .abs()
+            .reset_index()
+            .sort_values("month")
+        )
+
+        st.markdown("### 📈 관리비 추이")
+
+        fig, ax = plt.subplots()
+
+        ax.plot(
+            monthly_sum["month"],
+            monthly_sum["amount"],
+            marker="o"
+        )
+
+        ax.set_xlabel("월")
+        ax.set_ylabel("금액")
+        ax.set_title("관리비 월별 추이")
+        plt.xticks(rotation=45)
+        fig.tight_layout()
+
+        st.pyplot(fig)
+        plt.close(fig)
 
     st.divider()
     st.subheader("💵 현금")
