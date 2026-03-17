@@ -918,7 +918,18 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         cash_type = st.selectbox("구분", CASH_TYPE_OPTIONS, key="cash_type")
 
     with f3:
-        cash_category = st.selectbox("카테고리", CASH_CATEGORY_OPTIONS, key="cash_category")
+        if cash_type == "현금 넣기":
+            cash_category = st.text_input(
+                "카테고리",
+                placeholder="예: 부모님이 주심 / 보너스 / 축의금",
+                key="cash_category"
+            )
+        else:
+            cash_category = st.selectbox(
+                "카테고리",
+                CASH_CATEGORY_OPTIONS,
+                key="cash_category"
+            )
 
     with f4:
         cash_amount_text = st.text_input("금액", key="cash_amount")
@@ -934,11 +945,17 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             amount_value = int(amount_clean)
             final_amount = amount_value if cash_type == "현금 넣기" else -amount_value
 
+            memo_value = cash_memo.strip()
+
+            # 👉 여기 추가!
+            if cash_type == "현금 넣기" and not memo_value:
+                memo_value = cash_category
+
             new_row = {
                 "date": str(cash_date),
                 "amount": final_amount,
                 "category": cash_category,
-                "memo": cash_memo.strip(),
+                "memo": memo_value,
             }
 
             current_df = load_cash_df(get_worksheet_func)
@@ -983,12 +1000,19 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 )
 
             with q2:
-                edit_category = st.selectbox(
-                    "카테고리",
-                    CASH_CATEGORY_OPTIONS,
-                    index=category_index,
-                    key=f"cash_edit_category_{rid}"
-                )
+                if edit_type == "현금 넣기":
+                    edit_category = st.text_input(
+                        "카테고리",
+                        value=row_category,
+                        key=f"cash_edit_category_{rid}"
+                    )
+                else:
+                    edit_category = st.selectbox(
+                        "카테고리",
+                        CASH_CATEGORY_OPTIONS,
+                        index=category_index,
+                        key=f"cash_edit_category_{rid}"
+                    )
 
             memo = st.text_input(
                 "메모",
