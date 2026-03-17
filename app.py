@@ -1392,7 +1392,9 @@ div[data-baseweb="tab-highlight"] {{
         border-radius: 12px !important;
     }}
 
-    div[data-testid="stMarkdownContainer"]{{background:red}}
+    div[data-testid="stMarkdownContainer"]{{
+        margin-bottom:0;
+    }}
 }}
 </style>
 """, unsafe_allow_html=True)
