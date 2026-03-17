@@ -38,6 +38,17 @@ LIVING_TYPE_OPTIONS = ["지출", "입금", "비상금"]
 LIVING_DEFAULT_METHOD = "생활비통장"
 LIVING_PAGE_SIZE = 10
 
+CASH_COLUMNS = ["date", "amount", "category", "memo"]
+
+CASH_TYPE_OPTIONS = ["현금 넣기", "현금 쓰기"]
+
+CASH_CATEGORY_OPTIONS = [
+    "경조사",
+    "용돈",
+    "식비",
+    "교통",
+    "기타",
+]
 
 @st.cache_data(ttl=60)
 def load_living_df(_get_worksheet_func) -> pd.DataFrame:
@@ -788,3 +799,176 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             c3.markdown(f"<div class='row-box'>{row_type}</div>", unsafe_allow_html=True)
             c4.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
             c5.markdown(amount_html, unsafe_allow_html=True)
+
+@st.cache_data(ttl=60)
+def load_cash_df(_get_worksheet_func) -> pd.DataFrame:
+    try:
+        ws = _get_worksheet_func("cash")
+        values = ws.get_all_records()
+
+        if not values:
+            return pd.DataFrame(columns=CASH_COLUMNS)
+
+        df = pd.DataFrame(values).fillna("")
+
+        rename_map = {
+            "날짜": "date",
+            "금액": "amount",
+            "카테고리": "category",
+            "메모": "memo",
+            "구분": "type",
+        }
+        df = df.rename(columns=rename_map)
+
+        if "번호" in df.columns:
+            df = df.drop(columns=["번호"])
+
+        for c in ["date", "amount", "category", "memo"]:
+            if c not in df.columns:
+                df[c] = ""
+
+        raw_amount = df["amount"].astype(str).str.strip()
+
+        df["amount"] = (
+            raw_amount
+            .str.replace(",", "", regex=False)
+            .str.replace("원", "", regex=False)
+        )
+        df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0).astype(int)
+
+        df["type"] = df.get("type", "").astype(str).str.strip()
+        df["category"] = df["category"].astype(str).str.strip()
+
+        def restore_amount(row):
+            amt = abs(int(row["amount"]))
+            typ = row["type"]
+
+            if typ == "현금 넣기":
+                return amt
+            elif typ == "현금 쓰기":
+                return -amt
+
+            return amt if row["amount"] > 0 else -amt
+
+        df["amount"] = df.apply(restore_amount, axis=1)
+
+        return df[CASH_COLUMNS].copy()
+
+    except Exception:
+        return pd.DataFrame(columns=CASH_COLUMNS)
+
+def save_cash_df(df: pd.DataFrame, _get_worksheet_func) -> None:
+    ws = _get_worksheet_func("cash")
+
+    save_data = df[CASH_COLUMNS].copy().fillna("")
+
+    save_data["date_dt"] = pd.to_datetime(save_data["date"], errors="coerce")
+    save_data = save_data.sort_values(by=["date_dt"], ascending=False).drop(columns=["date_dt"])
+
+    def get_type(row):
+        return "현금 넣기" if int(row["amount"]) > 0 else "현금 쓰기"
+
+    save_data["구분"] = save_data.apply(get_type, axis=1)
+
+    save_data["금액"] = save_data["amount"].apply(
+        lambda x: f"{abs(int(x)):,}원"
+    )
+
+    save_data["날짜"] = save_data["date"]
+    save_data["카테고리"] = save_data["category"]
+    save_data["메모"] = save_data["memo"]
+
+    save_data = save_data.reset_index(drop=True)
+    save_data.insert(0, "번호", range(1, len(save_data) + 1))
+
+    save_data = save_data[
+        ["번호", "날짜", "구분", "카테고리", "메모", "금액"]
+    ]
+
+    rows = [save_data.columns.tolist()] + save_data.values.tolist()
+
+    ws.clear()
+    ws.update(rows)
+    load_cash_df.clear()
+
+st.divider()
+st.subheader("💵 현금")
+
+cash_df = load_cash_df(get_worksheet_func)
+
+# 👉 요약
+cash_df["date_dt"] = pd.to_datetime(cash_df["date"], errors="coerce")
+
+today = pd.Timestamp.today()
+month_start = today.replace(day=1)
+
+month_cash_df = cash_df[cash_df["date_dt"] >= month_start]
+
+cash_balance = int(cash_df["amount"].sum()) if not cash_df.empty else 0
+month_cash_expense = abs(int(month_cash_df[month_cash_df["amount"] < 0]["amount"].sum())) if not month_cash_df.empty else 0
+
+c1, c2 = st.columns(2)
+
+with c1:
+    render_budget_card("💵 현금 보유액", f"{cash_balance:,}원", "#F0FFF4", "#C6F6D5", "#2F855A")
+
+with c2:
+    render_budget_card("🧧 이번달 현금지출", f"{month_cash_expense:,}원", "#FFF5F5", "#FED7D7", "#C53030")
+
+st.markdown("### ✍ 현금 입력")
+
+f1, f2, f3, f4 = st.columns(4)
+
+with f1:
+    cash_date = st.date_input("날짜", key="cash_date")
+
+with f2:
+    cash_type = st.selectbox("구분", CASH_TYPE_OPTIONS, key="cash_type")
+
+with f3:
+    cash_category = st.selectbox("카테고리", CASH_CATEGORY_OPTIONS, key="cash_category")
+
+with f4:
+    cash_amount_text = st.text_input("금액", key="cash_amount")
+
+cash_memo = st.text_input("메모", key="cash_memo")
+
+if st.button("➕ 현금 저장", use_container_width=True):
+    amount_clean = cash_amount_text.replace(",", "").strip()
+
+    if not amount_clean or not re.fullmatch(r"\d+", amount_clean):
+        st.error("금액은 숫자만 입력해줘.")
+    else:
+        amount_value = int(amount_clean)
+
+        final_amount = amount_value if cash_type == "현금 넣기" else -amount_value
+
+        new_row = {
+            "date": str(cash_date),
+            "amount": final_amount,
+            "category": cash_category,
+            "memo": cash_memo.strip(),
+        }
+
+        current_df = load_cash_df(get_worksheet_func)
+        current_df = pd.concat([current_df, pd.DataFrame([new_row])], ignore_index=True)
+        save_cash_df(current_df, get_worksheet_func)
+
+        st.success("현금 저장 완료!")
+        st.rerun()
+
+st.markdown("### 🧾 현금 내역")
+
+cash_view = cash_df.sort_values(by="date_dt", ascending=False)
+
+for _, r in cash_view.iterrows():
+    c1, c2, c3, c4 = st.columns([1.2, 1.2, 2.5, 1.5])
+
+    amount = int(r["amount"])
+    icon = "💵" if amount > 0 else "💸"
+    amount_display = f"{abs(amount):,}원"
+
+    c1.markdown(r["date"])
+    c2.markdown(r["category"])
+    c3.markdown(r["memo"])
+    c4.markdown(f"{icon} {amount_display}")
