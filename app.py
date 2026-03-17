@@ -1283,17 +1283,6 @@ div[data-baseweb="tab-highlight"] {{
     border-radius: 999px !important;
 }}
 
-.budget-card-grid {{
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 8px;
-}}
-
-.budget-card-item {{
-    min-width: 0;
-}}
-
 /* ===== 모바일 전용 ===== */
 @media (max-width: 768px) {{
     .block-container {{
@@ -1401,10 +1390,6 @@ div[data-baseweb="tab-highlight"] {{
         padding: 6px 10px !important;
         font-size: 12px !important;
         border-radius: 12px !important;
-    }}
-    .budget-card-grid {{
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
     }}
 }}
 </style>
@@ -1718,40 +1703,6 @@ def open_quick_edit(amount: int, category: str, memo: str = "", method: str = DE
     }
     quick_add_dialog()
 
-def render_budget_card_html(title, value, bg_color, border_color, text_color):
-    return f"""
-    <div class="budget-card-item">
-        <div style="
-            background:{bg_color};
-            border:1px solid {border_color};
-            border-radius:16px;
-            padding:12px 12px;
-            min-height:92px;
-            box-sizing:border-box;
-        ">
-            <div style="
-                font-size:13px;
-                font-weight:700;
-                color:{text_color};
-                opacity:0.92;
-                margin-bottom:8px;
-                line-height:1.2;
-                word-break:keep-all;
-            ">
-                {title}
-            </div>
-            <div style="
-                font-size:20px;
-                font-weight:800;
-                color:{text_color};
-                line-height:1.2;
-                word-break:keep-all;
-            ">
-                {value}
-            </div>
-        </div>
-    </div>
-    """
 
 @st.dialog("📝 빠른 입력 수정")
 def quick_add_dialog():
@@ -1843,38 +1794,43 @@ with tab1:
     # -------------------
     # 상단 예산 현황
     # -------------------
-    cards_html = "".join([
-        render_budget_card_html(
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        render_budget_card(
             "이번달 예산",
             f"{MONTHLY_BUDGET:,}원",
             theme["container_bg"],
             theme["metric_border"],
             theme["button_text"]
-        ),
-        render_budget_card_html(
+        )
+    
+    with c2:
+        render_budget_card(
             "지금까지 사용",
             f"{spent:,}원",
             theme["container_bg"],
             theme["metric_border"],
             theme["button_text"]
-        ),
-        render_budget_card_html(
+        )
+    
+    with c3:
+        render_budget_card(
             "남은 금액",
             f"{remaining:,}원",
             theme["container_bg"],
             theme["metric_border"],
             theme["button_text"]
-        ),
-        render_budget_card_html(
+        )
+    
+    with c4:
+        render_budget_card(
             "예산 상태",
             status["label"],
             status["bg"],
             status["border"],
             status["text"]
-        ),
-    ])
+        )
 
-    st.markdown(f'<div class="budget-card-grid">{cards_html}</div>', unsafe_allow_html=True)
     st.progress(percent)
 
     if spent > MONTHLY_BUDGET:
