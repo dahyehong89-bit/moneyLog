@@ -1391,6 +1391,8 @@ div[data-baseweb="tab-highlight"] {{
         font-size: 12px !important;
         border-radius: 12px !important;
     }}
+
+    div[data-testid="stMarkdownContainer"]{{background:red}}
 }}
 </style>
 """, unsafe_allow_html=True)
