@@ -1072,6 +1072,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         if canceled:
             st.rerun()
 
+    st.divider()
     st.markdown("### 🧾 현금 내역")
 
     cash_view = cash_df.copy()
