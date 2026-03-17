@@ -1,64 +1,485 @@
+import os
 import re
+import base64
+import socket
+from io import BytesIO
 from datetime import date, datetime
+from living import render_living_tab
 
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
+import gspread
+from google.oauth2.service_account import Credentials
 
-LIVING_COLUMNS = ["date", "amount", "category", "method", "memo"]
+FILE = "money.csv"
+CHECKLIST_FILE = "checklist.csv"
+COLUMNS = ["date", "amount", "category", "method", "memo"]
 
-LIVING_EXPENSE_CATEGORY_OPTIONS = [
-    "식비",
-    "영양식품",
-    "주거비",
-    "생활용품",
-    "가족용돈",
-    "자동차관련",
-    "쇼핑",
-    "여행관련",
-    "카페/간식",
-    "선물",
-    "문화활동",
-    "병원/건강",
-    "기타",
+CATEGORY_OPTIONS = ["쇼핑", "외식", "배달", "커피", "편의점", "고정비", "사건비"]
+METHOD_OPTIONS = ["현대카드", "신한카드", "사건비통장"]
+DEFAULT_METHOD = "현대카드"
+MONTHLY_BUDGET = 600000
+BUDGET_METHOD = "현대카드"
+PAGE_SIZE = 10
+
+AUTO_CATEGORY = {
+    "스타벅스": "커피",
+    "커피": "커피",
+    "카페": "커피",
+    "배민": "배달",
+    "요기요": "배달",
+    "쿠팡이츠": "배달",
+    "쿠팡": "쇼핑",
+    "다이소": "쇼핑",
+    "올리브영": "쇼핑",
+    "편의점": "쇼핑",
+    "마트": "쇼핑",
+    "우유": "쇼핑",
+    "편의점": "편의점",
+}
+
+AUTO_SHINHAN = [
+    "주유",
+    "통신비",
+    "쿠팡와우",
+    "이모티콘",
+    "톨게이트",
 ]
 
-LIVING_INCOME_CATEGORY_OPTIONS = [
-    "정기입금",
-    "추가수입",
-    "환급",
+INCIDENT_INCOME_KEYWORDS = ["환급", "입금", "수입", "보험금"]
+
+CHECKLIST_ITEMS = [
+    "공용 생활비 : 100만",
+    "사건비 통장 : 20만",
+    "수원 지역화폐 충전 : 10만",
+    "모임비 : 19만",
+    "정기 주차비 : 8만",
+    "적금 : 30만",
+    "청약 : 2만",
+    "보험료1 : 23,226원",
+    "보험료2 : 60,712원",
 ]
 
-LIVING_EMERGENCY_CATEGORY_OPTIONS = [
-    "비상금 넣기",
-    "비상금 빼기",
-]
+INCIDENT_CATEGORY_KEYWORDS = {
+    "병원비": ["이비인후과", "내과", "소아과", "정형외과", "외과", "유방외과", "치과", "피부과", "안과", "산부인과", "병원", "의원", "진료", "외래", "감기"],
+    "약값": ["약국", "처방", "약값", "약"],
+    "검진": ["검진", "건강검진", "초음파", "엑스레이", "x-ray", "mri", "ct"],
+    "선물": ["선물", "생선", "생일선물", "축의", "축하", "꽃", "케이크"],
+    "경조사": ["조의금", "부의금", "축의금", "결혼식", "장례식", "부고", "상가", "근조", "화환"],
+}
 
-LIVING_TYPE_OPTIONS = ["지출", "입금", "비상금"]
-LIVING_DEFAULT_METHOD = "생활비통장"
-LIVING_PAGE_SIZE = 10
+INCIDENT_EXPENSE_KEYWORDS = {
+    "병원비": ["이비인후과", "내과", "소아과", "정형외과", "외과", "유방외과", "치과", "피부과", "안과", "산부인과", "병원", "의원", "진료", "외래", "감기"],
+    "약값": ["약국", "처방", "약값", "약"],
+    "검진": ["검진", "건강검진", "초음파", "엑스레이", "x-ray", "mri", "ct"],
+    "선물": ["선물", "생일선물", "생선", "꽃", "케이크"],
+    "경조사": ["조의금", "부의금", "축의금", "결혼식", "장례식", "부고", "상가", "근조", "화환"],
+}
 
-CASH_COLUMNS = ["date", "amount", "category", "memo"]
+# -----------------------
+# 테마 설정
+# -----------------------
+THEMES = {
+    "strawberry": {
+        "app_bg_1": "#FFF7FB",
+        "app_bg_2": "#FFF1F6",
+        "container_bg": "rgba(255, 250, 253, 0.55)",
+        "input_border": "rgba(255,143,177,0.35)",
+        "input_bg": "rgba(255,255,255,0.78)",
+        "button_bg_1": "#FFD1E1",
+        "button_bg_2": "#FFB6CF",
+        "button_border": "rgba(255,143,177,0.35)",
+        "button_text": "#2E2A2B",
+        "button_shadow": "rgba(255,143,177,0.18)",
+        "line": "rgba(255,143,177,0.25)",
+        "metric_border": "rgba(255,143,177,0.25)",
+        "expander_border": "rgba(255,143,177,0.18)",
+        "form_border": "rgba(255,143,177,0.15)",
+        "table_head_bg": "rgba(255,209,225,0.65)",
+        "table_head_border": "rgba(255,143,177,0.25)",
+        "table_head_text": "#7A4B5A",
+        "row_hover": "rgba(255,143,177,0.08)",
+        "amount_text": "#C33B5E",
+        "cat_bg": "rgba(255,182,207,0.35)",
+        "cat_text": "#7A4B5A",
+        "filter_bg": "rgba(255,255,255,0.80)",
+        "filter_border": "rgba(255,143,177,0.35)",
+        "filter_hover": "rgba(255,209,225,0.25)",
+        "filter_active_1": "#FFD1E1",
+        "filter_active_2": "#FFB6CF",
+        "filter_active_border": "rgba(255,143,177,0.55)",
+        "filter_shadow": "rgba(255,143,177,0.18)",
+        "date_text": "#A85E74"
+    },
+    "latte": {
+        "app_bg_1": "#FCF8F3",
+        "app_bg_2": "#F7F0E8",
+        "container_bg": "rgba(255, 252, 247, 0.65)",
+        "input_border": "rgba(181,153,120,0.30)",
+        "input_bg": "rgba(255,255,255,0.82)",
+        "button_bg_1": "#F7E7D2",
+        "button_bg_2": "#EFD6B6",
+        "button_border": "rgba(181,153,120,0.30)",
+        "button_text": "#4E3F33",
+        "button_shadow": "rgba(180,150,120,0.14)",
+        "line": "rgba(181,153,120,0.22)",
+        "metric_border": "rgba(181,153,120,0.22)",
+        "expander_border": "rgba(181,153,120,0.18)",
+        "form_border": "rgba(181,153,120,0.15)",
+        "table_head_bg": "rgba(239,214,182,0.65)",
+        "table_head_border": "rgba(181,153,120,0.20)",
+        "table_head_text": "#6B5443",
+        "row_hover": "rgba(239,214,182,0.18)",
+        "amount_text": "#A75A2A",
+        "cat_bg": "rgba(239,214,182,0.45)",
+        "cat_text": "#6B5443",
+        "filter_bg": "rgba(255,255,255,0.82)",
+        "filter_border": "rgba(181,153,120,0.30)",
+        "filter_hover": "rgba(239,214,182,0.22)",
+        "filter_active_1": "#F7E7D2",
+        "filter_active_2": "#EFD6B6",
+        "filter_active_border": "rgba(181,153,120,0.45)",
+        "filter_shadow": "rgba(180,150,120,0.16)",
+        "date_text": "#8B6B4A"
+    },
+    "modern": {
+        "app_bg_1": "#F7F7F8",
+        "app_bg_2": "#EFEFF2",
+        "container_bg": "rgba(255,255,255,0.62)",
+        "input_border": "rgba(160,160,170,0.28)",
+        "input_bg": "rgba(255,255,255,0.88)",
+        "button_bg_1": "#EAEAEA",
+        "button_bg_2": "#D8D8DD",
+        "button_border": "rgba(160,160,170,0.30)",
+        "button_text": "#2E2E33",
+        "button_shadow": "rgba(120,120,130,0.10)",
+        "line": "rgba(160,160,170,0.20)",
+        "metric_border": "rgba(160,160,170,0.20)",
+        "expander_border": "rgba(160,160,170,0.18)",
+        "form_border": "rgba(160,160,170,0.14)",
+        "table_head_bg": "rgba(225,225,232,0.75)",
+        "table_head_border": "rgba(160,160,170,0.18)",
+        "table_head_text": "#555763",
+        "row_hover": "rgba(200,200,210,0.14)",
+        "amount_text": "#4E5968",
+        "cat_bg": "rgba(225,225,232,0.55)",
+        "cat_text": "#555763",
+        "filter_bg": "rgba(255,255,255,0.86)",
+        "filter_border": "rgba(160,160,170,0.28)",
+        "filter_hover": "rgba(225,225,232,0.30)",
+        "filter_active_1": "#EAEAEA",
+        "filter_active_2": "#D8D8DD",
+        "filter_active_border": "rgba(160,160,170,0.42)",
+        "filter_shadow": "rgba(120,120,130,0.12)",
+        "date_text": "#5B5E68"
+    },
+    "green": {
+        "app_bg_1": "#F5FFF8",
+        "app_bg_2": "#EAF7EE",
+        "container_bg": "rgba(250,255,251,0.68)",
+        "input_border": "rgba(124,181,139,0.30)",
+        "input_bg": "rgba(255,255,255,0.84)",
+        "button_bg_1": "#D7F2DD",
+        "button_bg_2": "#BDE8C7",
+        "button_border": "rgba(124,181,139,0.32)",
+        "button_text": "#2D5C38",
+        "button_shadow": "rgba(124,181,139,0.14)",
+        "line": "rgba(124,181,139,0.20)",
+        "metric_border": "rgba(124,181,139,0.20)",
+        "expander_border": "rgba(124,181,139,0.18)",
+        "form_border": "rgba(124,181,139,0.15)",
+        "table_head_bg": "rgba(189,232,199,0.65)",
+        "table_head_border": "rgba(124,181,139,0.20)",
+        "table_head_text": "#3D6E49",
+        "row_hover": "rgba(189,232,199,0.18)",
+        "amount_text": "#2F8A4B",
+        "cat_bg": "rgba(189,232,199,0.45)",
+        "cat_text": "#3D6E49",
+        "filter_bg": "rgba(255,255,255,0.84)",
+        "filter_border": "rgba(124,181,139,0.30)",
+        "filter_hover": "rgba(189,232,199,0.22)",
+        "filter_active_1": "#D7F2DD",
+        "filter_active_2": "#BDE8C7",
+        "filter_active_border": "rgba(124,181,139,0.45)",
+        "filter_shadow": "rgba(124,181,139,0.16)",
+        "date_text": "#3D7A57"
+    },
+    "blue": {
+        "app_bg_1": "#F5FAFF",
+        "app_bg_2": "#EAF3FF",
+        "container_bg": "rgba(250,252,255,0.68)",
+        "input_border": "rgba(126,170,220,0.30)",
+        "input_bg": "rgba(255,255,255,0.84)",
+        "button_bg_1": "#D9EBFF",
+        "button_bg_2": "#BCD8F8",
+        "button_border": "rgba(126,170,220,0.32)",
+        "button_text": "#2C527A",
+        "button_shadow": "rgba(126,170,220,0.14)",
+        "line": "rgba(126,170,220,0.20)",
+        "metric_border": "rgba(126,170,220,0.20)",
+        "expander_border": "rgba(126,170,220,0.18)",
+        "form_border": "rgba(126,170,220,0.15)",
+        "table_head_bg": "rgba(188,216,248,0.65)",
+        "table_head_border": "rgba(126,170,220,0.20)",
+        "table_head_text": "#416B96",
+        "row_hover": "rgba(188,216,248,0.18)",
+        "amount_text": "#2F6FAD",
+        "cat_bg": "rgba(188,216,248,0.45)",
+        "cat_text": "#416B96",
+        "filter_bg": "rgba(255,255,255,0.84)",
+        "filter_border": "rgba(126,170,220,0.30)",
+        "filter_hover": "rgba(188,216,248,0.22)",
+        "filter_active_1": "#D9EBFF",
+        "filter_active_2": "#BCD8F8",
+        "filter_active_border": "rgba(126,170,220,0.45)",
+        "filter_shadow": "rgba(126,170,220,0.16)",
+        "date_text": "#416B96"
+    },
+    "violet": {
+        "app_bg_1": "#FAF7FF",
+        "app_bg_2": "#F1EBFB",
+        "container_bg": "rgba(252,250,255,0.68)",
+        "input_border": "rgba(167,145,206,0.30)",
+        "input_bg": "rgba(255,255,255,0.84)",
+        "button_bg_1": "#E6D9FA",
+        "button_bg_2": "#D3C0F3",
+        "button_border": "rgba(167,145,206,0.32)",
+        "button_text": "#503A73",
+        "button_shadow": "rgba(167,145,206,0.14)",
+        "line": "rgba(167,145,206,0.20)",
+        "metric_border": "rgba(167,145,206,0.20)",
+        "expander_border": "rgba(167,145,206,0.18)",
+        "form_border": "rgba(167,145,206,0.15)",
+        "table_head_bg": "rgba(211,192,243,0.65)",
+        "table_head_border": "rgba(167,145,206,0.20)",
+        "table_head_text": "#6A548C",
+        "row_hover": "rgba(211,192,243,0.18)",
+        "amount_text": "#7B4FC9",
+        "cat_bg": "rgba(211,192,243,0.45)",
+        "cat_text": "#6A548C",
+        "filter_bg": "rgba(255,255,255,0.84)",
+        "filter_border": "rgba(167,145,206,0.30)",
+        "filter_hover": "rgba(211,192,243,0.22)",
+        "filter_active_1": "#E6D9FA",
+        "filter_active_2": "#D3C0F3",
+        "filter_active_border": "rgba(167,145,206,0.45)",
+        "filter_shadow": "rgba(167,145,206,0.16)",
+        "date_text": "#6A548C"
+    },
+    "mint": {
+        "app_bg_1": "#F3FFFD",
+        "app_bg_2": "#E6F9F6",
+        "container_bg": "rgba(245,255,253,0.70)",
+        "input_border": "rgba(130,210,195,0.30)",
+        "input_bg": "rgba(255,255,255,0.84)",
+        "button_bg_1": "#CFF5EE",
+        "button_bg_2": "#AEEDE2",
+        "button_border": "rgba(130,210,195,0.30)",
+        "button_text": "#285A53",
+        "button_shadow": "rgba(130,210,195,0.14)",
+        "line": "rgba(130,210,195,0.20)",
+        "metric_border": "rgba(130,210,195,0.20)",
+        "expander_border": "rgba(130,210,195,0.18)",
+        "form_border": "rgba(130,210,195,0.15)",
+        "table_head_bg": "rgba(174,237,226,0.62)",
+        "table_head_border": "rgba(130,210,195,0.20)",
+        "table_head_text": "#2B6B63",
+        "row_hover": "rgba(174,237,226,0.18)",
+        "amount_text": "#2B8F82",
+        "cat_bg": "rgba(174,237,226,0.45)",
+        "cat_text": "#2B6B63",
+        "filter_bg": "rgba(255,255,255,0.84)",
+        "filter_border": "rgba(130,210,195,0.30)",
+        "filter_hover": "rgba(174,237,226,0.22)",
+        "filter_active_1": "#CFF5EE",
+        "filter_active_2": "#AEEDE2",
+        "filter_active_border": "rgba(130,210,195,0.45)",
+        "filter_shadow": "rgba(130,210,195,0.16)",
+        "date_text": "#2B8F82"
+    },
+    "lemon": {
+        "app_bg_1": "#FFFDEB",
+        "app_bg_2": "#FFF8CC",
+        "container_bg": "rgba(255,255,240,0.70)",
+        "input_border": "rgba(230,210,120,0.35)",
+        "input_bg": "rgba(255,255,255,0.86)",
+        "button_bg_1": "#FFF3A3",
+        "button_bg_2": "#FFE777",
+        "button_border": "rgba(230,210,120,0.35)",
+        "button_text": "#6D6200",
+        "button_shadow": "rgba(230,210,120,0.14)",
+        "line": "rgba(230,210,120,0.20)",
+        "metric_border": "rgba(230,210,120,0.20)",
+        "expander_border": "rgba(230,210,120,0.18)",
+        "form_border": "rgba(230,210,120,0.15)",
+        "table_head_bg": "rgba(255,231,119,0.50)",
+        "table_head_border": "rgba(230,210,120,0.20)",
+        "table_head_text": "#8A7A00",
+        "row_hover": "rgba(255,231,119,0.18)",
+        "amount_text": "#9A8B00",
+        "cat_bg": "rgba(255,231,119,0.35)",
+        "cat_text": "#8A7A00",
+        "filter_bg": "rgba(255,255,255,0.86)",
+        "filter_border": "rgba(230,210,120,0.35)",
+        "filter_hover": "rgba(255,231,119,0.22)",
+        "filter_active_1": "#FFF3A3",
+        "filter_active_2": "#FFE777",
+        "filter_active_border": "rgba(230,210,120,0.45)",
+        "filter_shadow": "rgba(230,210,120,0.16)",
+        "date_text": "#9A8B00"
+    },
+    "peach": {
+        "app_bg_1": "#FFF6F1",
+        "app_bg_2": "#FFEDE4",
+        "container_bg": "rgba(255,250,247,0.70)",
+        "input_border": "rgba(255,170,150,0.35)",
+        "input_bg": "rgba(255,255,255,0.84)",
+        "button_bg_1": "#FFD6C6",
+        "button_bg_2": "#FFBEA8",
+        "button_border": "rgba(255,170,150,0.35)",
+        "button_text": "#7A4A3A",
+        "button_shadow": "rgba(255,170,150,0.14)",
+        "line": "rgba(255,170,150,0.20)",
+        "metric_border": "rgba(255,170,150,0.20)",
+        "expander_border": "rgba(255,170,150,0.18)",
+        "form_border": "rgba(255,170,150,0.15)",
+        "table_head_bg": "rgba(255,190,168,0.50)",
+        "table_head_border": "rgba(255,170,150,0.20)",
+        "table_head_text": "#A45B49",
+        "row_hover": "rgba(255,190,168,0.18)",
+        "amount_text": "#C7654E",
+        "cat_bg": "rgba(255,190,168,0.35)",
+        "cat_text": "#A45B49",
+        "filter_bg": "rgba(255,255,255,0.84)",
+        "filter_border": "rgba(255,170,150,0.35)",
+        "filter_hover": "rgba(255,190,168,0.22)",
+        "filter_active_1": "#FFD6C6",
+        "filter_active_2": "#FFBEA8",
+        "filter_active_border": "rgba(255,170,150,0.45)",
+        "filter_shadow": "rgba(255,170,150,0.16)",
+        "date_text": "#C7654E"
+    },
+    "navy": {
+        "app_bg_1": "#F4F6FA",
+        "app_bg_2": "#E6EBF5",
+        "container_bg": "rgba(250,252,255,0.70)",
+        "input_border": "rgba(120,140,200,0.35)",
+        "input_bg": "rgba(255,255,255,0.86)",
+        "button_bg_1": "#B9C7E8",
+        "button_bg_2": "#9FB2DE",
+        "button_border": "rgba(120,140,200,0.35)",
+        "button_text": "#31466E",
+        "button_shadow": "rgba(120,140,200,0.14)",
+        "line": "rgba(120,140,200,0.20)",
+        "metric_border": "rgba(120,140,200,0.20)",
+        "expander_border": "rgba(120,140,200,0.18)",
+        "form_border": "rgba(120,140,200,0.15)",
+        "table_head_bg": "rgba(159,178,222,0.50)",
+        "table_head_border": "rgba(120,140,200,0.20)",
+        "table_head_text": "#48608F",
+        "row_hover": "rgba(159,178,222,0.18)",
+        "amount_text": "#3A4F8A",
+        "cat_bg": "rgba(159,178,222,0.35)",
+        "cat_text": "#48608F",
+        "filter_bg": "rgba(255,255,255,0.86)",
+        "filter_border": "rgba(120,140,200,0.35)",
+        "filter_hover": "rgba(159,178,222,0.22)",
+        "filter_active_1": "#B9C7E8",
+        "filter_active_2": "#9FB2DE",
+        "filter_active_border": "rgba(120,140,200,0.45)",
+        "filter_shadow": "rgba(120,140,200,0.16)",
+        "date_text": "#3A4F8A"
+    },
+    "blackberry": {
+        "app_bg_1": "#FBF7FF",
+        "app_bg_2": "#EFE7FB",
+        "container_bg": "rgba(250,245,255,0.70)",
+        "input_border": "rgba(170,140,220,0.35)",
+        "input_bg": "rgba(255,255,255,0.84)",
+        "button_bg_1": "#DCCBFA",
+        "button_bg_2": "#C6AFF2",
+        "button_border": "rgba(170,140,220,0.35)",
+        "button_text": "#4E3B74",
+        "button_shadow": "rgba(170,140,220,0.14)",
+        "line": "rgba(170,140,220,0.20)",
+        "metric_border": "rgba(170,140,220,0.20)",
+        "expander_border": "rgba(170,140,220,0.18)",
+        "form_border": "rgba(170,140,220,0.15)",
+        "table_head_bg": "rgba(198,175,242,0.50)",
+        "table_head_border": "rgba(170,140,220,0.20)",
+        "table_head_text": "#6C48A6",
+        "row_hover": "rgba(198,175,242,0.18)",
+        "amount_text": "#6C48A6",
+        "cat_bg": "rgba(198,175,242,0.35)",
+        "cat_text": "#6C48A6",
+        "filter_bg": "rgba(255,255,255,0.84)",
+        "filter_border": "rgba(170,140,220,0.35)",
+        "filter_hover": "rgba(198,175,242,0.22)",
+        "filter_active_1": "#DCCBFA",
+        "filter_active_2": "#C6AFF2",
+        "filter_active_border": "rgba(170,140,220,0.45)",
+        "filter_shadow": "rgba(170,140,220,0.16)",
+        "date_text": "#6C48A6"
+    },
+    "rose_gold": {
+        "app_bg_1": "#FFF7F5",
+        "app_bg_2": "#FFEDEA",
+        "container_bg": "rgba(255,248,246,0.70)",
+        "input_border": "rgba(230,150,130,0.35)",
+        "input_bg": "rgba(255,255,255,0.84)",
+        "button_bg_1": "#FFD5CC",
+        "button_bg_2": "#FFC1B6",
+        "button_border": "rgba(230,150,130,0.35)",
+        "button_text": "#7A4F45",
+        "button_shadow": "rgba(230,150,130,0.14)",
+        "line": "rgba(230,150,130,0.20)",
+        "metric_border": "rgba(230,150,130,0.20)",
+        "expander_border": "rgba(230,150,130,0.18)",
+        "form_border": "rgba(230,150,130,0.15)",
+        "table_head_bg": "rgba(255,193,182,0.50)",
+        "table_head_border": "rgba(230,150,130,0.20)",
+        "table_head_text": "#B96A5C",
+        "row_hover": "rgba(255,193,182,0.18)",
+        "amount_text": "#B96A5C",
+        "cat_bg": "rgba(255,193,182,0.35)",
+        "cat_text": "#B96A5C",
+        "filter_bg": "rgba(255,255,255,0.84)",
+        "filter_border": "rgba(230,150,130,0.35)",
+        "filter_hover": "rgba(255,193,182,0.22)",
+        "filter_active_1": "#FFD5CC",
+        "filter_active_2": "#FFC1B6",
+        "filter_active_border": "rgba(230,150,130,0.45)",
+        "filter_shadow": "rgba(230,150,130,0.16)",
+        "date_text": "#B96A5C"
+    },
+}
 
-CASH_TYPE_OPTIONS = ["현금 넣기", "현금 쓰기"]
+@st.cache_resource
+def get_gspread_client():
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    credentials = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scopes,
+    )
+    return gspread.authorize(credentials)
 
-CASH_CATEGORY_OPTIONS = [
-    "경조사",
-    "용돈",
-    "식비",
-    "교통",
-    "기타",
-]
 
+def get_worksheet(sheet_name: str):
+    client = get_gspread_client()
+    spreadsheet = client.open(st.secrets["sheets"]["spreadsheet_name"])
+    return spreadsheet.worksheet(sheet_name)
 
 @st.cache_data(ttl=60)
-def load_living_df(_get_worksheet_func) -> pd.DataFrame:
+def load_df() -> pd.DataFrame:
     try:
-        ws = _get_worksheet_func("living")
+        ws = get_worksheet("money")
         values = ws.get_all_records()
 
         if not values:
-            return pd.DataFrame(columns=LIVING_COLUMNS)
+            return pd.DataFrame(columns=COLUMNS)
 
         df = pd.DataFrame(values).fillna("")
 
@@ -70,6 +491,7 @@ def load_living_df(_get_worksheet_func) -> pd.DataFrame:
             "메모": "memo",
             "구분": "type",
         }
+
         df = df.rename(columns=rename_map)
 
         if "번호" in df.columns:
@@ -91,79 +513,85 @@ def load_living_df(_get_worksheet_func) -> pd.DataFrame:
         )
         df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0).astype(int)
 
-        df["date"] = df["date"].astype(str).str.strip()
-        df["category"] = df["category"].astype(str).str.strip()
+        df["type"] = df["type"].astype(str).str.strip()
         df["method"] = df["method"].astype(str).str.strip()
         df["memo"] = df["memo"].astype(str).str.strip()
-        df["type"] = df["type"].astype(str).str.strip()
-        df["_raw_amount"] = raw_amount
 
         def restore_amount(row):
             amt = abs(int(row["amount"]))
-            typ = str(row.get("type", "")).strip()
-            category = str(row.get("category", "")).strip()
+            typ = row["type"]
+            method = row["method"]
+            memo = row["memo"]
             raw = str(row.get("_raw_amount", "")).strip()
 
-            if category == "비상금 넣기":
-                return -amt
-            if category == "비상금 빼기":
-                return amt
-
-            if typ == "입금":
-                return amt
-            if typ == "지출":
+            # 사건비통장은 메모 키워드 기준으로 우선 복원
+            if method == "사건비통장":
+                if any(k in memo for k in INCIDENT_INCOME_KEYWORDS):
+                    return amt
                 return -amt
 
+            # 그 외는 구분 기준 복원
+            if typ == "환급":
+                return amt
+            elif typ == "지출":
+                return -amt
+
+            # 예전 데이터 대응: 구분이 없으면 원래 부호 최대한 유지
             if raw.startswith("-"):
                 return -amt
-            if raw.startswith("+"):
+            elif raw.startswith("+"):
                 return amt
+            else:
+                return -amt if method != "사건비통장" else amt
 
-            return -amt
-
+        df["_raw_amount"] = raw_amount
         df["amount"] = df.apply(restore_amount, axis=1)
-        df = df.drop(columns=["_raw_amount", "type"], errors="ignore")
+        df = df.drop(columns=["_raw_amount"])
 
-        return df[LIVING_COLUMNS].copy()
+        df["date"] = df["date"].astype(str)
+        df["category"] = df["category"].astype(str)
+        df["method"] = df["method"].astype(str)
+        df["memo"] = df["memo"].astype(str)
 
-    except Exception as e:
-        st.error(f"load_living_df 에러: {e}")
-        return pd.DataFrame(columns=LIVING_COLUMNS)
+        return df[COLUMNS].copy()
 
+    except Exception:
+        return pd.DataFrame(columns=COLUMNS)
 
-def save_living_df(df: pd.DataFrame, _get_worksheet_func) -> None:
-    ws = _get_worksheet_func("living")
+def save_df(df: pd.DataFrame) -> None:
+    ws = get_worksheet("money")
 
-    save_data = df[LIVING_COLUMNS].copy().fillna("")
+    save_data = df[COLUMNS].copy().fillna("")
 
+    # 날짜 정렬용
     save_data["date_dt"] = pd.to_datetime(save_data["date"], errors="coerce")
+
     save_data = save_data.sort_values(
         by=["date_dt", "date"],
         ascending=[False, False]
     ).drop(columns=["date_dt"])
 
-    def get_type_from_row(row):
-        category = str(row["category"]).strip()
-        amount = int(row["amount"])
+    # 지출 / 환급 구분
+    save_data["구분"] = save_data["amount"].apply(
+        lambda x: "환급" if int(x) > 0 else "지출"
+    )
 
-        if category in LIVING_EMERGENCY_CATEGORY_OPTIONS:
-            return "비상금"
-        return "입금" if amount > 0 else "지출"
-
-    save_data["구분"] = save_data.apply(get_type_from_row, axis=1)
-
+    # 금액 표시
     save_data["금액"] = save_data["amount"].apply(
         lambda x: f"{abs(int(x)):,}원"
     )
 
+    # 한글 컬럼 생성
     save_data["날짜"] = save_data["date"]
     save_data["카테고리"] = save_data["category"]
     save_data["결제수단"] = save_data["method"]
     save_data["메모"] = save_data["memo"]
 
+    # 번호 생성
     save_data = save_data.reset_index(drop=True)
     save_data.insert(0, "번호", range(1, len(save_data) + 1))
 
+    # 최종 컬럼 순서
     save_data = save_data[
         ["번호", "날짜", "구분", "카테고리", "메모", "금액", "결제수단"]
     ]
@@ -172,23 +600,254 @@ def save_living_df(df: pd.DataFrame, _get_worksheet_func) -> None:
 
     ws.clear()
     ws.update(rows)
-    load_living_df.clear()
+
+    load_df.clear()
+
+def get_month_sheet(gc, month_key):
+    sh = gc.open("moneyLog")
+
+    try:
+        worksheet = sh.worksheet(month_key)
+    except:
+        worksheet = sh.add_worksheet(title=month_key, rows="1000", cols="20")
+
+    return worksheet
+
+def get_worksheet(sheet_name: str):
+    client = get_gspread_client()
+    spreadsheet = client.open(st.secrets["sheets"]["spreadsheet_name"])
+    return spreadsheet.worksheet(sheet_name)
+
+@st.cache_data(ttl=60)
+def load_checklist_df() -> pd.DataFrame:
+    try:
+        ws = get_worksheet("checklist")
+        values = ws.get_all_records()
+
+        if not values:
+            return pd.DataFrame(columns=["month", "item", "checked"])
+
+        df = pd.DataFrame(values).fillna("")
+
+        for c in ["month", "item", "checked"]:
+            if c not in df.columns:
+                df[c] = ""
+
+        df = df[["month", "item", "checked"]].copy()
+        df["month"] = df["month"].astype(str)
+        df["item"] = df["item"].astype(str)
+        df["checked"] = df["checked"].astype(str).map(
+            lambda x: str(x).lower() in ["true", "1", "yes"]
+        )
+
+        return df
+
+    except Exception:
+        return pd.DataFrame(columns=["month", "item", "checked"])
+
+def save_checklist_df(df: pd.DataFrame) -> None:
+    ws = get_worksheet("checklist")
+
+    save_data = df[["month", "item", "checked"]].copy().fillna("")
+    rows = [["month", "item", "checked"]] + save_data.values.tolist()
+
+    ws.clear()
+    ws.update(rows)
+    load_checklist_df.clear()
+
+def get_month_checklist(month_key: str) -> pd.DataFrame:
+    checklist_df = load_checklist_df()
+    month_df = checklist_df[checklist_df["month"] == month_key].copy()
+
+    if month_df.empty:
+        month_df = pd.DataFrame({
+            "month": [month_key] * len(CHECKLIST_ITEMS),
+            "item": CHECKLIST_ITEMS,
+            "checked": [False] * len(CHECKLIST_ITEMS),
+        })
+        checklist_df = pd.concat([checklist_df, month_df], ignore_index=True)
+        save_checklist_df(checklist_df)
+    else:
+        existing_items = set(month_df["item"].tolist())
+        missing_items = [x for x in CHECKLIST_ITEMS if x not in existing_items]
+
+        if missing_items:
+            add_df = pd.DataFrame({
+                "month": [month_key] * len(missing_items),
+                "item": missing_items,
+                "checked": [False] * len(missing_items),
+            })
+            checklist_df = pd.concat([checklist_df, add_df], ignore_index=True)
+            save_checklist_df(checklist_df)
+            month_df = checklist_df[checklist_df["month"] == month_key].copy()
+
+    return month_df
 
 
-def get_living_month_options(df: pd.DataFrame):
+def update_checklist_item(month_key: str, item_name: str, checked_value: bool) -> None:
+    checklist_df = load_checklist_df()
+    mask = (checklist_df["month"] == month_key) & (checklist_df["item"] == item_name)
+
+    if mask.any():
+        checklist_df.loc[mask, "checked"] = checked_value
+    else:
+        add_row = pd.DataFrame([{
+            "month": month_key,
+            "item": item_name,
+            "checked": checked_value,
+        }])
+        checklist_df = pd.concat([checklist_df, add_row], ignore_index=True)
+
+    save_checklist_df(checklist_df)
+
+
+def auto_category_from_text(text: str, fallback: str = "쇼핑") -> str:
+    t = (text or "").strip()
+
+    for k, v in AUTO_CATEGORY.items():
+        if k and k in t:
+            return v
+
+    return fallback
+
+
+def auto_card_and_category(text: str, default_category: str, default_method: str):
+    t = (text or "").strip()
+
+    # 신한카드 고정비 우선
+    for k in AUTO_SHINHAN:
+        if k in t:
+            return "고정비", "신한카드"
+
+    # 사건비통장 자동 분류
+    if is_incident_expense_text(t):
+        return "사건비", "사건비통장"
+
+    category = auto_category_from_text(t, default_category)
+    return category, default_method
+
+def is_incident_expense_text(text: str) -> bool:
+    t = (text or "").strip()
+
+    for keywords in INCIDENT_EXPENSE_KEYWORDS.values():
+        for keyword in keywords:
+            if keyword in t:
+                return True
+    return False
+
+def split_fuel_memo(memo: str):
+    memo = (memo or "").strip()
+    m = re.search(r"리터당\s*([\d,]+)원", memo)
+
+    fuel_price = ""
+    clean_memo = memo
+
+    if m:
+        fuel_price = m.group(1).replace(",", "")
+        clean_memo = re.sub(r"\s*/?\s*리터당\s*[\d,]+원", "", memo).strip()
+        clean_memo = re.sub(r"\s*/?\s*[\d.]+L", "", clean_memo).strip()
+
+    return clean_memo, fuel_price
+
+
+def is_incident_income(method: str, memo: str) -> bool:
+    if method != "사건비통장":
+        return False
+
+    memo_text = (memo or "").strip()
+    return any(k in memo_text for k in INCIDENT_INCOME_KEYWORDS)
+
+
+def build_fuel_memo(memo: str, fuel_price_clean: str, amount_clean: str) -> str:
+    final_memo = (memo or "").strip()
+
+    if fuel_price_clean:
+        fuel_price_int = int(fuel_price_clean)
+        amount_int = int(amount_clean)
+        liters = abs(amount_int) / fuel_price_int
+        liters_str = f"{liters:.2f}L"
+
+        if final_memo:
+            return f"{final_memo} / 리터당 {fuel_price_int:,}원 / {liters_str}"
+        return f"주유 / 리터당 {fuel_price_int:,}원 / {liters_str}"
+
+    return final_memo
+
+def classify_incident_memo(memo: str) -> str:
+    memo_text = (memo or "").strip()
+
+    for category, keywords in INCIDENT_CATEGORY_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in memo_text:
+                return category
+
+    return "기타"
+
+def parse_quick_input(text: str, default_category: str, default_method: str) -> dict:
+    text = (text or "").strip()
+    if not text:
+        raise ValueError("빈 입력이에요.")
+
+    tokens = text.split()
+    if not tokens:
+        raise ValueError("입력값이 없어요.")
+
+    d = str(date.today())
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", tokens[0]):
+        d = tokens[0]
+        tokens = tokens[1:]
+        if not tokens:
+            raise ValueError("날짜만 있고 금액이 없어요. 예: 2026-03-01 우유 4500")
+
+    method = default_method or DEFAULT_METHOD
+    filtered_tokens = []
+
+    for t in tokens:
+        if t.startswith("@") and len(t) > 1:
+            method = t[1:]
+        else:
+            filtered_tokens.append(t)
+
+    amount = None
+    memo_tokens = []
+
+    for t in filtered_tokens:
+        t_clean = t.replace(",", "")
+        if amount is None and re.fullmatch(r"[+-]?\d+", t_clean):
+            amount = int(t_clean)
+        else:
+            memo_tokens.append(t)
+
+    if amount is None:
+        raise ValueError("금액이 없어요. 예: 4500 우유 / 우유 4500")
+
+    memo = " ".join(memo_tokens).strip()
+    category, method = auto_card_and_category(memo, default_category, method)
+
+    # 사건비통장 + 환급/입금/수입/보험금 => 수입(+)
+    if method == "사건비통장" and any(k in memo for k in INCIDENT_INCOME_KEYWORDS):
+        final_amount = abs(amount)
+    else:
+        final_amount = -abs(amount)
+
+    return {
+        "date": d,
+        "amount": final_amount,
+        "category": category,
+        "method": method or DEFAULT_METHOD,
+        "memo": memo,
+    }
+
+
+def get_month_options(df: pd.DataFrame):
     current_month = datetime.today().strftime("%Y-%m")
 
     if df.empty:
         return [current_month]
 
-    temp = df.copy()
-    temp["date_dt"] = pd.to_datetime(temp["date"], errors="coerce")
-
+    dts = pd.to_datetime(df["date"], errors="coerce")
     months = sorted(
-        {
-            m.strftime("%Y-%m")
-            for m in temp["date_dt"].dropna().dt.to_period("M").dt.to_timestamp()
-        },
+        {m.strftime("%Y-%m") for m in dts.dropna().dt.to_period("M").dt.to_timestamp()},
         reverse=True
     )
 
@@ -198,581 +857,1804 @@ def get_living_month_options(df: pd.DataFrame):
     return months or [current_month]
 
 
-def calc_living_summary(df: pd.DataFrame, month_key: str):
-    temp = df.copy()
-    temp["date_dt"] = pd.to_datetime(temp["date"], errors="coerce")
-    temp["category"] = temp["category"].astype(str).str.strip()
+def load_font():
+    if not os.path.exists("leejieun.ttf"):
+        return
 
-    month_start = pd.to_datetime(f"{month_key}-01")
-    month_end = month_start + pd.offsets.MonthEnd(1)
-    prev_end = month_start - pd.Timedelta(days=1)
+    with open("leejieun.ttf", "rb") as f:
+        font_bytes = f.read()
 
-    def is_emergency(dataframe):
-        return dataframe["category"].isin(LIVING_EMERGENCY_CATEGORY_OPTIONS)
+    encoded = base64.b64encode(font_bytes).decode()
 
-    prev_df = temp[temp["date_dt"] <= prev_end].copy()
-    prev_normal_df = prev_df[~is_emergency(prev_df)].copy()
-    prev_total_balance = int(prev_normal_df["amount"].sum())
-
-    prev_emergency_put = abs(int(
-        prev_df[prev_df["category"] == "비상금 넣기"]["amount"].sum()
-    ))
-    prev_emergency_take = int(
-        prev_df[prev_df["category"] == "비상금 빼기"]["amount"].sum()
+    st.markdown(
+        f"""
+        <style>
+        @font-face {{
+            font-family: 'LeeJieun';
+            src: url(data:font/ttf;base64,{encoded}) format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
     )
-    prev_emergency_balance = prev_emergency_put - prev_emergency_take
 
-    carryover = prev_total_balance - prev_emergency_balance
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("10.255.255.255", 1))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return None
 
-    month_df = temp[
-        (temp["date_dt"] >= month_start) &
-        (temp["date_dt"] <= month_end)
-    ].copy()
-    month_normal_df = month_df[~is_emergency(month_df)].copy()
 
-    month_income = int(month_normal_df[month_normal_df["amount"] > 0]["amount"].sum())
-    month_expense = abs(int(month_normal_df[month_normal_df["amount"] < 0]["amount"].sum()))
+def budget_status(spent: int):
+    ratio = spent / MONTHLY_BUDGET if MONTHLY_BUDGET > 0 else 0
 
-    current_df = temp[temp["date_dt"] <= month_end].copy()
-    current_normal_df = current_df[~is_emergency(current_df)].copy()
-    total_balance = int(current_normal_df["amount"].sum())
+    if ratio >= 1:
+        return {
+            "label": "초과",
+            "bg": "#FFE3E8",
+            "border": "#FF7A9A",
+            "text": "#C33B5E",
+        }
+    elif ratio >= 0.8:
+        return {
+            "label": "거의 다 씀",
+            "bg": "#FFF1E0",
+            "border": "#FFB85C",
+            "text": "#C97A00",
+        }
+    elif ratio >= 0.5:
+        return {
+            "label": "주의",
+            "bg": "#FFF8D9",
+            "border": "#E7C84C",
+            "text": "#9A7A00",
+        }
+    else:
+        return {
+            "label": "여유",
+            "bg": "#E9F9EF",
+            "border": "#72D69B",
+            "text": "#257A45",
+        }
 
-    emergency_put = abs(int(
-        current_df[current_df["category"] == "비상금 넣기"]["amount"].sum()
-    ))
-    emergency_take = int(
-        current_df[current_df["category"] == "비상금 빼기"]["amount"].sum()
+
+def render_budget_card(title: str, value: str, bg: str, border: str, text: str):
+    st.markdown(
+        f"""
+        <div style="
+            background:{bg};
+            border:1px solid {border};
+            border-radius:18px;
+            padding:16px;
+            min-height:105px;
+            box-shadow:0 6px 18px rgba(0,0,0,0.04);
+        ">
+            <div style="font-size:14px; color:{text}; margin-bottom:8px;">{title}</div>
+            <div style="font-size:28px; font-weight:800; color:{text};">{value}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
-    emergency_balance = emergency_put - emergency_take
 
-    available_balance = total_balance - emergency_balance
 
-    return {
-        "carryover": carryover,
-        "income": month_income,
-        "expense": month_expense,
-        "emergency": emergency_balance,
-        "available": available_balance,
+# -----------------------------
+# App
+# -----------------------------
+st.set_page_config(page_title="빠른 가계부", layout="wide")
+df = load_df()
+load_font()
+
+theme_name = st.sidebar.selectbox(
+    "🎨 테마 선택",
+    list(THEMES.keys()),
+    index=0,
+    key="theme_select"
+)
+
+theme = THEMES[theme_name]
+
+st.markdown(f"""
+<style>
+/* ===== 폰트 ===== */
+html, body, [data-testid="stApp"], [data-testid="stAppViewContainer"],
+[data-testid="stSidebar"], div, p, span, label, li {{
+    font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+}}
+
+input,
+textarea,
+button,
+label,
+select,
+input[type="text"],
+input[type="number"],
+input[type="date"] {{
+    font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
+}}
+
+div[data-testid="stTextInput"] input,
+div[data-testid="stNumberInput"] input,
+div[data-testid="stDateInput"] input,
+div[data-testid="stTextArea"] textarea,
+[data-baseweb="select"] *,
+div[data-testid="stSelectbox"] * {{
+    font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
+}}
+
+/* ===== 배경 ===== */
+html, body, [data-testid="stAppViewContainer"] {{
+    background: linear-gradient(180deg, {theme["app_bg_1"]} 0%, {theme["app_bg_2"]} 100%) !important;
+}}
+
+[data-testid="stAppViewContainer"] > .main {{
+    background: transparent !important;
+}}
+
+/* ===== 메인 컨테이너 ===== */
+.block-container {{
+    padding-top: 1rem !important;
+    padding-bottom: 1.2rem !important;
+    padding-left: 0.8rem !important;
+    padding-right: 0.8rem !important;
+    max-width: 1400px;
+    background: {theme["container_bg"]};
+    border-radius: 24px;
+}}
+
+/* ===== 타이틀 ===== */
+h1, h2, h3 {{
+    font-weight: 800;
+    letter-spacing: -1px;
+}}
+
+h3, h4 {{
+    margin-top: 0.3rem !important;
+    margin-bottom: 0.5rem !important;
+}}
+
+hr {{
+    border: none;
+    height: 1px;
+    background: {theme["line"]};
+    margin: 1.1rem 0;
+}}
+
+/* ===== 입력창 ===== */
+input, textarea {{
+    border-radius: 14px !important;
+    border: 1px solid {theme["input_border"]} !important;
+    background: {theme["input_bg"]} !important;
+}}
+
+[data-baseweb="select"] > div {{
+    border-radius: 14px !important;
+    border: 1px solid {theme["input_border"]} !important;
+    background: {theme["input_bg"]} !important;
+    cursor: pointer !important;
+}}
+
+/* ===== 기본 버튼 ===== */
+button:not([kind="primary"]) {{
+    border-radius: 16px !important;
+    border: 1px solid {theme["button_border"]} !important;
+    background: linear-gradient(180deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
+    color: {theme["button_text"]} !important;
+    font-weight: 700 !important;
+    box-shadow: 0 10px 18px {theme["button_shadow"]} !important;
+    transition: all 0.15s ease !important;
+}}
+
+button:hover {{
+    transform: translateY(-1px);
+}}
+
+/* ===== 필터 버튼 상태 ===== */
+button[kind="secondary"] {{
+    background: {theme["filter_bg"]} !important;
+    border: 1px solid {theme["filter_border"]} !important;
+    color: {theme["button_text"]} !important;
+    box-shadow: none !important;
+}}
+
+button[kind="secondary"]:hover {{
+    background: {theme["filter_hover"]} !important;
+    border: 1px solid {theme["filter_active_border"]} !important;
+    transform: translateY(-1px);
+}}
+
+button[kind="primary"] {{
+    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
+    border: 1px solid {theme["filter_active_border"]} !important;
+    color: {theme["button_text"]} !important;
+    box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
+    font-weight: 800 !important;
+}}
+
+button[kind="primary"]:hover {{
+    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
+    border: 1px solid {theme["filter_active_border"]} !important;
+}}
+
+/* ===== metric / form ===== */
+[data-testid="stMetric"] {{
+    background: rgba(255,255,255,0.60);
+    border-radius: 16px;
+    padding: 10px;
+    border: 1px solid {theme["metric_border"]};
+}}
+
+[data-testid="stForm"] {{
+    background: rgba(255,255,255,0.45);
+    border: 1px solid {theme["form_border"]};
+    border-radius: 18px;
+    padding: 14px;
+}}
+
+/* ===== 테이블 ===== */
+.table-head {{
+    font-weight: 800;
+    background: {theme["table_head_bg"]};
+    border: 1px solid {theme["table_head_border"]};
+    border-radius: 12px;
+    padding: 8px 10px;
+    text-align: center;
+    color: {theme["table_head_text"]};
+    margin-bottom: 4px;
+    font-size: 14px;
+}}
+
+.row-box {{
+    padding: 6px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.35;
+}}
+
+.row-box:hover {{
+    background: {theme["row_hover"]};
+}}
+
+.amount-text {{
+    font-weight: 800;
+    color: {theme["amount_text"]};
+}}
+
+/* ===== 태그 ===== */
+.cat-tag {{
+    background: {theme["cat_bg"]};
+    color: {theme["cat_text"]};
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 15px;
+    display: inline-block;
+}}
+
+.method-hyundai {{
+    background: rgba(200,200,200,0.35);
+    color: #4A4A4A;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 15px;
+    display: inline-block;
+}}
+
+.method-shinhan {{
+    background: rgba(180,220,255,0.45);
+    color: #2F6F8F;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 15px;
+    display: inline-block;
+}}
+
+.method-incident {{
+    background: rgba(255,225,120,0.45);
+    color: #8A6A00;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 15px;
+    display: inline-block;
+}}
+
+/* ===== 버튼 간격 ===== */
+div[data-testid="stButton"] {{
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}}
+
+div[data-testid="stButton"] button {{
+    padding: 2px 6px !important;
+    min-height: 30px !important;
+    border-radius: 16px;
+}}
+
+/* ===== 체크박스 ===== */
+label:has(input[type="checkbox"]) {{
+    font-weight: 700;
+}}
+
+/* ===== radio group ===== */
+div[role="radiogroup"] {{
+    gap: 8px !important;
+    padding-left: 0px !important;
+    margin-left: 0px !important;
+}}
+
+div[role="radiogroup"] * {{
+    box-shadow: none !important;
+}}
+
+div[role="radiogroup"] label {{
+    background: {theme["filter_bg"]} !important;
+    border: 1px solid {theme["filter_border"]} !important;
+    border-radius: 14px !important;
+    padding: 8px 14px !important;
+    min-height: 42px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    margin-left: 0px !important;
+}}
+
+div[role="radiogroup"] label:hover {{
+    background: {theme["filter_hover"]} !important;
+    transform: translateY(-1px);
+}}
+
+div[role="radiogroup"] label:has(input:checked) {{
+    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
+    border: 1px solid {theme["filter_active_border"]} !important;
+    box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
+    color: {theme["button_text"]} !important;
+}}
+
+div[role="radiogroup"] label > div:first-child {{
+    display: none !important;
+}}
+
+div[role="radiogroup"] input[type="radio"] {{
+    display: none !important;
+}}
+
+div[role="radiogroup"] input[type="radio"],
+div[role="radiogroup"] input[type="radio"] + div,
+div[role="radiogroup"] [data-testid="stMarkdownContainer"] + div {{
+    accent-color: transparent !important;
+}}
+
+/* ===== 탭 ===== */
+button[data-baseweb="tab"] {{
+    background: {theme["filter_bg"]} !important;
+    border: 1px solid {theme["filter_border"]} !important;
+    border-radius: 14px !important;
+    color: {theme["button_text"]} !important;
+    font-weight: 700 !important;
+    padding: 10px 18px !important;
+    height: auto !important;
+    transition: all 0.15s ease !important;
+    box-shadow: none !important;
+    margin-right: 8px !important;
+}}
+
+button[data-baseweb="tab"]:hover {{
+    background: {theme["filter_hover"]} !important;
+    transform: translateY(-1px);
+}}
+
+button[data-baseweb="tab"][aria-selected="true"] {{
+    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
+    border: 1px solid {theme["filter_active_border"]} !important;
+    color: {theme["button_text"]} !important;
+    box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
+}}
+
+div[data-baseweb="tab-border"] {{
+    background: transparent !important;
+}}
+
+div[data-baseweb="tab-highlight"] {{
+    background: transparent !important;
+}}
+
+/* ===== 진행바 ===== */
+[data-testid="stProgress"] [data-baseweb="progress-bar"] > div {{
+    background: rgba(255,255,255,0.55) !important;
+    border: 1px solid {theme["metric_border"]} !important;
+    border-radius: 999px !important;
+    overflow: hidden !important;
+}}
+
+[data-testid="stProgress"] [role="progressbar"] div[style*="width"],
+[data-testid="stProgress"] [data-baseweb="progress-bar"] div div div {{
+    background: linear-gradient(90deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
+    border-radius: 999px !important;
+}}
+
+/* ===== 모바일 전용 ===== */
+@media (max-width: 768px) {{
+    .block-container {{
+        padding-top: 0.55rem !important;
+        padding-bottom: 0.8rem !important;
+        padding-left: 0.45rem !important;
+        padding-right: 0.45rem !important;
+        border-radius: 16px !important;
+    }}
+
+    h1, h2, h3 {{
+        letter-spacing: -0.5px !important;
+    }}
+
+    h3 {{
+        font-size: 1.02rem !important;
+        margin-top: 0.15rem !important;
+        margin-bottom: 0.35rem !important;
+    }}
+
+    h4 {{
+        font-size: 0.95rem !important;
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.25rem !important;
+    }}
+
+    hr {{
+        margin: 0.65rem 0 !important;
+    }}
+
+    label[data-testid="stWidgetLabel"] p {{
+        font-size: 0.82rem !important;
+        margin-bottom: 0.05rem !important;
+    }}
+
+    input, textarea {{
+        font-size: 14px !important;
+    }}
+
+    [data-baseweb="select"] > div {{
+        min-height: 2.5rem !important;
+    }}
+
+    div[data-testid="stTextInput"],
+    div[data-testid="stDateInput"],
+    div[data-testid="stSelectbox"] {{
+        margin-bottom: 0.08rem !important;
+    }}
+
+    [data-testid="stForm"] {{
+        padding: 10px !important;
+        border-radius: 14px !important;
+    }}
+
+    [data-testid="stMetric"] {{
+        padding: 8px !important;
+        border-radius: 12px !important;
+    }}
+
+    .table-head {{
+        font-size: 11px !important;
+        padding: 6px 6px !important;
+        border-radius: 10px !important;
+    }}
+
+    .row-box {{
+        padding: 5px 3px !important;
+        font-size: 11.5px !important;
+        line-height: 1.2 !important;
+        word-break: keep-all;
+    }}
+
+    .amount-text {{
+        font-size: 11.5px !important;
+    }}
+
+    .cat-tag,
+    .method-hyundai,
+    .method-shinhan,
+    .method-incident {{
+        font-size: 11px !important;
+        padding: 3px 7px !important;
+    }}
+
+    div[data-testid="stButton"] button {{
+        min-height: 34px !important;
+        font-size: 13px !important;
+        padding: 4px 8px !important;
+        border-radius: 12px !important;
+    }}
+
+    button[data-baseweb="tab"] {{
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+        margin-right: 6px !important;
+        border-radius: 12px !important;
+    }}
+
+    div[role="radiogroup"] {{
+        gap: 6px !important;
+    }}
+
+    div[role="radiogroup"] label {{
+        min-height: 36px !important;
+        padding: 6px 10px !important;
+        font-size: 12px !important;
+        border-radius: 12px !important;
+    }}
+
+    div[data-testid="stMarkdownContainer"]{{
+        margin-bottom:0;
+    }}
+}}
+</style>
+""", unsafe_allow_html=True)
+
+# -------------------
+# 상단 제목 + 오늘 날짜
+# -------------------
+weekday = ["월", "화", "수", "목", "금", "토", "일"]
+today = datetime.today()
+today_str = f"{today.strftime('%Y.%m.%d')} ({weekday[today.weekday()]})"
+
+title_left, title_right = st.columns([3, 1])
+
+with title_left:
+    st.title("💸 빠른 가계부")
+
+with title_right:
+    st.markdown(
+        f"""
+        <div style="text-align:right;margin-top:10px;">
+            <div style="font-size:14px;color:{theme["date_text"]};font-weight:700;">
+                오늘
+            </div>
+            <div style="font-size:20px;font-weight:800;color:{theme["date_text"]};">
+                {today_str}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# 공통 월 데이터
+month_key = datetime.today().strftime("%Y-%m")
+month_df = df.copy()
+month_df["date_dt"] = pd.to_datetime(month_df["date"], errors="coerce")
+month_df = month_df[month_df["date_dt"].dt.strftime("%Y-%m") == month_key]
+
+# 예산은 현대카드만
+spent = int(
+    month_df[month_df["method"] == BUDGET_METHOD]["amount"]
+    .abs()
+    .sum()
+)
+remaining = MONTHLY_BUDGET - spent
+percent = min(spent / MONTHLY_BUDGET, 1.0) if MONTHLY_BUDGET > 0 else 0
+status = budget_status(spent)
+
+# 카드별 월 합계
+card_raw_sum = month_df.groupby("method")["amount"].sum()
+
+hyundai_amount = abs(int(card_raw_sum.get("현대카드", 0)))
+shinhan_amount = abs(int(card_raw_sum.get("신한카드", 0)))
+
+# 현대카드 세부내역
+hyundai_df = month_df[month_df["method"] == "현대카드"].copy()
+
+hyundai_shopping = abs(int(
+    hyundai_df[hyundai_df["category"] == "쇼핑"]["amount"].sum()
+))
+hyundai_eatout = abs(int(
+    hyundai_df[hyundai_df["category"] == "외식"]["amount"].sum()
+))
+hyundai_delivery = abs(int(
+    hyundai_df[hyundai_df["category"] == "배달"]["amount"].sum()
+))
+hyundai_coffee = abs(int(
+    hyundai_df[hyundai_df["category"] == "커피"]["amount"].sum()
+))
+hyundai_convenience = abs(int(
+    hyundai_df[hyundai_df["category"] == "편의점"]["amount"].sum()
+))
+
+hyundai_known_total = (
+    hyundai_shopping
+    + hyundai_eatout
+    + hyundai_delivery
+    + hyundai_coffee
+    + hyundai_convenience
+)
+
+hyundai_other = max(hyundai_amount - hyundai_known_total, 0)
+
+# 기타 표시 블록 (0원일 때 숨김)
+other_block = ""
+
+if hyundai_other > 0:
+    other_block = f"""
+    <div style="display:flex; justify-content:space-between;">
+        <span>🧾 기타</span>
+        <span><b>{hyundai_other:,}원</b></span>
+    </div>
+    """
+
+# 사건비통장: 지출 / 환급 / 순금액
+incident_df = month_df[month_df["method"] == "사건비통장"].copy()
+
+incident_spent = abs(int(incident_df[incident_df["amount"] < 0]["amount"].sum()))
+incident_refund = int(incident_df[incident_df["amount"] > 0]["amount"].sum())
+
+# -----------------------------
+# 사건비통장 세부 분류
+# -----------------------------
+incident_expense_df = incident_df[incident_df["amount"] < 0].copy()
+
+if not incident_expense_df.empty:
+    incident_expense_df["detail_category"] = incident_expense_df["memo"].apply(classify_incident_memo)
+else:
+    incident_expense_df["detail_category"] = []
+
+incident_hospital = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "병원비"]["amount"].sum()
+))
+
+incident_medicine = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "약값"]["amount"].sum()
+))
+
+incident_checkup = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "검진"]["amount"].sum()
+))
+
+incident_gift = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "선물"]["amount"].sum()
+))
+
+incident_event = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "경조사"]["amount"].sum()
+))
+
+incident_known_total = (
+    incident_hospital
+    + incident_medicine
+    + incident_checkup
+    + incident_gift
+    + incident_event
+)
+
+incident_other = max(incident_spent - incident_known_total, 0)
+
+# 순금액
+incident_amount = incident_spent - incident_refund
+
+# 신한카드 세부내역
+shinhan_df = month_df[month_df["method"] == "신한카드"].copy()
+
+shinhan_fuel = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("주유", na=False)]["amount"].sum()
+))
+shinhan_phone = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("통신비", na=False)]["amount"].sum()
+))
+shinhan_internet = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("인터넷", na=False)]["amount"].sum()
+))
+shinhan_wow = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("쿠팡와우", na=False)]["amount"].sum()
+))
+shinhan_emoji = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("이모티콘", na=False)]["amount"].sum()
+))
+
+shinhan_known_total = shinhan_fuel + shinhan_phone + shinhan_internet + shinhan_wow + shinhan_emoji
+shinhan_other = max(shinhan_amount - shinhan_known_total, 0)
+
+total_amount = hyundai_amount + shinhan_amount + incident_amount
+
+# 탭
+tab1, tab2, tab3 = st.tabs(["🏠 개인 가계부", "📊 내역", "🏦 생활비 통장"])
+
+# -------------------
+# 수정 모달
+# -------------------
+@st.dialog("✏ 기록 수정")
+def edit_dialog(rid: int):
+    current_df = load_df()
+
+    if rid >= len(current_df):
+        st.error("수정할 데이터를 찾지 못했어요.")
+        return
+
+    row = current_df.iloc[rid]
+    current_cat = str(row["category"])
+    cat_index = CATEGORY_OPTIONS.index(current_cat) if current_cat in CATEGORY_OPTIONS else 0
+
+    current_method = str(row["method"]).strip() if str(row["method"]).strip() else DEFAULT_METHOD
+    method_index = METHOD_OPTIONS.index(current_method) if current_method in METHOD_OPTIONS else 0
+
+    base_memo, base_fuel_price = split_fuel_memo(str(row["memo"]))
+
+    with st.form(f"edit_form_{rid}"):
+        q1, q2 = st.columns(2)
+
+        with q1:
+            category = st.selectbox(
+                "카테고리",
+                CATEGORY_OPTIONS,
+                index=cat_index,
+                key=f"edit_cat_{rid}"
+            )
+            method = st.selectbox(
+                "결제수단",
+                METHOD_OPTIONS,
+                index=method_index,
+                key=f"edit_method_{rid}"
+            )
+            d = st.date_input(
+                "날짜",
+                value=pd.to_datetime(row["date"], errors="coerce"),
+                key=f"edit_date_{rid}"
+            )
+
+        with q2:
+            memo = st.text_input(
+                "메모",
+                value=base_memo,
+                key=f"edit_memo_{rid}"
+            )
+            amount = st.text_input(
+                "금액",
+                value=f"{abs(int(row['amount'])):,}",
+                key=f"edit_amount_{rid}"
+            )
+            fuel_price = st.text_input(
+                "리터당 가격",
+                value=base_fuel_price,
+                placeholder="주유일 때만 입력",
+                key=f"edit_fuel_price_{rid}"
+            )
+
+        col_cancel, col_save = st.columns(2)
+
+        with col_cancel:
+            canceled = st.form_submit_button("취소", use_container_width=True)
+
+        with col_save:
+            saved = st.form_submit_button("💾 저장", use_container_width=True)
+
+    if saved:
+        amount_clean = amount.replace(",", "").strip()
+        fuel_price_clean = fuel_price.replace(",", "").strip()
+
+        if not amount_clean or not re.fullmatch(r"\d+", amount_clean):
+            st.error("금액은 숫자만 입력해줘.")
+        elif fuel_price_clean and not re.fullmatch(r"\d+", fuel_price_clean):
+            st.error("리터당 가격은 숫자만 입력해줘.")
+        else:
+            final_memo = build_fuel_memo(memo, fuel_price_clean, amount_clean)
+            final_category, final_method = auto_card_and_category(
+                final_memo,
+                category,
+                method or DEFAULT_METHOD
+            )
+
+            amount_value = int(amount_clean)
+            if is_incident_income(final_method, final_memo):
+                final_amount = amount_value
+            else:
+                final_amount = -amount_value
+
+            current_df.iloc[rid] = [
+                str(d),
+                final_amount,
+                final_category,
+                final_method,
+                final_memo
+            ]
+            save_df(current_df)
+            st.success("수정 완료!")
+            st.rerun()
+
+    if canceled:
+        st.rerun()
+
+if "pending_quick_entry" not in st.session_state:
+    st.session_state.pending_quick_entry = None
+
+
+def add_quick(amount: int, category: str, memo: str = "", method: str = DEFAULT_METHOD):
+    global df
+
+    amount = abs(int(amount))
+    final_category, final_method = auto_card_and_category(memo, category, method)
+
+    if is_incident_income(final_method, memo):
+        final_amount = amount
+    else:
+        final_amount = -amount
+
+    row = {
+        "date": str(date.today()),
+        "amount": final_amount,
+        "category": final_category,
+        "method": final_method,
+        "memo": memo,
     }
 
-
-@st.cache_data(ttl=60)
-def load_cash_df(_get_worksheet_func) -> pd.DataFrame:
-    try:
-        ws = _get_worksheet_func("cash")
-        values = ws.get_all_records()
-
-        if not values:
-            return pd.DataFrame(columns=CASH_COLUMNS)
-
-        df = pd.DataFrame(values).fillna("")
-
-        rename_map = {
-            "날짜": "date",
-            "금액": "amount",
-            "카테고리": "category",
-            "메모": "memo",
-            "구분": "type",
-        }
-        df = df.rename(columns=rename_map)
-
-        if "번호" in df.columns:
-            df = df.drop(columns=["번호"])
-
-        for c in ["date", "amount", "category", "memo"]:
-            if c not in df.columns:
-                df[c] = ""
-
-        if "type" not in df.columns:
-            df["type"] = ""
-
-        raw_amount = df["amount"].astype(str).str.strip()
-
-        df["amount"] = (
-            raw_amount
-            .str.replace(",", "", regex=False)
-            .str.replace("원", "", regex=False)
-        )
-        df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0).astype(int)
-
-        df["date"] = df["date"].astype(str).str.strip()
-        df["category"] = df["category"].astype(str).str.strip()
-        df["memo"] = df["memo"].astype(str).str.strip()
-        df["type"] = df["type"].astype(str).str.strip()
-
-        def restore_amount(row):
-            amt = abs(int(row["amount"]))
-            typ = str(row["type"]).strip()
-
-            if typ == "현금 넣기":
-                return amt
-            if typ == "현금 쓰기":
-                return -amt
-
-            return amt if int(row["amount"]) > 0 else -amt
-
-        df["amount"] = df.apply(restore_amount, axis=1)
-
-        return df[CASH_COLUMNS].copy()
-
-    except Exception as e:
-        st.error(f"load_cash_df 에러: {e}")
-        return pd.DataFrame(columns=CASH_COLUMNS)
+    df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+    save_df(df)
+    st.success("✅ 저장 완료!")
+    st.rerun()
 
 
-def save_cash_df(df: pd.DataFrame, _get_worksheet_func) -> None:
-    ws = _get_worksheet_func("cash")
-
-    save_data = df[CASH_COLUMNS].copy().fillna("")
-
-    save_data["date_dt"] = pd.to_datetime(save_data["date"], errors="coerce")
-    save_data = save_data.sort_values(
-        by=["date_dt", "date"],
-        ascending=[False, False]
-    ).drop(columns=["date_dt"])
-
-    def get_type(row):
-        return "현금 넣기" if int(row["amount"]) > 0 else "현금 쓰기"
-
-    save_data["구분"] = save_data.apply(get_type, axis=1)
-
-    save_data["금액"] = save_data["amount"].apply(
-        lambda x: f"{abs(int(x)):,}원"
-    )
-
-    save_data["날짜"] = save_data["date"]
-    save_data["카테고리"] = save_data["category"]
-    save_data["메모"] = save_data["memo"]
-
-    save_data = save_data.reset_index(drop=True)
-    save_data.insert(0, "번호", range(1, len(save_data) + 1))
-
-    save_data = save_data[
-        ["번호", "날짜", "구분", "카테고리", "메모", "금액"]
-    ]
-
-    rows = [save_data.columns.tolist()] + save_data.values.tolist()
-
-    ws.clear()
-    ws.update(rows)
-    load_cash_df.clear()
+def open_quick_edit(amount: int, category: str, memo: str = "", method: str = DEFAULT_METHOD):
+    st.session_state.pending_quick_entry = {
+        "date": date.today(),
+        "amount": abs(int(amount)),
+        "category": category,
+        "method": method,
+        "memo": memo,
+    }
+    quick_add_dialog()
 
 
-def render_living_tab(get_worksheet_func, render_budget_card):
-    living_df = load_living_df(get_worksheet_func)
-    cash_df = load_cash_df(get_worksheet_func)
+@st.dialog("📝 빠른 입력 수정")
+def quick_add_dialog():
+    item = st.session_state.get("pending_quick_entry")
 
-    st.subheader("🏦 생활비 통장")
+    if not item:
+        st.warning("등록할 항목이 없어요.")
+        return
 
-    month_options = get_living_month_options(living_df)
-    current_month = datetime.today().strftime("%Y-%m")
+    current_cat = str(item["category"])
+    cat_index = CATEGORY_OPTIONS.index(current_cat) if current_cat in CATEGORY_OPTIONS else 0
 
-    top_left, top_right = st.columns([1, 1])
+    current_method = str(item["method"]).strip() if str(item["method"]).strip() else DEFAULT_METHOD
+    method_index = METHOD_OPTIONS.index(current_method) if current_method in METHOD_OPTIONS else 0
 
-    with top_left:
-        if (
-            "living_selected_month" not in st.session_state
-            or st.session_state["living_selected_month"] not in month_options
-        ):
-            st.session_state["living_selected_month"] = current_month
+    base_memo, base_fuel_price = split_fuel_memo(str(item["memo"]))
 
-        living_month = st.selectbox(
-            "월 선택",
-            month_options,
-            key="living_selected_month"
-        )
+    with st.form("quick_add_edit_form"):
+        q1, q2 = st.columns(2)
+    
+        with q1:
+            category = st.selectbox("카테고리", CATEGORY_OPTIONS, index=cat_index, key="quick_edit_cat")
+            method = st.selectbox("결제수단", METHOD_OPTIONS, index=method_index, key="quick_edit_method")
+            d = st.date_input("날짜", value=item["date"], key="quick_edit_date")
+    
+        with q2:
+            memo = st.text_input("메모", value=base_memo, key="quick_edit_memo")
+            amount_text = st.text_input("금액", value=f"{abs(int(item['amount'])):,}", key="quick_edit_amount")
+            fuel_price = st.text_input(
+                "리터당 가격",
+                value=base_fuel_price,
+                placeholder="주유일 때만 입력",
+                key="quick_edit_fuel_price"
+            )
 
-    with top_right:
-        living_q = st.text_input(
-            "검색(카테고리/메모/구분)",
-            placeholder="예: 식비 / 관리비 / 입금 / 비상금",
-            key="living_search_text"
-        )
+        col_cancel, col_save = st.columns(2)
 
-    summary = calc_living_summary(living_df, living_month)
+        with col_cancel:
+            canceled = st.form_submit_button("취소", use_container_width=True)
+        
+        with col_save:
+            saved = st.form_submit_button("💾 저장", use_container_width=True)
 
-    cash_balance = int(cash_df["amount"].sum()) if not cash_df.empty else 0
-
-    top1, top2, top3 = st.columns(3, gap="large")
-
-    with top1:
-        render_budget_card("🔄 이월금액", f"{summary['carryover']:,}원", "#F8FBF7", "#D9E8D4", "#4D6B50")
-
-    with top2:
-        render_budget_card("➕ 입금", f"{summary['income']:,}원", "#F3F8FF", "#D8E6F8", "#4A6688")
-
-    with top3:
-        render_budget_card("💸 지출", f"{summary['expense']:,}원", "#FFF7F5", "#F2D9D2", "#8A5A4A")
-
-    # 👉 줄 간격 추가
-    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-
-    bottom1, bottom2, bottom3 = st.columns(3, gap="large")
-
-    with bottom1:
-        render_budget_card("💳 가용생활비", f"{summary['available']:,}원", "#F7F3FF", "#DCCBFA", "#6C48A6")
-
-    with bottom2:
-        render_budget_card("🏦 비상금", f"{summary['emergency']:,}원", "#FFF9E9", "#F2E1A8", "#8A6A00")
-
-    with bottom3:
-        render_budget_card("💵 현금보유액", f"{cash_balance:,}원", "#F0FFF4", "#C6F6D5", "#2F855A")
-
-    st.divider()
-    st.subheader("✍ 생활비 입력")
-
-    if "living_date" not in st.session_state:
-        st.session_state["living_date"] = date.today()
-    if "living_type" not in st.session_state:
-        st.session_state["living_type"] = "지출"
-    if "living_category" not in st.session_state:
-        st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
-    if "living_memo" not in st.session_state:
-        st.session_state["living_memo"] = ""
-    if "living_amount" not in st.session_state:
-        st.session_state["living_amount"] = ""
-
-    if st.session_state.get("living_form_reset"):
-        st.session_state["living_date"] = date.today()
-        st.session_state["living_type"] = "지출"
-        st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
-        st.session_state["living_memo"] = ""
-        st.session_state["living_amount"] = ""
-        st.session_state["living_form_reset"] = False
-
-    f1, f2, f3, f4, f5 = st.columns(5)
-
-    with f1:
-        living_date = st.date_input("날짜", key="living_date")
-
-    with f2:
-        living_type = st.selectbox("구분", LIVING_TYPE_OPTIONS, key="living_type")
-
-    with f3:
-        if living_type == "입금":
-            category_options = LIVING_INCOME_CATEGORY_OPTIONS
-        elif living_type == "비상금":
-            category_options = LIVING_EMERGENCY_CATEGORY_OPTIONS
-        else:
-            category_options = LIVING_EXPENSE_CATEGORY_OPTIONS
-
-        if st.session_state.get("living_category") not in category_options:
-            st.session_state["living_category"] = category_options[0]
-
-        living_category = st.selectbox("카테고리", category_options, key="living_category")
-
-    with f4:
-        living_memo = st.text_input("메모", key="living_memo")
-
-    with f5:
-        living_amount_text = st.text_input("금액", placeholder="금액 입력", key="living_amount")
-
-    living_saved = st.button("➕ 생활비 저장", use_container_width=True, type="primary")
-
-    if living_saved:
-        amount_clean = living_amount_text.replace(",", "").strip()
+    if saved:
+        amount_clean = amount_text.replace(",", "").strip()
+        fuel_price_clean = fuel_price.replace(",", "").strip()
 
         if not amount_clean:
             st.error("금액을 입력해줘.")
         elif not re.fullmatch(r"\d+", amount_clean):
             st.error("금액은 숫자만 입력해줘.")
+        elif fuel_price_clean and not re.fullmatch(r"\d+", fuel_price_clean):
+            st.error("리터당 가격은 숫자만 입력해줘.")
         else:
-            amount_value = int(amount_clean)
+            final_memo = build_fuel_memo(memo, fuel_price_clean, amount_clean)
+            final_category, final_method = auto_card_and_category(
+                final_memo,
+                category,
+                method or DEFAULT_METHOD
+            )
 
-            if living_type == "입금":
+            amount_value = int(amount_clean)
+            if is_incident_income(final_method, final_memo):
                 final_amount = amount_value
-            elif living_type == "비상금":
-                final_amount = -amount_value if living_category == "비상금 넣기" else amount_value
             else:
                 final_amount = -amount_value
 
-            memo_value = living_memo.strip()
-            if living_type == "비상금" and not memo_value:
-                memo_value = living_category
-
-            new_row = {
-                "date": str(living_date),
+            row = {
+                "date": str(d),
                 "amount": final_amount,
-                "category": living_category,
-                "method": LIVING_DEFAULT_METHOD,
-                "memo": memo_value,
+                "category": final_category,
+                "method": final_method,
+                "memo": final_memo,
             }
 
-            current_df = load_living_df(get_worksheet_func)
-            current_df = pd.concat([current_df, pd.DataFrame([new_row])], ignore_index=True)
-            save_living_df(current_df, get_worksheet_func)
+            current_df = load_df()
+            current_df = pd.concat([current_df, pd.DataFrame([row])], ignore_index=True)
+            save_df(current_df)
 
-            st.success("✅ 생활비 저장 완료!")
-            st.session_state["living_form_reset"] = True
+            st.session_state.pending_quick_entry = None
+            st.success("✅ 저장 완료!")
             st.rerun()
 
-    @st.dialog("✏ 생활비 기록 수정")
-    def edit_living_dialog(rid: int):
-        current_df = load_living_df(get_worksheet_func)
+    if canceled:
+        st.session_state.pending_quick_entry = None
+        st.rerun()
 
-        if rid >= len(current_df):
-            st.error("수정할 데이터를 찾지 못했어요.")
-            return
+with tab1:
+    # -------------------
+    # 상단 예산 현황
+    # -------------------
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        render_budget_card(
+            "이번달 예산",
+            f"{MONTHLY_BUDGET:,}원",
+            theme["container_bg"],
+            theme["metric_border"],
+            theme["button_text"]
+        )
+    
+    with c2:
+        render_budget_card(
+            "지금까지 사용",
+            f"{spent:,}원",
+            theme["container_bg"],
+            theme["metric_border"],
+            theme["button_text"]
+        )
+    
+    with c3:
+        render_budget_card(
+            "남은 금액",
+            f"{remaining:,}원",
+            theme["container_bg"],
+            theme["metric_border"],
+            theme["button_text"]
+        )
+    
+    with c4:
+        render_budget_card(
+            "예산 상태",
+            status["label"],
+            status["bg"],
+            status["border"],
+            status["text"]
+        )
 
-        row = current_df.iloc[rid]
-        row_category = str(row["category"]).strip()
-        row_amount = int(row["amount"])
+    st.progress(percent)
 
-        if row_category in LIVING_EMERGENCY_CATEGORY_OPTIONS:
-            row_type = "비상금"
-        elif row_amount > 0:
-            row_type = "입금"
-        else:
-            row_type = "지출"
+    if spent > MONTHLY_BUDGET:
+        st.warning(f"예산을 {spent - MONTHLY_BUDGET:,}원 초과했어요.")
+    else:
+        st.caption(f"{month_key} 예산 사용률: {percent * 100:.1f}%")
 
-        if row_type == "입금":
-            category_options = LIVING_INCOME_CATEGORY_OPTIONS
-        elif row_type == "비상금":
-            category_options = LIVING_EMERGENCY_CATEGORY_OPTIONS
-        else:
-            category_options = LIVING_EXPENSE_CATEGORY_OPTIONS
+    # -------------------
+    # 체크리스트
+    # -------------------
+    checklist_month_df = get_month_checklist(month_key)
 
-        type_index = LIVING_TYPE_OPTIONS.index(row_type) if row_type in LIVING_TYPE_OPTIONS else 0
-        category_index = category_options.index(row_category) if row_category in category_options else 0
+    checked_count = int(checklist_month_df["checked"].sum())
+    total_count = len(checklist_month_df)
+    all_checked = total_count > 0 and checked_count == total_count
 
-        with st.form(f"living_edit_form_{rid}"):
-            q1, q2 = st.columns(2)
+    expander_title = f"✅ 이번달 체크리스트 ({checked_count}/{total_count})"
 
-            with q1:
-                edit_type = st.selectbox(
-                    "구분",
-                    LIVING_TYPE_OPTIONS,
-                    index=type_index,
-                    key=f"living_edit_type_{rid}"
+    with st.expander(expander_title, expanded=not all_checked):
+        check_cols = st.columns(2)
+
+        checklist_df_reset = checklist_month_df.reset_index(drop=True)
+        half = (len(checklist_df_reset) + 1) // 2
+
+        left_items = checklist_df_reset.iloc[:half]
+        right_items = checklist_df_reset.iloc[half:]
+
+        with check_cols[0]:
+            for _, row in left_items.iterrows():
+                checked_now = st.checkbox(
+                    row["item"],
+                    value=bool(row["checked"]),
+                    key=f"check_{month_key}_{row['item']}"
                 )
+                if checked_now != bool(row["checked"]):
+                    update_checklist_item(month_key, row["item"], checked_now)
+                    st.rerun()
 
-            with q2:
-                if edit_type == "입금":
-                    edit_category_options = LIVING_INCOME_CATEGORY_OPTIONS
-                elif edit_type == "비상금":
-                    edit_category_options = LIVING_EMERGENCY_CATEGORY_OPTIONS
-                else:
-                    edit_category_options = LIVING_EXPENSE_CATEGORY_OPTIONS
-
-                if row_category not in edit_category_options:
-                    edit_category_index = 0
-                else:
-                    edit_category_index = edit_category_options.index(row_category)
-
-                edit_category = st.selectbox(
-                    "카테고리",
-                    edit_category_options,
-                    index=edit_category_index,
-                    key=f"living_edit_category_{rid}"
+        with check_cols[1]:
+            for _, row in right_items.iterrows():
+                checked_now = st.checkbox(
+                    row["item"],
+                    value=bool(row["checked"]),
+                    key=f"check_{month_key}_{row['item']}"
                 )
+                if checked_now != bool(row["checked"]):
+                    update_checklist_item(month_key, row["item"], checked_now)
+                    st.rerun()
 
-            q3, q4 = st.columns(2)
+    st.divider()
 
-            with q3:
-                memo = st.text_input(
-                    "메모",
-                    value=str(row["memo"]),
-                    key=f"living_edit_memo_{rid}"
-                )
+    # -------------------
+    # 카드별 이번달 사용
+    # -------------------
+    st.subheader("💳 카드별 이번달 사용")
+    
+    card_col1, card_col2, card_col3, card_col4 = st.columns(4)
+    
+    with card_col1:
+        render_budget_card(
+            "현대카드",
+            f"{hyundai_amount:,}원",
+            "#F4F4F4",
+            "#D6D6D6",
+            "#4A4A4A"
+        )
 
-            with q4:
-                amount_text = st.text_input(
-                    "금액",
-                    value=f"{abs(row_amount):,}",
-                    key=f"living_edit_amount_{rid}"
-                )
+        hyundai_detail_html = f"""
+    <div style="
+        margin-top:10px;
+        background:rgba(255,255,255,0.45);
+        border:1px solid {theme["form_border"]};
+        border-radius:16px;
+        padding:12px 14px;
+        font-size:14px;
+        color:{theme["button_text"]};
+    ">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🛒 쇼핑</span>
+            <span><b>{hyundai_shopping:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🍚 외식</span>
+            <span><b>{hyundai_eatout:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🛵 배달</span>
+            <span><b>{hyundai_delivery:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>☕ 커피</span>
+            <span><b>{hyundai_coffee:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🏪 편의점</span>
+            <span><b>{hyundai_convenience:,}원</b></span>
+        </div>
+        {other_block}   
+    </div>
+    """
+        st.markdown(hyundai_detail_html, unsafe_allow_html=True)
+    
+    with card_col2:
+        render_budget_card(
+            "신한카드",
+            f"{shinhan_amount:,}원",
+            "#F2FBFF",
+            "#BFE8F7",
+            "#3E7C91"
+        )
 
-            d = st.date_input(
-                "날짜",
-                value=pd.to_datetime(row["date"], errors="coerce"),
-                key=f"living_edit_date_{rid}"
+        shinhan_detail_html = f"""
+    <div style="
+        margin-top:10px;
+        background:rgba(255,255,255,0.45);
+        border:1px solid {theme["form_border"]};
+        border-radius:16px;
+        padding:12px 14px;
+        font-size:14px;
+        color:{theme["button_text"]};
+    ">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>⛽ 주유</span>
+            <span><b>{shinhan_fuel:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>📱 통신비</span>
+            <span><b>{shinhan_phone:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>🌐 인터넷</span>
+            <span><b>{shinhan_internet:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>📦 쿠팡와우</span>
+            <span><b>{shinhan_wow:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>💬 이모티콘</span>
+            <span><b>{shinhan_emoji:,}원</b></span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+            <span>🧾 기타</span>
+            <span><b>{shinhan_other:,}원</b></span>
+        </div>
+    </div>
+    """
+        st.markdown(shinhan_detail_html, unsafe_allow_html=True)
+        
+    with card_col3:
+        render_budget_card(
+            "사건비통장",
+            f"{incident_amount:,}원",
+            "#FFF8CC",
+            "#F2E18B",
+            "#8A6A00"
+        )
+
+        # -------------------------
+        # 사건비 표시 라인 생성
+        # -------------------------
+        incident_lines = []
+
+        if incident_hospital > 0:
+            incident_lines.append(
+                f'<div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>🏥 병원비</span><span><b>{incident_hospital:,}원</b></span></div>'
             )
 
-            col_cancel, col_save = st.columns(2)
+        if incident_medicine > 0:
+            incident_lines.append(
+                f'<div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>💊 약값</span><span><b>{incident_medicine:,}원</b></span></div>'
+            )
 
-            with col_cancel:
-                canceled = st.form_submit_button("취소", use_container_width=True)
+        if incident_checkup > 0:
+            incident_lines.append(
+                f'<div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>🩺 검진</span><span><b>{incident_checkup:,}원</b></span></div>'
+            )
 
-            with col_save:
-                saved = st.form_submit_button("💾 저장", use_container_width=True)
+        if incident_gift > 0:
+            incident_lines.append(
+                f'<div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>🎁 선물</span><span><b>{incident_gift:,}원</b></span></div>'
+            )
 
-        if saved:
-            amount_clean = amount_text.replace(",", "").strip()
+        if incident_event > 0:
+            incident_lines.append(
+                f'<div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>🙏 경조사</span><span><b>{incident_event:,}원</b></span></div>'
+            )
 
-            if not amount_clean or not re.fullmatch(r"\d+", amount_clean):
-                st.error("금액은 숫자만 입력해줘.")
+        if incident_other > 0:
+            incident_lines.append(
+                f'<div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>🧾 기타</span><span><b>{incident_other:,}원</b></span></div>'
+            )
+
+        if incident_refund > 0:
+            incident_lines.append(
+                f'<div style="display:flex; justify-content:space-between;"><span>💰 환급</span><span><b>{incident_refund:,}원</b></span></div>'
+            )
+
+        if not incident_lines:
+            incident_lines.append(
+                '<div style="text-align:center; opacity:0.6; font-size:13px;">이번달 사건비 사용 내역 없음</div>'
+            )
+
+
+        incident_detail_html = f"""
+        <div style="
+        margin-top:10px;
+        background:rgba(255,255,255,0.45);
+        border:1px solid {theme["form_border"]};
+        border-radius:16px;
+        padding:12px 14px;
+        font-size:14px;
+        color:{theme["button_text"]};
+        ">
+        
+        {''.join(incident_lines)}
+        </div>
+        """
+        st.markdown(incident_detail_html, unsafe_allow_html=True)
+    
+    with card_col4:
+        render_budget_card(
+            "이번달 총 지출",
+            f"{total_amount:,}원",
+            "#FFEFF6",
+            "#FFC4D6",
+            "#A85E74"
+        )
+
+    st.divider()
+
+    # =========================
+    # 날짜 선택 입력
+    # =========================
+    st.subheader("🗓 날짜 선택해서 입력")
+
+    with st.form("manual_add", clear_on_submit=True):
+        m1, m2, m3 = st.columns(3)
+
+        with m1:
+            d = st.date_input("날짜", value=date.today(), key="manual_date")
+            category = st.selectbox(
+                "카테고리",
+                CATEGORY_OPTIONS,
+                index=CATEGORY_OPTIONS.index("쇼핑"),
+                key="manual_cat"
+            )
+
+        with m2:
+            memo = st.text_input("메모", value="", key="manual_memo")
+            amount_text = st.text_input("금액", value="", placeholder="금액 입력", key="manual_amount")
+
+        with m3:
+            fuel_price = st.text_input("리터당 가격", value="", placeholder="주유일 때만 입력", key="manual_fuel_price")
+            method = st.selectbox(
+                "결제수단",
+                METHOD_OPTIONS,
+                index=METHOD_OPTIONS.index(DEFAULT_METHOD),
+                key="manual_method"
+            )
+
+        submitted_manual = st.form_submit_button("추가", use_container_width=True)
+
+    if submitted_manual:
+        amount_clean = amount_text.replace(",", "").strip()
+        fuel_price_clean = fuel_price.replace(",", "").strip()
+
+        if not amount_clean:
+            st.error("금액을 입력해줘.")
+        elif not re.fullmatch(r"\d+", amount_clean):
+            st.error("금액은 숫자만 입력해줘. 예: 4500 또는 4,500")
+        elif fuel_price_clean and not re.fullmatch(r"\d+", fuel_price_clean):
+            st.error("리터당 가격은 숫자만 입력해줘.")
+        else:
+            final_memo = build_fuel_memo(memo, fuel_price_clean, amount_clean)
+            final_category, final_method = auto_card_and_category(
+                final_memo,
+                category,
+                method or DEFAULT_METHOD
+            )
+
+            amount_value = int(amount_clean)
+            if is_incident_income(final_method, final_memo):
+                final_amount = amount_value
             else:
-                amount_value = int(amount_clean)
+                final_amount = -amount_value
 
-                if edit_type == "입금":
-                    final_amount = amount_value
-                elif edit_type == "비상금":
-                    final_amount = -amount_value if edit_category == "비상금 넣기" else amount_value
-                else:
-                    final_amount = -amount_value
-
-                memo_value = memo.strip()
-                if edit_type == "비상금" and not memo_value:
-                    memo_value = edit_category
-
-                current_df.iloc[rid] = [
-                    str(d),
-                    final_amount,
-                    edit_category,
-                    LIVING_DEFAULT_METHOD,
-                    memo_value,
-                ]
-
-                save_living_df(current_df, get_worksheet_func)
-                st.success("수정 완료!")
-                st.rerun()
-
-        if canceled:
+            row = {
+                "date": str(d),
+                "amount": final_amount,
+                "category": final_category,
+                "method": final_method,
+                "memo": final_memo,
+            }
+            df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+            save_df(df)
+            st.success("✅ 저장 완료!")
             st.rerun()
 
     st.divider()
-    st.subheader("🧾 생활비 내역")
 
-    living_view = living_df.copy()
-    living_view["date_dt"] = pd.to_datetime(living_view["date"], errors="coerce")
+    # =========================
+    # 입력예시 | 빠른입력
+    # =========================
+    left_col, right_col = st.columns([1, 1])
 
+    with left_col:
+        st.subheader("📝 입력 예시 / 규칙")
+        st.markdown("""
+- 빠른 입력: `금액 메모 @결제수단`
+- 예: `12000 점심 @현대카드`
+- `우유 1000` / `1000 우유` 둘 다 가능
+- 날짜 지정: `YYYY-MM-DD`를 맨 앞에
+- 예: `2026-03-01 4500 스타벅스 @현금`
+- 사건비통장에서 `환급`, `입금`, `수입`, `보험금` 단어가 들어가면 자동 수입 처리
+- 지정 키워드가 없으면 카테고리는 기본 `쇼핑`
+""")
+
+    with right_col:
+        st.subheader("⚡ 빠른 입력")
+        with st.form("quick_add", clear_on_submit=True):
+            quick_category = st.selectbox(
+                "카테고리",
+                CATEGORY_OPTIONS,
+                index=CATEGORY_OPTIONS.index("쇼핑"),
+                key="quick_category_select"
+            )
+        
+            quick = st.text_input(
+                "입력",
+                placeholder="4500 스타벅스 @현대카드",
+                key="quick_input_text"
+            )
+        
+            submitted_quick = st.form_submit_button("저장 (Enter)", use_container_width=True)        
+
+        if submitted_quick:
+            try:
+                row = parse_quick_input(
+                    quick,
+                    default_category=quick_category,
+                    default_method=DEFAULT_METHOD
+                )
+                df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+                save_df(df)
+                st.success("✅ 저장 완료!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"저장 실패: {e}")
+
+    st.divider()
+
+    # =========================
+    # 빠른 입력 보조
+    # =========================
+    with st.expander("⚡ 빠른 입력 보조", expanded=False):
+        top_left, top_right = st.columns([1, 1])
+
+        with top_left:
+            st.subheader("⚡ 자주 쓰는 버튼")
+
+            b1, b2 = st.columns(2)
+            b3, b4 = st.columns(2)
+
+            with b1:
+                if st.button("☕ 커피 4,500", use_container_width=True, key="btn_coffee"):
+                    open_quick_edit(4500, "커피")
+
+            with b2:
+                if st.button("🍚 외식 12,000", use_container_width=True, key="btn_eatout"):
+                    open_quick_edit(12000, "외식")
+
+            with b3:
+                if st.button("🛵 배달 18,000", use_container_width=True, key="btn_delivery"):
+                    open_quick_edit(18000, "배달")
+
+            with b4:
+                if st.button("🛒 쇼핑 30,000", use_container_width=True, key="btn_shopping"):
+                    open_quick_edit(30000, "쇼핑")
+
+        with top_right:
+            st.subheader("📌 신한카드 고정비")
+
+            shinhan_fixed_buttons = [
+                ("📱 통신비", 103490, "통신비"),
+                ("🌐 인터넷", 26400, "인터넷"),
+                ("📦 쿠팡와우", 7890, "쿠팡와우"),
+                ("💬 이모티콘", 3900, "이모티콘"),
+                ("⛽ 주유", 65000, "주유"),
+            ]
+
+            cols_per_row = 2
+
+            for i in range(0, len(shinhan_fixed_buttons), cols_per_row):
+                cols = st.columns(cols_per_row)
+
+                for j, (label, amount, memo) in enumerate(shinhan_fixed_buttons[i:i+cols_per_row]):
+                    with cols[j]:
+                        if st.button(label, use_container_width=True, key=f"btn_{memo}"):
+                            open_quick_edit(amount, "고정비", memo, "신한카드")
+
+    # -------------------
+    # 폰에서도 쓰기 안내
+    # -------------------
+    local_ip = get_local_ip()
+    with st.expander("📱 폰에서도 쓰기", expanded=False):
+        if local_ip:
+            st.markdown(
+                f"""
+같은 와이파이에서 폰 브라우저로 아래 주소 열면 돼:
+
+`http://{local_ip}:8501`
+
+`run.bat`은 아래처럼 쓰면 더 안정적이야:
+
+`python -m streamlit run app.py --server.address 0.0.0.0`
+"""
+            )
+        else:
+            st.write("로컬 IP를 찾지 못했어요.")
+
+with tab2:
+    # =========================
+    # 검색 / 월선택 / 다운로드
+    # =========================
+    top_filter_left, top_filter_right = st.columns([1, 1])
+
+    with top_filter_left:
+        month_options = get_month_options(df)
+        current_month = datetime.today().strftime("%Y-%m")
+
+        if "selected_month" not in st.session_state or st.session_state["selected_month"] not in month_options:
+            st.session_state["selected_month"] = current_month
+
+        month = st.selectbox("월 선택", month_options, key="selected_month")
+        q = st.text_input(
+            "검색(카테고리/메모/결제수단)",
+            placeholder="예: 스타벅스 / 배달 / 현대카드 / 환급",
+            key="search_text"
+        )
+
+        with top_filter_right:
+            download_month = st.selectbox(
+                "다운로드할 월 선택",
+                month_options,
+                key="download_month"
+            )    
+        
+            # 다운로드용 데이터
+            download_view = df.copy()
+            download_view["date_dt"] = pd.to_datetime(download_view["date"], errors="coerce")
+        
+            try:
+                dy, dm = download_month.split("-")
+                download_view = download_view[
+                    (download_view["date_dt"].dt.year == int(dy)) &
+                    (download_view["date_dt"].dt.month == int(dm))
+                ]
+            except Exception:
+                download_view = download_view.iloc[0:0]
+        
+            if download_view.empty:
+                st.caption("선택한 월의 다운로드할 내역이 없어요.")
+            else:
+                download_df = download_view.drop(columns=["date_dt"], errors="ignore").copy()
+                download_df = download_df.sort_values(by="date", ascending=False)
+
+                # 구분 추가
+                download_df["구분"] = download_df["amount"].apply(
+                    lambda x: "환급" if int(x) > 0 else "지출"
+                )
+
+                # 숫자 보관용
+                download_df["amount_num"] = download_df["amount"].abs()
+
+                # 표시용 금액
+                download_df["금액"] = download_df["amount_num"].apply(lambda x: f"{x:,}원")
+
+                # 한글 컬럼으로 정리
+                download_df["날짜"] = download_df["date"]
+                download_df["카테고리"] = download_df["category"]
+                download_df["결제수단"] = download_df["method"]
+                download_df["메모"] = download_df["memo"]
+
+                # 번호 생성
+                download_df = download_df.reset_index(drop=True)
+                download_df.insert(0, "번호", range(1, len(download_df) + 1))
+
+                # 최종 컬럼 순서
+                download_df = download_df[
+                    ["번호", "날짜", "구분", "카테고리", "메모", "금액", "결제수단", "amount_num"]
+                ]
+
+                buffer = BytesIO()
+
+                with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+                    download_df.drop(columns=["amount_num"]).to_excel(
+                        writer,
+                        index=False,
+                        sheet_name="가계부"
+                    )
+
+                    worksheet = writer.sheets["가계부"]
+
+                    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+                    # 스타일 정의
+                    header_font = Font(bold=True, color="FFFFFF")
+                    bold_font = Font(bold=True)
+
+                    header_fill = PatternFill("solid", fgColor="B96A5C")
+                    summary_fill = PatternFill("solid", fgColor="FDECEC")
+                    refund_fill = PatternFill("solid", fgColor="EAF4FF")
+                    expense_fill = PatternFill("solid", fgColor="FFF4F4")
+
+                    thin_border = Border(
+                        left=Side(style="thin", color="E5D6D1"),
+                        right=Side(style="thin", color="E5D6D1"),
+                        top=Side(style="thin", color="E5D6D1"),
+                        bottom=Side(style="thin", color="E5D6D1"),
+                    )
+
+                    center_align = Alignment(horizontal="center", vertical="center")
+                    right_align = Alignment(horizontal="right", vertical="center")
+                    left_align = Alignment(horizontal="left", vertical="center")
+
+                    # 헤더 스타일
+                    for cell in worksheet[1]:
+                        cell.font = header_font
+                        cell.fill = header_fill
+                        cell.alignment = center_align
+                        cell.border = thin_border
+
+                    # 열 너비
+                    column_widths = [8, 12, 10, 12, 28, 12, 12]  # 번호, 날짜, 구분, 카테고리, 메모, 금액, 결제수단
+                    for i, width in enumerate(column_widths, start=1):
+                        worksheet.column_dimensions[chr(64 + i)].width = width
+
+                    # 본문 스타일
+                    data_row_count = len(download_df)
+                    for row_idx in range(2, data_row_count + 2):
+                        row_type = worksheet[f"C{row_idx}"].value  # 구분 컬럼
+
+                        for col_idx in range(1, 8):
+                            cell = worksheet.cell(row=row_idx, column=col_idx)
+                            cell.border = thin_border
+
+                            if col_idx in [1, 2, 3, 4, 7]:
+                                cell.alignment = center_align
+                            elif col_idx == 6:
+                                cell.alignment = right_align
+                            else:
+                                cell.alignment = left_align
+
+                        # 지출 / 환급 행 색상
+                        if row_type == "환급":
+                            for col_idx in range(1, 8):
+                                worksheet.cell(row=row_idx, column=col_idx).fill = refund_fill
+                        else:
+                            for col_idx in range(1, 8):
+                                worksheet.cell(row=row_idx, column=col_idx).fill = expense_fill
+
+                    # 합계 계산
+                    spent_total = download_df.loc[download_df["구분"] == "지출", "amount_num"].sum()
+                    refund_total = download_df.loc[download_df["구분"] == "환급", "amount_num"].sum()
+                    net_total = spent_total - refund_total
+
+                    start_row = len(download_df) + 3
+
+                    summary_rows = [
+                        ("지출 합계", f"{spent_total:,}원"),
+                        ("환급 합계", f"{refund_total:,}원"),
+                        ("순지출", f"{net_total:,}원"),
+                    ]
+
+                    for i, (label, value) in enumerate(summary_rows):
+                        row_no = start_row + i
+                        worksheet[f"E{row_no}"] = label
+                        worksheet[f"F{row_no}"] = value
+
+                        worksheet[f"E{row_no}"].font = bold_font
+                        worksheet[f"F{row_no}"].font = bold_font
+
+                        worksheet[f"E{row_no}"].fill = summary_fill
+                        worksheet[f"F{row_no}"].fill = summary_fill
+
+                        worksheet[f"E{row_no}"].alignment = center_align
+                        worksheet[f"F{row_no}"].alignment = right_align
+
+                        worksheet[f"E{row_no}"].border = thin_border
+                        worksheet[f"F{row_no}"].border = thin_border
+
+                    # 카테고리 합계 시트
+                    category_sum = (
+                        download_df
+                        .groupby("카테고리")["amount_num"]
+                        .sum()
+                        .reset_index()
+                    )
+
+                    category_sum["합계"] = category_sum["amount_num"].apply(lambda x: f"{x:,}원")
+                    category_sum = category_sum[["카테고리", "합계"]]
+
+                    category_sum.to_excel(
+                        writer,
+                        index=False,
+                        sheet_name="카테고리합계"
+                    )
+
+                    sheet2 = writer.sheets["카테고리합계"]
+
+                    # 카테고리합계 헤더 스타일
+                    for cell in sheet2[1]:
+                        cell.font = header_font
+                        cell.fill = header_fill
+                        cell.alignment = center_align
+                        cell.border = thin_border
+
+                    sheet2.column_dimensions["A"].width = 15
+                    sheet2.column_dimensions["B"].width = 15
+
+                    for row in sheet2.iter_rows(min_row=2, max_col=2):
+                        row[0].alignment = center_align
+                        row[1].alignment = right_align
+                        row[0].border = thin_border
+                        row[1].border = thin_border
+
+                excel_data = buffer.getvalue()
+
+                st.download_button(
+                    label=f"📥 {download_month} 가계부 다운로드",
+                    data=excel_data,
+                    file_name=f"{download_month}_가계부.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+
+    st.divider()
+
+    current_view_key = f"{month}|{q}|{st.session_state.get('record_filter', '전체')}"
+    if "last_view_key" not in st.session_state:
+        st.session_state["last_view_key"] = current_view_key
+
+    if st.session_state["last_view_key"] != current_view_key:
+        st.session_state["record_page"] = 1
+        st.session_state["last_view_key"] = current_view_key
+
+    # =========================
+    # 기록 보기 필터
+    # =========================
+    st.subheader("🧾 기록 보기 / 필터")
+    
+    if "record_filter" not in st.session_state:
+        st.session_state["record_filter"] = "전체"
+    
+    filter_items = [
+        ("전체", "전체"),
+        ("💳현대", "현대"),
+        ("💳신한", "신한"),
+        ("⛽주유", "주유"),
+        ("📂사건비", "사건비"),
+        ("💰환급", "환급"),
+    ]
+    
+    cols = st.columns(len(filter_items))
+    
+    for i, (label, value) in enumerate(filter_items):
+        with cols[i]:
+            if st.button(
+                label,
+                use_container_width=True,
+                key=f"filter_{value}",
+                type="primary" if st.session_state["record_filter"] == value else "secondary"
+            ):
+                st.session_state["record_filter"] = value
+                st.session_state["record_page"] = 1
+                st.rerun()
+    
+    record_filter = st.session_state["record_filter"]
+    
+    # 보기용 데이터
+    view = df.copy()
+    view["date_dt"] = pd.to_datetime(view["date"], errors="coerce")
+    
     try:
-        y, m = living_month.split("-")
-        living_view = living_view[
-            (living_view["date_dt"].dt.year == int(y)) &
-            (living_view["date_dt"].dt.month == int(m))
+        y, m = month.split("-")
+        view = view[
+            (view["date_dt"].dt.year == int(y)) &
+            (view["date_dt"].dt.month == int(m))
         ]
     except Exception:
         pass
-
-    if living_q.strip():
-        qq = living_q.strip().lower()
-
-        def get_row_type(r):
-            if r["category"] in LIVING_EMERGENCY_CATEGORY_OPTIONS:
-                return "비상금"
-            return "입금" if int(r["amount"]) > 0 else "지출"
-
-        row_type_series = living_view.apply(get_row_type, axis=1)
-
+    
+    if q.strip():
+        qq = q.strip().lower()
         mask = (
-            living_view["category"].astype(str).str.lower().str.contains(qq, na=False)
-            | living_view["memo"].astype(str).str.lower().str.contains(qq, na=False)
-            | row_type_series.astype(str).str.lower().str.contains(qq, na=False)
+            view["category"].astype(str).str.lower().str.contains(qq, na=False)
+            | view["memo"].astype(str).str.lower().str.contains(qq, na=False)
+            | view["method"].astype(str).str.lower().str.contains(qq, na=False)
         )
-        living_view = living_view[mask]
-
-    living_view = living_view.sort_values(by=["date_dt", "date"], ascending=False)
-
-    expense_df = living_view[
-        (~living_view["category"].isin(LIVING_EMERGENCY_CATEGORY_OPTIONS)) &
-        (living_view["amount"] < 0)
-    ]
-
-    living_total = abs(int(expense_df["amount"].sum())) if not expense_df.empty else 0
+        view = view[mask]
+    
+    view = view.sort_values(by=["date_dt"], ascending=False)
+    
+    if record_filter == "현대":
+        view = view[view["method"] == "현대카드"]
+    
+    elif record_filter == "신한":
+        view = view[view["method"] == "신한카드"]
+    
+    elif record_filter == "주유":
+        view = view[view["memo"].astype(str).str.contains("주유", na=False)]
+    
+    elif record_filter == "사건비":
+        view = view[view["category"] == "사건비"]
+    
+    elif record_filter == "환급":
+        view = view[(view["method"] == "사건비통장") & (view["amount"] > 0)]
+    
+    filtered_total = int(view["amount"].abs().sum()) if not view.empty else 0
     st.markdown(
-        f"<div style='text-align:right; font-size:13px; opacity:0.75;'>현재 보기: {living_month} · 총금액: {living_total:,}원</div>",
+        f"<div style='text-align:right; font-size:13px; opacity:0.75;'>"
+        f"🔎 현재 보기: {record_filter} &nbsp;&nbsp; | &nbsp;&nbsp; "
+        f"💰 총금액: {filtered_total:,}원"
+        f"</div>",
         unsafe_allow_html=True
     )
-
-    if living_view.empty:
-        st.write("생활비 내역이 없어요.")
+    
+    if view.empty:
+        st.write("표시할 기록이 없어요.")
     else:
-        living_view_with_idx = living_view.copy()
-        living_view_with_idx["row_id"] = living_view_with_idx.index
-        living_view_with_idx = living_view_with_idx.reset_index(drop=True)
-
-        total_rows = len(living_view_with_idx)
-        total_pages = (total_rows - 1) // LIVING_PAGE_SIZE + 1
-
-        living_view_key = f"{living_month}|{living_q}"
-        if "living_last_view_key" not in st.session_state:
-            st.session_state["living_last_view_key"] = living_view_key
-
-        if "living_record_page" not in st.session_state:
-            st.session_state["living_record_page"] = 1
-
-        if st.session_state["living_last_view_key"] != living_view_key:
-            st.session_state["living_record_page"] = 1
-            st.session_state["living_last_view_key"] = living_view_key
-
-        if st.session_state["living_record_page"] > total_pages:
-            st.session_state["living_record_page"] = total_pages
-        if st.session_state["living_record_page"] < 1:
-            st.session_state["living_record_page"] = 1
-
-        start_idx = (st.session_state["living_record_page"] - 1) * LIVING_PAGE_SIZE
-        end_idx = start_idx + LIVING_PAGE_SIZE
-
-        page_view = living_view_with_idx.iloc[start_idx:end_idx].copy()
-        page_view["번호"] = range(start_idx + 1, min(end_idx, total_rows) + 1)
-
-        st.markdown(
-            f"<div style='text-align:right; font-size:13px; opacity:0.75;'>총 {total_rows}건</div>",
-            unsafe_allow_html=True
-        )
-
-        h1, h2, h3, h4, h5, h6, h7, h8 = st.columns([0.7, 1.2, 1.0, 1.2, 2.6, 1.2, 0.8, 0.8])
-        h1.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
-        h2.markdown("<div class='table-head'>날짜</div>", unsafe_allow_html=True)
-        h3.markdown("<div class='table-head'>구분</div>", unsafe_allow_html=True)
-        h4.markdown("<div class='table-head'>카테고리</div>", unsafe_allow_html=True)
-        h5.markdown("<div class='table-head'>메모</div>", unsafe_allow_html=True)
-        h6.markdown("<div class='table-head'>금액</div>", unsafe_allow_html=True)
-        h7.markdown("<div class='table-head'>삭제</div>", unsafe_allow_html=True)
-        h8.markdown("<div class='table-head'>수정</div>", unsafe_allow_html=True)
-
-        for _, r in page_view.iterrows():
-            c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.7, 1.2, 1.0, 1.2, 2.6, 1.2, 0.8, 0.8])
-
-            if r["category"] in LIVING_EMERGENCY_CATEGORY_OPTIONS:
-                row_type = "비상금"
-            else:
-                row_type = "입금" if int(r["amount"]) > 0 else "지출"
-
-            category = str(r["category"]).strip()
-            amount = int(r["amount"])
-            amount_display = f"{abs(amount):,}원"
-
-            if category == "비상금 넣기":
-                icon = "🏦"
-            elif category == "비상금 빼기":
-                icon = "💰"
-            elif amount > 0:
-                icon = "➕"
-            else:
-                icon = "💸"
-
-            amount_html = f"<div class='row-box amount-text'>{icon} {amount_display}</div>"
-
-            c1.markdown(f"<div class='row-box'>{r['번호']}</div>", unsafe_allow_html=True)
-            c2.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
-            c3.markdown(f"<div class='row-box'>{row_type}</div>", unsafe_allow_html=True)
-            c4.markdown(f"<div class='row-box'><span class='cat-tag'>{r['category']}</span></div>", unsafe_allow_html=True)
-            c5.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
-            c6.markdown(amount_html, unsafe_allow_html=True)
-
-            rid = int(r["row_id"])
-
-            with c7:
-                if st.button("🗑", key=f"living_del_{rid}", use_container_width=True):
-                    current_df = load_living_df(get_worksheet_func)
-                    current_df = current_df.drop(index=rid).reset_index(drop=True)
-                    save_living_df(current_df, get_worksheet_func)
-                    st.success("삭제 완료!")
-                    st.rerun()
-
-            with c8:
-                if st.button("✏", key=f"living_edit_{rid}", use_container_width=True):
-                    edit_living_dialog(rid)
+        view_with_idx = view.copy()
+        view_with_idx["row_id"] = view_with_idx.index
+        view_with_idx = view_with_idx.reset_index(drop=True)
+    
+        total_rows = len(view_with_idx)
+        total_pages = (total_rows - 1) // PAGE_SIZE + 1
+    
+        if "record_page" not in st.session_state:
+            st.session_state["record_page"] = 1
+    
+        # 페이지 범위 보정
+        if st.session_state["record_page"] > total_pages:
+            st.session_state["record_page"] = total_pages
+        if st.session_state["record_page"] < 1:
+            st.session_state["record_page"] = 1
+    
+        start_idx = (st.session_state["record_page"] - 1) * PAGE_SIZE
+        end_idx = start_idx + PAGE_SIZE
+    
+        page_view = view_with_idx.iloc[start_idx:end_idx].copy()
+        page_view["no"] = range(start_idx + 1, min(end_idx, total_rows) + 1)
 
         st.markdown("<br>", unsafe_allow_html=True)
-
+        
+        st.markdown(
+            f"<p style='text-align:right; font-size:13px; opacity:0.75;'>"
+            f"총 {total_rows}건"
+            f"</p>",
+            unsafe_allow_html=True
+        )
+    
+        h0, h1, h2, h3, h4, h5, h6, h7 = st.columns([0.6, 1.1, 1.2, 2.2, 1.2, 1.1, 0.8, 0.8])
+        h0.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
+        h1.markdown("<div class='table-head'>날짜</div>", unsafe_allow_html=True)
+        h2.markdown("<div class='table-head'>카테고리</div>", unsafe_allow_html=True)
+        h3.markdown("<div class='table-head'>메모</div>", unsafe_allow_html=True)
+        h4.markdown("<div class='table-head'>금액</div>", unsafe_allow_html=True)
+        h5.markdown("<div class='table-head'>결제수단</div>", unsafe_allow_html=True)
+        h6.markdown("<div class='table-head'>삭제</div>", unsafe_allow_html=True)
+        h7.markdown("<div class='table-head'>수정</div>", unsafe_allow_html=True)
+    
+        for _, r in page_view.iterrows():
+            c0, c1, c2, c3, c4, c5, c6, c7 = st.columns([0.6, 1.1, 1.2, 2.2, 1.2, 1.1, 0.8, 0.8])
+    
+            c0.markdown(f"<div class='row-box'>{r['no']}</div>", unsafe_allow_html=True)
+            c1.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
+            c2.markdown(f"<div class='row-box'><span class='cat-tag'>{r['category']}</span></div>", unsafe_allow_html=True)
+            c3.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
+    
+            amount_display = f"{abs(int(r['amount'])):,}원"
+            if int(r["amount"]) > 0:
+                amount_html = f"<div class='row-box amount-text'>➕ {amount_display}</div>"
+            else:
+                amount_html = f"<div class='row-box amount-text'>💸 {amount_display}</div>"
+    
+            c4.markdown(amount_html, unsafe_allow_html=True)
+    
+            method = str(r["method"])
+            if method == "신한카드":
+                method_html = f"<span class='method-shinhan'>{method}</span>"
+            elif method == "사건비통장":
+                method_html = f"<span class='method-incident'>{method}</span>"
+            else:
+                method_html = f"<span class='method-hyundai'>{method}</span>"
+    
+            c5.markdown(f"<div class='row-box'>{method_html}</div>", unsafe_allow_html=True)
+    
+            rid = int(r["row_id"])
+    
+            with c6:
+                if st.button("🗑", key=f"del_{rid}", use_container_width=True):
+                    df = df.drop(index=rid).reset_index(drop=True)
+                    save_df(df)
+                    st.success("삭제 완료!")
+                    st.rerun()
+    
+            with c7:
+                if st.button("✏", key=f"edit_{rid}", use_container_width=True):
+                    edit_dialog(rid)
+    
+        st.markdown("<br>", unsafe_allow_html=True)
+        
         p1, p2, p3 = st.columns([1.2, 5, 1.2])
-
-        current_page = st.session_state["living_record_page"]
-
+        
+        current_page = st.session_state["record_page"]
+        
+        # 표시할 페이지 번호 계산
         pages_to_show = []
+        
         if total_pages <= 10:
             pages_to_show = list(range(1, total_pages + 1))
         else:
@@ -782,20 +2664,23 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 pages_to_show = [1, "...", total_pages - 4, total_pages - 3, total_pages - 2, total_pages - 1, total_pages]
             else:
                 pages_to_show = [1, "...", current_page - 1, current_page, current_page + 1, "...", total_pages]
-
+        
+        # 이전 버튼
         with p1:
             prev_disabled = current_page <= 1
             if st.button(
                 "◀ 이전",
                 use_container_width=True,
-                key="living_prev_page",
+                key="prev_page",
                 disabled=prev_disabled
             ):
-                st.session_state["living_record_page"] -= 1
+                st.session_state["record_page"] -= 1
                 st.rerun()
-
+        
+        # 숫자 페이지
         with p2:
             page_cols = st.columns(len(pages_to_show))
+        
             for i, page_item in enumerate(pages_to_show):
                 with page_cols[i]:
                     if page_item == "...":
@@ -807,377 +2692,65 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                         if st.button(
                             str(page_item),
                             use_container_width=True,
-                            key=f"living_page_{page_item}",
+                            key=f"page_{page_item}",
                             type="primary" if current_page == page_item else "secondary"
                         ):
-                            st.session_state["living_record_page"] = page_item
+                            st.session_state["record_page"] = page_item
                             st.rerun()
-
+        
+        # 다음 버튼
         with p3:
             next_disabled = current_page >= total_pages
             if st.button(
                 "다음 ▶",
                 use_container_width=True,
-                key="living_next_page",
+                key="next_page",
                 disabled=next_disabled
             ):
-                st.session_state["living_record_page"] += 1
+                st.session_state["record_page"] += 1
                 st.rerun()
-
+                
     st.divider()
-    st.subheader("🏠 최근 1년 관리비 내역")
 
-    today_dt = pd.Timestamp.today()
-    one_year_ago = today_dt - pd.DateOffset(months=12)
+    # =========================
+    # 그래프
+    # =========================
+    st.subheader("📊 요약 그래프")
 
-    management_df = living_df.copy()
-    management_df["date_dt"] = pd.to_datetime(management_df["date"], errors="coerce")
+    expense_view = view[view["amount"] < 0]
 
-    management_df = management_df[
-        (management_df["date_dt"] >= one_year_ago) &
-        (management_df["category"] == "주거비") &
-        (management_df["memo"].astype(str).str.contains("관리비", na=False))
-    ].copy()
-
-    management_df = management_df.sort_values(by="date_dt", ascending=False)
-
-    management_spent = abs(int(management_df[management_df["amount"] < 0]["amount"].sum())) if not management_df.empty else 0
-
-    st.markdown(
-        f"<div style='text-align:right; font-size:13px; opacity:0.75;'>최근 1년 관리비 합계: {management_spent:,}원</div>",
-        unsafe_allow_html=True
-    )
-
-    if management_df.empty:
-        st.write("최근 1년 관리비 내역이 없어요.")
-    else:
-        management_df = management_df.reset_index(drop=True)
-        management_df["번호"] = range(1, len(management_df) + 1)
-
-        h1, h2, h3, h4, h5 = st.columns([0.7, 1.2, 1.2, 2.8, 1.2])
-        h1.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
-        h2.markdown("<div class='table-head'>날짜</div>", unsafe_allow_html=True)
-        h3.markdown("<div class='table-head'>구분</div>", unsafe_allow_html=True)
-        h4.markdown("<div class='table-head'>메모</div>", unsafe_allow_html=True)
-        h5.markdown("<div class='table-head'>금액</div>", unsafe_allow_html=True)
-
-        for _, r in management_df.iterrows():
-            c1, c2, c3, c4, c5 = st.columns([0.7, 1.2, 1.2, 2.8, 1.2])
-
-            if r["category"] in LIVING_EMERGENCY_CATEGORY_OPTIONS:
-                row_type = "비상금"
-            else:
-                row_type = "입금" if int(r["amount"]) > 0 else "지출"
-
-            amount_display = f"{abs(int(r['amount'])):,}원"
-            amount_html = (
-                f"<div class='row-box amount-text'>➕ {amount_display}</div>"
-                if int(r["amount"]) > 0
-                else f"<div class='row-box amount-text'>💸 {amount_display}</div>"
-            )
-
-            c1.markdown(f"<div class='row-box'>{r['번호']}</div>", unsafe_allow_html=True)
-            c2.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
-            c3.markdown(f"<div class='row-box'>{row_type}</div>", unsafe_allow_html=True)
-            c4.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
-            c5.markdown(amount_html, unsafe_allow_html=True)
-
-    # 👉 월별로 묶기
-    if not management_df.empty:
-        chart_df = management_df.copy()
-        chart_df["month"] = chart_df["date_dt"].dt.strftime("%Y-%m")
-
-        monthly_sum = (
-            chart_df.groupby("month")["amount"]
+    if not expense_view.empty:
+        top_cat = (
+            expense_view.groupby("category")["amount"]
             .sum()
             .abs()
-            .reset_index()
-            .sort_values("month")
+            .sort_values(ascending=False)
         )
 
-        st.markdown("### 📈 관리비 추이")
+        st.subheader("🔥 이번달 지출 TOP")
+        top3 = top_cat.head(3)
+        cols = st.columns(len(top3))
 
-        fig, ax = plt.subplots()
+        for i, (cat, val) in enumerate(top3.items()):
+            cols[i].metric(cat, f"{int(val):,} 원")
 
-        ax.plot(
-            monthly_sum["month"],
-            monthly_sum["amount"],
-            marker="o"
-        )
-
-        ax.set_xlabel("월")
-        ax.set_ylabel("금액")
-        ax.set_title("관리비 월별 추이")
-        plt.xticks(rotation=45)
-        fig.tight_layout()
-
-        st.pyplot(fig)
-        plt.close(fig)
-
-    st.divider()
-    st.subheader("💵 현금")
-
-    cash_df["date_dt"] = pd.to_datetime(cash_df["date"], errors="coerce")
-
-    today = pd.Timestamp.today()
-    month_start = today.replace(day=1)
-
-    month_cash_df = cash_df[cash_df["date_dt"] >= month_start].copy()
-
-    cash_balance = int(cash_df["amount"].sum()) if not cash_df.empty else 0
-    month_cash_expense = abs(int(month_cash_df[month_cash_df["amount"] < 0]["amount"].sum())) if not month_cash_df.empty else 0
-
-    c1, c2 = st.columns(2)
-
-    with c1:
-        render_budget_card("💵 현금 보유액", f"{cash_balance:,}원", "#F0FFF4", "#C6F6D5", "#2F855A")
-
-    with c2:
-        render_budget_card("🧧 이번달 현금지출", f"{month_cash_expense:,}원", "#FFF5F5", "#FED7D7", "#C53030")
-
-    st.divider()
-    st.markdown("### ✍ 현금 입력")
-
-    if "cash_date" not in st.session_state:
-        st.session_state["cash_date"] = date.today()
-    if "cash_type" not in st.session_state:
-        st.session_state["cash_type"] = CASH_TYPE_OPTIONS[0]
-    if "cash_category" not in st.session_state:
-        st.session_state["cash_category"] = CASH_CATEGORY_OPTIONS[0]
-    if "cash_amount" not in st.session_state:
-        st.session_state["cash_amount"] = ""
-    if "cash_memo" not in st.session_state:
-        st.session_state["cash_memo"] = ""
-
-    if st.session_state.get("cash_form_reset"):
-        st.session_state["cash_date"] = date.today()
-        st.session_state["cash_type"] = CASH_TYPE_OPTIONS[0]
-        st.session_state["cash_category"] = CASH_CATEGORY_OPTIONS[0]
-        st.session_state["cash_amount"] = ""
-        st.session_state["cash_memo"] = ""
-        st.session_state["cash_form_reset"] = False
-
-    f1, f2, f3, f4, f5 = st.columns(5)
-
-    with f1:
-        cash_date = st.date_input("날짜", key="cash_date")
-
-    with f2:
-        cash_type = st.selectbox("구분", CASH_TYPE_OPTIONS, key="cash_type")
-
-    with f3:
-        if cash_type == "현금 넣기":
-            cash_category = st.text_input(
-                "카테고리",
-                placeholder="예: 부모님이 주심",
-                key="cash_category"
-            )
-        else:
-            cash_category = st.selectbox(
-                "카테고리",
-                CASH_CATEGORY_OPTIONS,
-                key="cash_category"
+    if not view.empty:
+        st.caption("카테고리별 지출")
+        if not expense_view.empty:
+            st.bar_chart(
+                expense_view.groupby("category")["amount"]
+                .sum()
+                .abs()
+                .sort_values(ascending=False)
             )
 
-    with f4:
-        cash_memo = st.text_input("메모", key="cash_memo")
+        st.caption("결제수단별 순금액")
+        method_sum = view.groupby("method")["amount"].sum().abs().sort_values(ascending=False)
 
-    with f5:
-        cash_amount_text = st.text_input("금액", key="cash_amount")
+        if not method_sum.empty:
+            st.bar_chart(method_sum)
 
-    if st.button("➕ 현금 저장", use_container_width=True, type="primary"):
-        amount_clean = cash_amount_text.replace(",", "").strip()
+    st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
 
-        if not amount_clean or not re.fullmatch(r"\d+", amount_clean):
-            st.error("금액은 숫자만 입력해줘.")
-        else:
-            amount_value = int(amount_clean)
-            final_amount = amount_value if cash_type == "현금 넣기" else -amount_value
-
-            category_value = cash_category.strip()
-            memo_value = cash_memo.strip()
-
-            # 카테고리 비어있으면 자동 채우기
-            if cash_type == "현금 넣기" and not category_value:
-                category_value = "현금 들어옴"
-
-            # 메모 비어있으면 카테고리값 따라가기
-            if cash_type == "현금 넣기" and not memo_value:
-                memo_value = category_value
-
-            new_row = {
-                "date": str(cash_date),
-                "amount": final_amount,
-                "category": category_value,
-                "memo": memo_value,
-            }
-
-            current_df = load_cash_df(get_worksheet_func)
-            current_df = pd.concat([current_df, pd.DataFrame([new_row])], ignore_index=True)
-            save_cash_df(current_df, get_worksheet_func)
-
-            st.success("현금 저장 완료!")
-            st.session_state["cash_form_reset"] = True
-            st.rerun()
-
-    @st.dialog("✏ 현금 기록 수정")
-    def edit_cash_dialog(rid: int):
-        current_df = load_cash_df(get_worksheet_func)
-
-        if rid >= len(current_df):
-            st.error("수정할 데이터를 찾지 못했어요.")
-            return
-
-        row = current_df.iloc[rid]
-        row_amount = int(row["amount"])
-
-        row_type = "현금 넣기" if row_amount > 0 else "현금 쓰기"
-        type_index = CASH_TYPE_OPTIONS.index(row_type) if row_type in CASH_TYPE_OPTIONS else 0
-
-        row_category = str(row["category"]).strip()
-        category_index = CASH_CATEGORY_OPTIONS.index(row_category) if row_category in CASH_CATEGORY_OPTIONS else 0
-
-        with st.form(f"cash_edit_form_{rid}"):
-            q1, q2 = st.columns(2)
-
-            with q1:
-                edit_type = st.selectbox(
-                    "구분",
-                    CASH_TYPE_OPTIONS,
-                    index=type_index,
-                    key=f"cash_edit_type_{rid}"
-                )
-
-            with q2:
-                if edit_type == "현금 넣기":
-                    edit_category = st.text_input(
-                        "카테고리",
-                        value=row_category,
-                        key=f"cash_edit_category_{rid}"
-                    )
-                else:
-                    edit_category = st.selectbox(
-                        "카테고리",
-                        CASH_CATEGORY_OPTIONS,
-                        index=category_index,
-                        key=f"cash_edit_category_{rid}"
-                    )
-
-            q3, q4 = st.columns(2)
-
-            with q3:
-                memo = st.text_input(
-                    "메모",
-                    value=str(row["memo"]),
-                    key=f"cash_edit_memo_{rid}"
-                )
-
-            with q4:
-                amount_text = st.text_input(
-                    "금액",
-                    value=f"{abs(row_amount):,}",
-                    key=f"cash_edit_amount_{rid}"
-                )
-
-            d = st.date_input(
-                "날짜",
-                value=pd.to_datetime(row["date"], errors="coerce"),
-                key=f"cash_edit_date_{rid}"
-            )
-
-            col_cancel, col_save = st.columns(2)
-
-            with col_cancel:
-                canceled = st.form_submit_button("취소", use_container_width=True)
-
-            with col_save:
-                saved = st.form_submit_button("💾 저장", use_container_width=True)
-
-        if saved:
-            amount_clean = amount_text.replace(",", "").strip()
-
-            if not amount_clean or not re.fullmatch(r"\d+", amount_clean):
-                st.error("금액은 숫자만 입력해줘.")
-            else:
-                amount_value = int(amount_clean)
-                final_amount = amount_value if edit_type == "현금 넣기" else -amount_value
-
-                category_value = edit_category.strip()
-                memo_value = memo.strip()
-
-                if edit_type == "현금 넣기" and not category_value:
-                    category_value = "현금 들어옴"
-
-                if edit_type == "현금 넣기" and not memo_value:
-                    memo_value = category_value
-
-                current_df.iloc[rid] = [
-                    str(d),
-                    final_amount,
-                    category_value,
-                    memo_value,
-                ]
-
-                save_cash_df(current_df, get_worksheet_func)
-                st.success("현금 수정 완료!")
-                st.rerun()
-
-        if canceled:
-            st.rerun()
-
-    st.divider()
-    st.markdown("### 🧾 현금 내역")
-
-    cash_view = cash_df.copy()
-    cash_view["date_dt"] = pd.to_datetime(cash_view["date"], errors="coerce")
-    cash_view = cash_view.sort_values(by=["date_dt", "date"], ascending=False)
-
-    if cash_view.empty:
-        st.write("현금 내역이 없어요.")
-    else:
-        cash_view_with_idx = cash_view.copy()
-        cash_view_with_idx["row_id"] = cash_view_with_idx.index
-        cash_view_with_idx = cash_view_with_idx.reset_index(drop=True)
-        cash_view_with_idx["번호"] = range(1, len(cash_view_with_idx) + 1)
-
-        h1, h2, h3, h4, h5, h6, h7, h8 = st.columns([0.7, 1.2, 1.2, 1.2, 2.2, 1.2, 0.8, 0.8])
-        h1.markdown("<div class='table-head'>번호</div>", unsafe_allow_html=True)
-        h2.markdown("<div class='table-head'>날짜</div>", unsafe_allow_html=True)
-        h3.markdown("<div class='table-head'>구분</div>", unsafe_allow_html=True)
-        h4.markdown("<div class='table-head'>카테고리</div>", unsafe_allow_html=True)
-        h5.markdown("<div class='table-head'>메모</div>", unsafe_allow_html=True)
-        h6.markdown("<div class='table-head'>금액</div>", unsafe_allow_html=True)
-        h7.markdown("<div class='table-head'>삭제</div>", unsafe_allow_html=True)
-        h8.markdown("<div class='table-head'>수정</div>", unsafe_allow_html=True)
-
-        for _, r in cash_view_with_idx.iterrows():
-            c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.7, 1.2, 1.2, 1.2, 2.2, 1.2, 0.8, 0.8])
-
-            amount = int(r["amount"])
-            rid = int(r["row_id"])
-
-            if amount > 0:
-                row_type = "현금 넣기"
-                amount_html = f"<div class='row-box amount-text'>💵 {abs(amount):,}원</div>"
-            else:
-                row_type = "현금 쓰기"
-                amount_html = f"<div class='row-box amount-text'>💸 {abs(amount):,}원</div>"
-
-            c1.markdown(f"<div class='row-box'>{r['번호']}</div>", unsafe_allow_html=True)
-            c2.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
-            c3.markdown(f"<div class='row-box'>{row_type}</div>", unsafe_allow_html=True)
-            c4.markdown(f"<div class='row-box'><span class='cat-tag'>{r['category']}</span></div>", unsafe_allow_html=True)
-            c5.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
-            c6.markdown(amount_html, unsafe_allow_html=True)
-
-            with c7:
-                if st.button("🗑", key=f"cash_del_{rid}", use_container_width=True):
-                    current_df = load_cash_df(get_worksheet_func)
-                    current_df = current_df.drop(index=rid).reset_index(drop=True)
-                    save_cash_df(current_df, get_worksheet_func)
-                    st.success("현금 삭제 완료!")
-                    st.rerun()
-
-            with c8:
-                if st.button("✏", key=f"cash_edit_{rid}", use_container_width=True):
-                    edit_cash_dialog(rid)
+with tab3:
+    render_living_tab(get_worksheet, render_budget_card)
