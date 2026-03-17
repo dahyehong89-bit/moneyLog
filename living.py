@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 
 
-LIVING_COLUMNS = ["date", "amount", "category", "method", "memo"]
+LIVING_COLUMNS = ["date", "amount", "category", "method", "memo", "type"]
 
 LIVING_EXPENSE_CATEGORY_OPTIONS = [
     "식비",
@@ -63,12 +63,9 @@ def load_living_df(_get_worksheet_func) -> pd.DataFrame:
         if "번호" in df.columns:
             df = df.drop(columns=["번호"])
 
-        for c in ["date", "amount", "category", "method", "memo"]:
+        for c in ["date", "amount", "category", "method", "memo", "type"]:
             if c not in df.columns:
                 df[c] = ""
-
-        if "type" not in df.columns:
-            df["type"] = ""
 
         raw_amount = df["amount"].astype(str).str.strip()
 
@@ -85,13 +82,19 @@ def load_living_df(_get_worksheet_func) -> pd.DataFrame:
 
         def restore_amount(row):
             amt = abs(int(row["amount"]))
-            typ = row["type"]
+            typ = str(row["type"]).strip()
             raw = str(row.get("_raw_amount", "")).strip()
+            category = str(row.get("category", "")).strip()
 
             if typ == "입금":
                 return amt
             elif typ == "지출":
                 return -amt
+            elif typ == "비상금":
+                if category == "비상금 넣기":
+                    return -amt
+                elif category == "비상금 빼기":
+                    return amt
 
             if raw.startswith("-"):
                 return -amt
@@ -108,6 +111,7 @@ def load_living_df(_get_worksheet_func) -> pd.DataFrame:
         df["category"] = df["category"].astype(str)
         df["method"] = df["method"].astype(str)
         df["memo"] = df["memo"].astype(str)
+        df["type"] = df["type"].astype(str)
 
         return df[LIVING_COLUMNS].copy()
 
@@ -126,8 +130,10 @@ def save_living_df(df: pd.DataFrame, _get_worksheet_func) -> None:
         ascending=[False, False]
     ).drop(columns=["date_dt"])
 
-    save_data["구분"] = save_data["amount"].apply(
-        lambda x: "입금" if int(x) > 0 else "지출"
+    save_data["구분"] = save_data["type"].astype(str).str.strip()
+    save_data["구분"] = save_data["구분"].replace("", pd.NA)
+    save_data["구분"] = save_data["구분"].fillna(
+        save_data["amount"].apply(lambda x: "입금" if int(x) > 0 else "지출")
     )
 
     save_data["금액"] = save_data["amount"].apply(
@@ -179,17 +185,24 @@ def calc_living_summary(df: pd.DataFrame, month_key: str):
     temp = df.copy()
     temp["date_dt"] = pd.to_datetime(temp["date"], errors="coerce")
 
+    if "type" not in temp.columns:
+        temp["type"] = ""
+
+    temp["type"] = temp["type"].astype(str).str.strip()
+    temp["category"] = temp["category"].astype(str).str.strip()
+
     month_start = pd.to_datetime(f"{month_key}-01")
     month_end = month_start + pd.offsets.MonthEnd(1)
     prev_end = month_start - pd.Timedelta(days=1)
 
-    # 비상금 카테고리
-    emergency_cats = set(LIVING_EMERGENCY_CATEGORY_OPTIONS)
+    def is_emergency(dataframe):
+        return (
+            dataframe["type"].eq("비상금")
+            | dataframe["category"].isin(LIVING_EMERGENCY_CATEGORY_OPTIONS)
+        )
 
-    # 이전달 말까지
     prev_df = temp[temp["date_dt"] <= prev_end].copy()
-    prev_normal_df = prev_df[~prev_df["category"].isin(emergency_cats)].copy()
-
+    prev_normal_df = prev_df[~is_emergency(prev_df)].copy()
     prev_total_balance = int(prev_normal_df["amount"].sum())
 
     prev_emergency_put = abs(int(
@@ -202,21 +215,17 @@ def calc_living_summary(df: pd.DataFrame, month_key: str):
 
     carryover = prev_total_balance - prev_emergency_balance
 
-    # 선택 월
     month_df = temp[
         (temp["date_dt"] >= month_start) &
         (temp["date_dt"] <= month_end)
     ].copy()
-
-    month_normal_df = month_df[~month_df["category"].isin(emergency_cats)].copy()
+    month_normal_df = month_df[~is_emergency(month_df)].copy()
 
     month_income = int(month_normal_df[month_normal_df["amount"] > 0]["amount"].sum())
     month_expense = abs(int(month_normal_df[month_normal_df["amount"] < 0]["amount"].sum()))
 
-    # 현재까지 전체 기준
     current_df = temp[temp["date_dt"] <= month_end].copy()
-    current_normal_df = current_df[~current_df["category"].isin(emergency_cats)].copy()
-
+    current_normal_df = current_df[~is_emergency(current_df)].copy()
     total_balance = int(current_normal_df["amount"].sum())
 
     emergency_put = abs(int(
@@ -225,8 +234,8 @@ def calc_living_summary(df: pd.DataFrame, month_key: str):
     emergency_take = int(
         current_df[current_df["category"] == "비상금 빼기"]["amount"].sum()
     )
-
     emergency_balance = emergency_put - emergency_take
+
     available_balance = total_balance - emergency_balance
 
     return {
@@ -294,57 +303,29 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     f1, f2, f3, f4, f5 = st.columns(5)
 
     with f1:
-        living_date = st.date_input(
-            "날짜",
-            value=date.today(),
-            key="living_date"
-        )
+        living_date = st.date_input("날짜", key="living_date")
 
     with f2:
-        living_type = st.selectbox(
-            "구분",
-            LIVING_TYPE_OPTIONS,
-            index=0,
-            key="living_type"
-        )
+        living_type = st.selectbox("구분", LIVING_TYPE_OPTIONS, key="living_type")
 
     with f3:
         if living_type == "입금":
-            living_category = st.selectbox(
-                "카테고리",
-                LIVING_INCOME_CATEGORY_OPTIONS,
-                index=0,
-                key="living_category"
-            )
+            category_options = LIVING_INCOME_CATEGORY_OPTIONS
         elif living_type == "비상금":
-            living_category = st.selectbox(
-                "카테고리",
-                LIVING_EMERGENCY_CATEGORY_OPTIONS,
-                index=0,
-                key="living_category"
-            )
+            category_options = LIVING_EMERGENCY_CATEGORY_OPTIONS
         else:
-            living_category = st.selectbox(
-                "카테고리",
-                LIVING_EXPENSE_CATEGORY_OPTIONS,
-                index=0,
-                key="living_category"
-            )
+            category_options = LIVING_EXPENSE_CATEGORY_OPTIONS
+
+        if st.session_state.get("living_category") not in category_options:
+            st.session_state["living_category"] = category_options[0]
+
+        living_category = st.selectbox("카테고리", category_options, key="living_category")
 
     with f4:
-        living_memo = st.text_input(
-            "메모",
-            value="",
-            key="living_memo"
-        )
+        living_memo = st.text_input("메모", key="living_memo")
 
     with f5:
-        living_amount_text = st.text_input(
-            "금액",
-            value="",
-            placeholder="금액 입력",
-            key="living_amount"
-        )
+        living_amount_text = st.text_input("금액", placeholder="금액 입력", key="living_amount")
 
     living_saved = st.button("➕ 생활비 저장", use_container_width=True)
 
@@ -371,6 +352,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 "category": living_category,
                 "method": LIVING_DEFAULT_METHOD,
                 "memo": living_memo,
+                "type": living_type,
             }
 
             current_df = load_living_df(get_worksheet_func)
@@ -490,6 +472,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                     edit_category,
                     LIVING_DEFAULT_METHOD,
                     memo,
+                    edit_type,
                 ]
 
                 save_living_df(current_df, get_worksheet_func)
