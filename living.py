@@ -550,7 +550,13 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     living_view = living_view.sort_values(by=["date_dt", "date"], ascending=False)
 
-    living_total = int(living_view["amount"].abs().sum()) if not living_view.empty else 0
+    # 지출만 필터
+    expense_df = living_view[
+        (~living_view["category"].isin(LIVING_EMERGENCY_CATEGORY_OPTIONS)) &
+        (living_view["amount"] < 0)
+    ]
+
+    living_total = abs(int(expense_df["amount"].sum())) if not expense_df.empty else 0
     st.markdown(
         f"<div style='text-align:right; font-size:13px; opacity:0.75;'>현재 보기: {living_month} · 총금액: {living_total:,}원</div>",
         unsafe_allow_html=True
