@@ -391,11 +391,9 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     summary = calc_living_summary(living_df, living_month)
 
-    cash_df = load_cash_df(get_worksheet_func)
     cash_balance = int(cash_df["amount"].sum()) if not cash_df.empty else 0
 
-    top1, top2, top3 = st.columns(3)
-    bottom1, bottom2, bottom3 = st.columns(3)
+    top1, top2, top3 = st.columns(3, gap="large")
 
     with top1:
         render_budget_card("🔄 이월금액", f"{summary['carryover']:,}원", "#F8FBF7", "#D9E8D4", "#4D6B50")
@@ -405,6 +403,11 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     with top3:
         render_budget_card("💸 지출", f"{summary['expense']:,}원", "#FFF7F5", "#F2D9D2", "#8A5A4A")
+
+    # 👉 줄 간격 추가
+    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+
+    bottom1, bottom2, bottom3 = st.columns(3, gap="large")
 
     with bottom1:
         render_budget_card("💳 가용생활비", f"{summary['available']:,}원", "#F7F3FF", "#DCCBFA", "#6C48A6")
