@@ -997,7 +997,10 @@ html, body, [data-testid="stAppViewContainer"] {{
 }}
 
 .block-container {{
-    padding-top: 1.2rem;
+    padding-top: 1rem !important;
+    padding-bottom: 1.2rem !important;
+    padding-left: 0.8rem !important;
+    padding-right: 0.8rem !important;
     max-width: 1400px;
     background: {theme["container_bg"]};
     border-radius: 24px;
@@ -1007,6 +1010,16 @@ html, body, [data-testid="stAppViewContainer"] {{
 h1, h2, h3 {{
     font-weight: 800;
     letter-spacing: -1px;
+}}
+
+h3, h4 {{
+    margin-top: 0.3rem !important;
+    margin-bottom: 0.5rem !important;
+}}
+
+hr {{
+    margin-top: 0.8rem !important;
+    margin-bottom: 0.8rem !important;
 }}
 
 /* ===== 입력창 ===== */
