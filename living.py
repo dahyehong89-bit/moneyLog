@@ -360,6 +360,7 @@ def save_cash_df(df: pd.DataFrame, _get_worksheet_func) -> None:
 
 def render_living_tab(get_worksheet_func, render_budget_card):
     living_df = load_living_df(get_worksheet_func)
+    cash_df = load_cash_df(get_worksheet_func)
 
     st.subheader("🏦 생활비 통장")
 
@@ -390,18 +391,29 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     summary = calc_living_summary(living_df, living_month)
 
-    c1, c2, c3, c4, c5 = st.columns(5)
+    cash_df = load_cash_df(get_worksheet_func)
+    cash_balance = int(cash_df["amount"].sum()) if not cash_df.empty else 0
 
-    with c1:
+    top1, top2, top3 = st.columns(3)
+    bottom1, bottom2, bottom3 = st.columns(3)
+
+    with top1:
         render_budget_card("🔄 이월금액", f"{summary['carryover']:,}원", "#F8FBF7", "#D9E8D4", "#4D6B50")
-    with c2:
+
+    with top2:
         render_budget_card("➕ 입금", f"{summary['income']:,}원", "#F3F8FF", "#D8E6F8", "#4A6688")
-    with c3:
+
+    with top3:
         render_budget_card("💸 지출", f"{summary['expense']:,}원", "#FFF7F5", "#F2D9D2", "#8A5A4A")
-    with c4:
+
+    with bottom1:
         render_budget_card("💳 가용생활비", f"{summary['available']:,}원", "#F7F3FF", "#DCCBFA", "#6C48A6")
-    with c5:
+
+    with bottom2:
         render_budget_card("🏦 비상금", f"{summary['emergency']:,}원", "#FFF9E9", "#F2E1A8", "#8A6A00")
+
+    with bottom3:
+        render_budget_card("💵 현금보유액", f"{cash_balance:,}원", "#F0FFF4", "#C6F6D5", "#2F855A")
 
     st.divider()
     st.subheader("✍ 생활비 입력")
@@ -869,7 +881,6 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     st.divider()
     st.subheader("💵 현금")
 
-    cash_df = load_cash_df(get_worksheet_func)
     cash_df["date_dt"] = pd.to_datetime(cash_df["date"], errors="coerce")
 
     today = pd.Timestamp.today()
