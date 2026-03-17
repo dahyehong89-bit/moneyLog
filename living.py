@@ -38,6 +38,7 @@ LIVING_TYPE_OPTIONS = ["지출", "입금", "비상금"]
 LIVING_DEFAULT_METHOD = "생활비통장"
 LIVING_PAGE_SIZE = 10
 
+
 @st.cache_data(ttl=60)
 def load_living_df(_get_worksheet_func) -> pd.DataFrame:
     try:
@@ -57,13 +58,12 @@ def load_living_df(_get_worksheet_func) -> pd.DataFrame:
             "메모": "memo",
             "구분": "type",
         }
-
         df = df.rename(columns=rename_map)
 
         if "번호" in df.columns:
             df = df.drop(columns=["번호"])
 
-        for c in ["date", "amount", "category", "method", "memo", "type"]:
+        for c in LIVING_COLUMNS:
             if c not in df.columns:
                 df[c] = ""
 
@@ -76,46 +76,49 @@ def load_living_df(_get_worksheet_func) -> pd.DataFrame:
         )
         df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0).astype(int)
 
-        df["type"] = df["type"].astype(str).str.strip()
+        df["date"] = df["date"].astype(str).str.strip()
+        df["category"] = df["category"].astype(str).str.strip()
         df["method"] = df["method"].astype(str).str.strip()
         df["memo"] = df["memo"].astype(str).str.strip()
+        df["type"] = df["type"].astype(str).str.strip()
+
+        df["_raw_amount"] = raw_amount
 
         def restore_amount(row):
             amt = abs(int(row["amount"]))
-            typ = str(row["type"]).strip()
-            raw = str(row.get("_raw_amount", "")).strip()
+            typ = str(row.get("type", "")).strip()
             category = str(row.get("category", "")).strip()
+            raw = str(row.get("_raw_amount", "")).strip()
 
             if typ == "입금":
                 return amt
-            elif typ == "지출":
+            if typ == "지출":
                 return -amt
-            elif typ == "비상금":
+            if typ == "비상금":
                 if category == "비상금 넣기":
                     return -amt
-                elif category == "비상금 빼기":
+                if category == "비상금 빼기":
                     return amt
 
             if raw.startswith("-"):
                 return -amt
-            elif raw.startswith("+"):
+            if raw.startswith("+"):
                 return amt
-            else:
-                return -amt
 
-        df["_raw_amount"] = raw_amount
+            if category == "비상금 넣기":
+                return -amt
+            if category == "비상금 빼기":
+                return amt
+
+            return -amt
+
         df["amount"] = df.apply(restore_amount, axis=1)
         df = df.drop(columns=["_raw_amount"])
 
-        df["date"] = df["date"].astype(str)
-        df["category"] = df["category"].astype(str)
-        df["method"] = df["method"].astype(str)
-        df["memo"] = df["memo"].astype(str)
-        df["type"] = df["type"].astype(str)
-
         return df[LIVING_COLUMNS].copy()
 
-    except Exception:
+    except Exception as e:
+        st.error(f"load_living_df 에러: {e}")
         return pd.DataFrame(columns=LIVING_COLUMNS)
 
 
@@ -157,6 +160,7 @@ def save_living_df(df: pd.DataFrame, _get_worksheet_func) -> None:
     ws.clear()
     ws.update(rows)
     load_living_df.clear()
+
 
 def get_living_month_options(df: pd.DataFrame):
     current_month = datetime.today().strftime("%Y-%m")
@@ -246,6 +250,7 @@ def calc_living_summary(df: pd.DataFrame, month_key: str):
         "available": available_balance,
     }
 
+
 def render_living_tab(get_worksheet_func, render_budget_card):
     living_df = load_living_df(get_worksheet_func)
 
@@ -257,7 +262,10 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     top_left, top_right = st.columns([1, 1])
 
     with top_left:
-        if "living_selected_month" not in st.session_state or st.session_state["living_selected_month"] not in month_options:
+        if (
+            "living_selected_month" not in st.session_state
+            or st.session_state["living_selected_month"] not in month_options
+        ):
             st.session_state["living_selected_month"] = current_month
 
         living_month = st.selectbox(
@@ -289,8 +297,18 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         render_budget_card("가용생활비", f"{summary['available']:,}원", "#F7F3FF", "#DCCBFA", "#6C48A6")
 
     st.divider()
-
     st.subheader("✍ 생활비 입력")
+
+    if "living_date" not in st.session_state:
+        st.session_state["living_date"] = date.today()
+    if "living_type" not in st.session_state:
+        st.session_state["living_type"] = "지출"
+    if "living_category" not in st.session_state:
+        st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
+    if "living_memo" not in st.session_state:
+        st.session_state["living_memo"] = ""
+    if "living_amount" not in st.session_state:
+        st.session_state["living_amount"] = ""
 
     if st.session_state.get("living_form_reset"):
         st.session_state["living_date"] = date.today()
@@ -303,10 +321,17 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     f1, f2, f3, f4, f5 = st.columns(5)
 
     with f1:
-        living_date = st.date_input("날짜", key="living_date")
+        living_date = st.date_input(
+            "날짜",
+            key="living_date"
+        )
 
     with f2:
-        living_type = st.selectbox("구분", LIVING_TYPE_OPTIONS, key="living_type")
+        living_type = st.selectbox(
+            "구분",
+            LIVING_TYPE_OPTIONS,
+            key="living_type"
+        )
 
     with f3:
         if living_type == "입금":
@@ -319,13 +344,24 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         if st.session_state.get("living_category") not in category_options:
             st.session_state["living_category"] = category_options[0]
 
-        living_category = st.selectbox("카테고리", category_options, key="living_category")
+        living_category = st.selectbox(
+            "카테고리",
+            category_options,
+            key="living_category"
+        )
 
     with f4:
-        living_memo = st.text_input("메모", key="living_memo")
+        living_memo = st.text_input(
+            "메모",
+            key="living_memo"
+        )
 
     with f5:
-        living_amount_text = st.text_input("금액", placeholder="금액 입력", key="living_amount")
+        living_amount_text = st.text_input(
+            "금액",
+            placeholder="금액 입력",
+            key="living_amount"
+        )
 
     living_saved = st.button("➕ 생활비 저장", use_container_width=True)
 
@@ -363,9 +399,6 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             st.session_state["living_form_reset"] = True
             st.rerun()
 
-    # -------------------
-    # 수정 모달
-    # -------------------
     @st.dialog("✏ 생활비 기록 수정")
     def edit_living_dialog(rid: int):
         current_df = load_living_df(get_worksheet_func)
@@ -375,17 +408,23 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             return
 
         row = current_df.iloc[rid]
-        row_category = str(row["category"])
+        row_category = str(row["category"]).strip()
         row_amount = int(row["amount"])
+        row_type = str(row.get("type", "")).strip()
 
-        if row_category in LIVING_EMERGENCY_CATEGORY_OPTIONS:
-            row_type = "비상금"
-            category_options = LIVING_EMERGENCY_CATEGORY_OPTIONS
-        elif row_amount > 0:
-            row_type = "입금"
+        if not row_type:
+            if row_category in LIVING_EMERGENCY_CATEGORY_OPTIONS:
+                row_type = "비상금"
+            elif row_amount > 0:
+                row_type = "입금"
+            else:
+                row_type = "지출"
+
+        if row_type == "입금":
             category_options = LIVING_INCOME_CATEGORY_OPTIONS
+        elif row_type == "비상금":
+            category_options = LIVING_EMERGENCY_CATEGORY_OPTIONS
         else:
-            row_type = "지출"
             category_options = LIVING_EXPENSE_CATEGORY_OPTIONS
 
         type_index = LIVING_TYPE_OPTIONS.index(row_type) if row_type in LIVING_TYPE_OPTIONS else 0
@@ -482,9 +521,6 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         if canceled:
             st.rerun()
 
-    # -------------------
-    # 생활비 내역
-    # -------------------
     st.divider()
     st.subheader("🧾 생활비 내역")
 
@@ -504,6 +540,9 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         qq = living_q.strip().lower()
 
         def get_row_type(r):
+            row_type = str(r.get("type", "")).strip()
+            if row_type:
+                return row_type
             if r["category"] in LIVING_EMERGENCY_CATEGORY_OPTIONS:
                 return "비상금"
             return "입금" if int(r["amount"]) > 0 else "지출"
@@ -575,10 +614,12 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         for _, r in page_view.iterrows():
             c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.7, 1.2, 1.0, 1.2, 2.6, 1.2, 0.8, 0.8])
 
-            if r["category"] in LIVING_EMERGENCY_CATEGORY_OPTIONS:
-                row_type = "비상금"
-            else:
-                row_type = "입금" if int(r["amount"]) > 0 else "지출"
+            row_type = str(r.get("type", "")).strip()
+            if not row_type:
+                if r["category"] in LIVING_EMERGENCY_CATEGORY_OPTIONS:
+                    row_type = "비상금"
+                else:
+                    row_type = "입금" if int(r["amount"]) > 0 else "지출"
 
             amount_display = f"{abs(int(r['amount'])):,}원"
             amount_html = (
@@ -706,10 +747,12 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         for _, r in management_df.iterrows():
             c1, c2, c3, c4, c5 = st.columns([0.7, 1.2, 1.2, 2.8, 1.2])
 
-            if r["category"] in LIVING_EMERGENCY_CATEGORY_OPTIONS:
-                row_type = "비상금"
-            else:
-                row_type = "입금" if int(r["amount"]) > 0 else "지출"
+            row_type = str(r.get("type", "")).strip()
+            if not row_type:
+                if r["category"] in LIVING_EMERGENCY_CATEGORY_OPTIONS:
+                    row_type = "비상금"
+                else:
+                    row_type = "입금" if int(r["amount"]) > 0 else "지출"
 
             amount_display = f"{abs(int(r['amount'])):,}원"
             amount_html = (
