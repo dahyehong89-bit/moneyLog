@@ -1063,11 +1063,22 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 amount_value = int(amount_clean)
                 final_amount = amount_value if edit_type == "현금 넣기" else -amount_value
 
+                category_value = edit_category.strip()
+                memo_value = memo.strip()
+
+                # 👉 카테고리 자동 채우기
+                if edit_type == "현금 넣기" and not category_value:
+                    category_value = "현금 들어옴"
+
+                # 👉 메모 자동 채우기
+                if edit_type == "현금 넣기" and not memo_value:
+                    memo_value = category_value
+
                 current_df.iloc[rid] = [
                     str(d),
                     final_amount,
-                    edit_category,
-                    memo.strip(),
+                    category_value,
+                    memo_value,
                 ]
 
                 save_cash_df(current_df, get_worksheet_func)
