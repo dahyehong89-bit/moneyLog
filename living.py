@@ -282,19 +282,19 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     c1, c2, c3, c4, c5 = st.columns(5)
 
     with c1:
-        render_budget_card("이월금액", f"{summary['carryover']:,}원", "#F8FBF7", "#D9E8D4", "#4D6B50")
+        render_budget_card("🔄 이월금액", f"{summary['carryover']:,}원", "#F8FBF7", "#D9E8D4", "#4D6B50")
 
     with c2:
-        render_budget_card("입금", f"{summary['income']:,}원", "#F3F8FF", "#D8E6F8", "#4A6688")
+        render_budget_card("➕ 입금", f"{summary['income']:,}원", "#F3F8FF", "#D8E6F8", "#4A6688")
 
     with c3:
-        render_budget_card("지출", f"{summary['expense']:,}원", "#FFF7F5", "#F2D9D2", "#8A5A4A")
+        render_budget_card("💸 지출", f"{summary['expense']:,}원", "#FFF7F5", "#F2D9D2", "#8A5A4A")
 
     with c4:
-        render_budget_card("가용생활비", f"{summary['available']:,}원", "#F7F3FF", "#DCCBFA", "#6C48A6")
+        render_budget_card("💳 가용생활비", f"{summary['available']:,}원", "#F7F3FF", "#DCCBFA", "#6C48A6")
 
     with c5:
-        render_budget_card("비상금", f"{summary['emergency']:,}원", "#FFF9E9", "#F2E1A8", "#8A6A00")
+        render_budget_card("🏦 비상금", f"{summary['emergency']:,}원", "#FFF9E9", "#F2E1A8", "#8A6A00")
 
     st.divider()
     st.subheader("✍ 생활비 입력")
