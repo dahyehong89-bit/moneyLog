@@ -902,6 +902,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     with c2:
         render_budget_card("🧧 이번달 현금지출", f"{month_cash_expense:,}원", "#FFF5F5", "#FED7D7", "#C53030")
 
+    st.divider()
     st.markdown("### ✍ 현금 입력")
 
     if "cash_date" not in st.session_state:
