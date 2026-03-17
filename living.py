@@ -536,14 +536,9 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         category_index = category_options.index(row_category) if row_category in category_options else 0
 
         with st.form(f"living_edit_form_{rid}"):
-            q1, q2 = st.columns(2)
+            q1, q2, q3, q4, q5 = st.columns(5)
 
             with q1:
-                d = st.date_input(
-                    "날짜",
-                    value=pd.to_datetime(row["date"], errors="coerce"),
-                    key=f"living_edit_date_{rid}"
-                )
                 edit_type = st.selectbox(
                     "구분",
                     LIVING_TYPE_OPTIONS,
@@ -571,8 +566,6 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                     key=f"living_edit_category_{rid}"
                 )
 
-            q3, q4 = st.columns(2)
-
             with q3:
                 memo = st.text_input(
                     "메모",
@@ -585,6 +578,13 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                     "금액",
                     value=f"{abs(row_amount):,}",
                     key=f"living_edit_amount_{rid}"
+                )
+
+            with q5:
+                d = st.date_input(
+                    "날짜",
+                    value=pd.to_datetime(row["date"], errors="coerce"),
+                    key=f"living_edit_date_{rid}"
                 )
 
             col_cancel, col_save = st.columns(2)
@@ -924,7 +924,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         st.session_state["cash_memo"] = ""
         st.session_state["cash_form_reset"] = False
 
-    f1, f2, f3, f4 = st.columns(4)
+    f1, f2, f3, f4, f5 = st.columns(5)
 
     with f1:
         cash_date = st.date_input("날짜", key="cash_date")
@@ -936,7 +936,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         if cash_type == "현금 넣기":
             cash_category = st.text_input(
                 "카테고리",
-                placeholder="예: 부모님이 주심 / 보너스 / 축의금",
+                placeholder="예: 부모님이 주심",
                 key="cash_category"
             )
         else:
@@ -947,9 +947,10 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             )
 
     with f4:
-        cash_amount_text = st.text_input("금액", key="cash_amount")
+        cash_memo = st.text_input("메모", key="cash_memo")
 
-    cash_memo = st.text_input("메모", key="cash_memo")
+    with f5:
+        cash_amount_text = st.text_input("금액", key="cash_amount")
 
     if st.button("➕ 현금 저장", use_container_width=True, type="primary"):
         amount_clean = cash_amount_text.replace(",", "").strip()
@@ -1004,14 +1005,9 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         category_index = CASH_CATEGORY_OPTIONS.index(row_category) if row_category in CASH_CATEGORY_OPTIONS else 0
 
         with st.form(f"cash_edit_form_{rid}"):
-            q1, q2 = st.columns(2)
+            q1, q2, q3, q4, q5 = st.columns(5)
 
             with q1:
-                d = st.date_input(
-                    "날짜",
-                    value=pd.to_datetime(row["date"], errors="coerce"),
-                    key=f"cash_edit_date_{rid}"
-                )
                 edit_type = st.selectbox(
                     "구분",
                     CASH_TYPE_OPTIONS,
@@ -1034,17 +1030,26 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                         key=f"cash_edit_category_{rid}"
                     )
 
-            memo = st.text_input(
-                "메모",
-                value=str(row["memo"]),
-                key=f"cash_edit_memo_{rid}"
-            )
+            with q3:
+                memo = st.text_input(
+                    "메모",
+                    value=str(row["memo"]),
+                    key=f"cash_edit_memo_{rid}"
+                )
 
-            amount_text = st.text_input(
-                "금액",
-                value=f"{abs(row_amount):,}",
-                key=f"cash_edit_amount_{rid}"
-            )
+            with q4:
+                amount_text = st.text_input(
+                    "금액",
+                    value=f"{abs(row_amount):,}",
+                    key=f"cash_edit_amount_{rid}"
+                )
+
+            with q5:
+                d = st.date_input(
+                    "날짜",
+                    value=pd.to_datetime(row["date"], errors="coerce"),
+                    key=f"cash_edit_date_{rid}"
+                )
 
             col_cancel, col_save = st.columns(2)
 
