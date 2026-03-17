@@ -1718,6 +1718,40 @@ def open_quick_edit(amount: int, category: str, memo: str = "", method: str = DE
     }
     quick_add_dialog()
 
+def render_budget_card_html(title, value, bg_color, border_color, text_color):
+    return f"""
+    <div class="budget-card-item">
+        <div style="
+            background:{bg_color};
+            border:1px solid {border_color};
+            border-radius:16px;
+            padding:12px 12px;
+            min-height:92px;
+            box-sizing:border-box;
+        ">
+            <div style="
+                font-size:13px;
+                font-weight:700;
+                color:{text_color};
+                opacity:0.92;
+                margin-bottom:8px;
+                line-height:1.2;
+                word-break:keep-all;
+            ">
+                {title}
+            </div>
+            <div style="
+                font-size:20px;
+                font-weight:800;
+                color:{text_color};
+                line-height:1.2;
+                word-break:keep-all;
+            ">
+                {value}
+            </div>
+        </div>
+    </div>
+    """
 
 @st.dialog("📝 빠른 입력 수정")
 def quick_add_dialog():
