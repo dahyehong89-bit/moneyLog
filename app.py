@@ -996,6 +996,7 @@ html, body, [data-testid="stAppViewContainer"] {{
     background: transparent !important;
 }}
 
+/* ===== 메인 컨테이너 ===== */
 .block-container {{
     padding-top: 1rem !important;
     padding-bottom: 1.2rem !important;
@@ -1018,8 +1019,10 @@ h3, h4 {{
 }}
 
 hr {{
-    margin-top: 0.8rem !important;
-    margin-bottom: 0.8rem !important;
+    border: none;
+    height: 1px;
+    background: {theme["line"]};
+    margin: 1.1rem 0;
 }}
 
 /* ===== 입력창 ===== */
@@ -1078,14 +1081,6 @@ button[kind="primary"]:hover {{
     border: 1px solid {theme["filter_active_border"]} !important;
 }}
 
-/* ===== 구분선 ===== */
-hr {{
-    border: none;
-    height: 1px;
-    background: {theme["line"]};
-    margin: 1.1rem 0;
-}}
-
 /* ===== metric / form ===== */
 [data-testid="stMetric"] {{
     background: rgba(255,255,255,0.60);
@@ -1111,12 +1106,15 @@ hr {{
     text-align: center;
     color: {theme["table_head_text"]};
     margin-bottom: 4px;
+    font-size: 14px;
 }}
 
 .row-box {{
     padding: 6px;
     border-radius: 10px;
     text-align: center;
+    font-size: 14px;
+    line-height: 1.35;
 }}
 
 .row-box:hover {{
@@ -1177,8 +1175,8 @@ div[data-testid="stButton"] {{
 
 div[data-testid="stButton"] button {{
     padding: 2px 6px !important;
-    min-height: 26px !important;
-    border-radius:16px;
+    min-height: 30px !important;
+    border-radius: 16px;
 }}
 
 /* ===== 체크박스 ===== */
@@ -1237,7 +1235,7 @@ div[role="radiogroup"] [data-testid="stMarkdownContainer"] + div {{
     accent-color: transparent !important;
 }}
 
-/* ===== 탭 전체 영역 ===== */
+/* ===== 탭 ===== */
 button[data-baseweb="tab"] {{
     background: {theme["filter_bg"]} !important;
     border: 1px solid {theme["filter_border"]} !important;
@@ -1251,13 +1249,11 @@ button[data-baseweb="tab"] {{
     margin-right: 8px !important;
 }}
 
-/* 탭 hover */
 button[data-baseweb="tab"]:hover {{
     background: {theme["filter_hover"]} !important;
     transform: translateY(-1px);
 }}
 
-/* 선택된 탭 */
 button[data-baseweb="tab"][aria-selected="true"] {{
     background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
     border: 1px solid {theme["filter_active_border"]} !important;
@@ -1265,7 +1261,6 @@ button[data-baseweb="tab"][aria-selected="true"] {{
     box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
 }}
 
-/* 기본 밑줄/라인 숨기기 */
 div[data-baseweb="tab-border"] {{
     background: transparent !important;
 }}
@@ -1286,6 +1281,116 @@ div[data-baseweb="tab-highlight"] {{
 [data-testid="stProgress"] [data-baseweb="progress-bar"] div div div {{
     background: linear-gradient(90deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
     border-radius: 999px !important;
+}}
+
+/* ===== 모바일 전용 ===== */
+@media (max-width: 768px) {{
+    .block-container {{
+        padding-top: 0.55rem !important;
+        padding-bottom: 0.8rem !important;
+        padding-left: 0.45rem !important;
+        padding-right: 0.45rem !important;
+        border-radius: 16px !important;
+    }}
+
+    h1, h2, h3 {{
+        letter-spacing: -0.5px !important;
+    }}
+
+    h3 {{
+        font-size: 1.02rem !important;
+        margin-top: 0.15rem !important;
+        margin-bottom: 0.35rem !important;
+    }}
+
+    h4 {{
+        font-size: 0.95rem !important;
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.25rem !important;
+    }}
+
+    hr {{
+        margin: 0.65rem 0 !important;
+    }}
+
+    label[data-testid="stWidgetLabel"] p {{
+        font-size: 0.82rem !important;
+        margin-bottom: 0.05rem !important;
+    }}
+
+    input, textarea {{
+        font-size: 14px !important;
+    }}
+
+    [data-baseweb="select"] > div {{
+        min-height: 2.5rem !important;
+    }}
+
+    div[data-testid="stTextInput"],
+    div[data-testid="stDateInput"],
+    div[data-testid="stSelectbox"] {{
+        margin-bottom: 0.08rem !important;
+    }}
+
+    [data-testid="stForm"] {{
+        padding: 10px !important;
+        border-radius: 14px !important;
+    }}
+
+    [data-testid="stMetric"] {{
+        padding: 8px !important;
+        border-radius: 12px !important;
+    }}
+
+    .table-head {{
+        font-size: 11px !important;
+        padding: 6px 6px !important;
+        border-radius: 10px !important;
+    }}
+
+    .row-box {{
+        padding: 5px 3px !important;
+        font-size: 11.5px !important;
+        line-height: 1.2 !important;
+        word-break: keep-all;
+    }}
+
+    .amount-text {{
+        font-size: 11.5px !important;
+    }}
+
+    .cat-tag,
+    .method-hyundai,
+    .method-shinhan,
+    .method-incident {{
+        font-size: 11px !important;
+        padding: 3px 7px !important;
+    }}
+
+    div[data-testid="stButton"] button {{
+        min-height: 34px !important;
+        font-size: 13px !important;
+        padding: 4px 8px !important;
+        border-radius: 12px !important;
+    }}
+
+    button[data-baseweb="tab"] {{
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+        margin-right: 6px !important;
+        border-radius: 12px !important;
+    }}
+
+    div[role="radiogroup"] {{
+        gap: 6px !important;
+    }}
+
+    div[role="radiogroup"] label {{
+        min-height: 36px !important;
+        padding: 6px 10px !important;
+        font-size: 12px !important;
+        border-radius: 12px !important;
+    }}
 }}
 </style>
 """, unsafe_allow_html=True)
