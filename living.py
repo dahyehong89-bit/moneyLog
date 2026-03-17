@@ -620,11 +620,20 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                     row_type = "입금" if int(r["amount"]) > 0 else "지출"
 
             amount_display = f"{abs(int(r['amount'])):,}원"
-            amount_html = (
-                f"<div class='row-box amount-text'>➕ {amount_display}</div>"
-                if int(r["amount"]) > 0
-                else f"<div class='row-box amount-text'>💸 {amount_display}</div>"
-            )
+            category = str(r["category"]).strip()
+            amount = int(r["amount"])
+            amount_display = f"{abs(amount):,}원"
+
+            if category == "비상금 넣기":
+                icon = "🏦"
+            elif category == "비상금 빼기":
+                icon = "💰"
+            elif amount > 0:
+                icon = "➕"
+            else:
+                icon = "💸"
+
+            amount_html = f"<div class='row-box amount-text'>{icon} {amount_display}</div>"
 
             c1.markdown(f"<div class='row-box'>{r['번호']}</div>", unsafe_allow_html=True)
             c2.markdown(f"<div class='row-box'>{r['date']}</div>", unsafe_allow_html=True)
