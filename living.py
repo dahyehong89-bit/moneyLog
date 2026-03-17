@@ -378,12 +378,18 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             else:
                 final_amount = -amount_value
 
+            memo_value = living_memo.strip()
+
+            # 비상금이면 메모 자동 채우기
+            if living_type == "비상금" and not memo_value:
+                memo_value = living_category
+
             new_row = {
                 "date": str(living_date),
                 "amount": final_amount,
                 "category": living_category,
                 "method": LIVING_DEFAULT_METHOD,
-                "memo": living_memo,
+                "memo": memo_value,
             }
 
             current_df = load_living_df(get_worksheet_func)
@@ -500,12 +506,17 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 else:
                     final_amount = -amount_value
 
+                memo_value = memo.strip()
+
+                if edit_type == "비상금" and not memo_value:
+                    memo_value = edit_category
+
                 current_df.iloc[rid] = [
                     str(d),
                     final_amount,
                     edit_category,
                     LIVING_DEFAULT_METHOD,
-                    memo,
+                    memo_value,
                 ]
 
                 save_living_df(current_df, get_worksheet_func)
