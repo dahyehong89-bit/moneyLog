@@ -467,7 +467,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     with f5:
         living_amount_text = st.text_input("금액", placeholder="금액 입력", key="living_amount")
 
-    living_saved = st.button("➕ 생활비 저장", use_container_width=True)
+    living_saved = st.button("➕ 생활비 저장", use_container_width=True, type="primary")
 
     if living_saved:
         amount_clean = living_amount_text.replace(",", "").strip()
@@ -951,7 +951,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     cash_memo = st.text_input("메모", key="cash_memo")
 
-    if st.button("➕ 현금 저장", use_container_width=True):
+    if st.button("➕ 현금 저장", use_container_width=True, type="primary"):
         amount_clean = cash_amount_text.replace(",", "").strip()
 
         if not amount_clean or not re.fullmatch(r"\d+", amount_clean):
