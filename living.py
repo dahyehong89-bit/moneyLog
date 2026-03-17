@@ -536,7 +536,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         category_index = category_options.index(row_category) if row_category in category_options else 0
 
         with st.form(f"living_edit_form_{rid}"):
-            q1, q2, q3, q4, q5 = st.columns(5)
+            q1, q2 = st.columns(2)
 
             with q1:
                 edit_type = st.selectbox(
@@ -566,6 +566,8 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                     key=f"living_edit_category_{rid}"
                 )
 
+            q3, q4 = st.columns(2)
+
             with q3:
                 memo = st.text_input(
                     "메모",
@@ -580,12 +582,11 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                     key=f"living_edit_amount_{rid}"
                 )
 
-            with q5:
-                d = st.date_input(
-                    "날짜",
-                    value=pd.to_datetime(row["date"], errors="coerce"),
-                    key=f"living_edit_date_{rid}"
-                )
+            d = st.date_input(
+                "날짜",
+                value=pd.to_datetime(row["date"], errors="coerce"),
+                key=f"living_edit_date_{rid}"
+            )
 
             col_cancel, col_save = st.columns(2)
 
@@ -1005,7 +1006,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         category_index = CASH_CATEGORY_OPTIONS.index(row_category) if row_category in CASH_CATEGORY_OPTIONS else 0
 
         with st.form(f"cash_edit_form_{rid}"):
-            q1, q2, q3, q4, q5 = st.columns(5)
+            q1, q2 = st.columns(2)
 
             with q1:
                 edit_type = st.selectbox(
@@ -1030,6 +1031,8 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                         key=f"cash_edit_category_{rid}"
                     )
 
+            q3, q4 = st.columns(2)
+
             with q3:
                 memo = st.text_input(
                     "메모",
@@ -1044,12 +1047,11 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                     key=f"cash_edit_amount_{rid}"
                 )
 
-            with q5:
-                d = st.date_input(
-                    "날짜",
-                    value=pd.to_datetime(row["date"], errors="coerce"),
-                    key=f"cash_edit_date_{rid}"
-                )
+            d = st.date_input(
+                "날짜",
+                value=pd.to_datetime(row["date"], errors="coerce"),
+                key=f"cash_edit_date_{rid}"
+            )
 
             col_cancel, col_save = st.columns(2)
 
@@ -1071,11 +1073,9 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 category_value = edit_category.strip()
                 memo_value = memo.strip()
 
-                # 👉 카테고리 자동 채우기
                 if edit_type == "현금 넣기" and not category_value:
                     category_value = "현금 들어옴"
 
-                # 👉 메모 자동 채우기
                 if edit_type == "현금 넣기" and not memo_value:
                     memo_value = category_value
 
