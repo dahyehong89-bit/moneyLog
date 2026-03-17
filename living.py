@@ -966,10 +966,21 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             if cash_type == "현금 넣기" and not memo_value:
                 memo_value = cash_category
 
+            memo_value = cash_memo.strip()
+            category_value = cash_category.strip()
+
+            # 👉 카테고리 비어있으면 자동 채우기
+            if cash_type == "현금 넣기" and not category_value:
+                category_value = "현금 들어옴"
+
+            # 👉 메모 자동 채우기
+            if cash_type == "현금 넣기" and not memo_value:
+                memo_value = category_value
+
             new_row = {
                 "date": str(cash_date),
                 "amount": final_amount,
-                "category": cash_category,
+                "category": category_value,
                 "memo": memo_value,
             }
 
