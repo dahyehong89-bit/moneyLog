@@ -1283,6 +1283,17 @@ div[data-baseweb="tab-highlight"] {{
     border-radius: 999px !important;
 }}
 
+.budget-card-grid {{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+}}
+
+.budget-card-item {{
+    min-width: 0;
+}}
+
 /* ===== 모바일 전용 ===== */
 @media (max-width: 768px) {{
     .block-container {{
@@ -1390,6 +1401,10 @@ div[data-baseweb="tab-highlight"] {{
         padding: 6px 10px !important;
         font-size: 12px !important;
         border-radius: 12px !important;
+    }}
+    .budget-card-grid {{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
     }}
 }}
 </style>
@@ -1794,43 +1809,38 @@ with tab1:
     # -------------------
     # 상단 예산 현황
     # -------------------
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        render_budget_card(
+    cards_html = "".join([
+        render_budget_card_html(
             "이번달 예산",
             f"{MONTHLY_BUDGET:,}원",
             theme["container_bg"],
             theme["metric_border"],
             theme["button_text"]
-        )
-    
-    with c2:
-        render_budget_card(
+        ),
+        render_budget_card_html(
             "지금까지 사용",
             f"{spent:,}원",
             theme["container_bg"],
             theme["metric_border"],
             theme["button_text"]
-        )
-    
-    with c3:
-        render_budget_card(
+        ),
+        render_budget_card_html(
             "남은 금액",
             f"{remaining:,}원",
             theme["container_bg"],
             theme["metric_border"],
             theme["button_text"]
-        )
-    
-    with c4:
-        render_budget_card(
+        ),
+        render_budget_card_html(
             "예산 상태",
             status["label"],
             status["bg"],
             status["border"],
             status["text"]
-        )
+        ),
+    ])
 
+    st.markdown(f'<div class="budget-card-grid">{cards_html}</div>', unsafe_allow_html=True)
     st.progress(percent)
 
     if spent > MONTHLY_BUDGET:
