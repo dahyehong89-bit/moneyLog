@@ -1450,7 +1450,7 @@ def card_detail_dialog():
     )
 
     st.markdown(
-        f"<div style='text-align:right; font-weight:800; font-size:15px; margin-top:10px;'>"
+        f"<div style='text-align:right; font-weight:800; font-size:15px; margin:10px 0;'>"
         f"💰 합계: {int(show_df['금액_num'].sum()):,}원"
         f"</div>",
         unsafe_allow_html=True
