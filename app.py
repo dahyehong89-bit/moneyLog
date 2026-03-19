@@ -360,35 +360,47 @@ THEMES = {
         "date_text": "#C7654E"
     },
     "navy": {
-        "app_bg_1": "#F4F6FA",
-        "app_bg_2": "#E6EBF5",
-        "container_bg": "rgba(250,252,255,0.70)",
-        "input_border": "rgba(120,140,200,0.35)",
-        "input_bg": "rgba(255,255,255,0.86)",
-        "button_bg_1": "#B9C7E8",
-        "button_bg_2": "#9FB2DE",
-        "button_border": "rgba(120,140,200,0.35)",
-        "button_text": "#31466E",
-        "button_shadow": "rgba(120,140,200,0.14)",
-        "line": "rgba(120,140,200,0.20)",
-        "metric_border": "rgba(120,140,200,0.20)",
-        "expander_border": "rgba(120,140,200,0.18)",
-        "form_border": "rgba(120,140,200,0.15)",
-        "table_head_bg": "rgba(159,178,222,0.50)",
-        "table_head_border": "rgba(120,140,200,0.20)",
-        "table_head_text": "#48608F",
-        "row_hover": "rgba(159,178,222,0.18)",
-        "amount_text": "#3A4F8A",
-        "cat_bg": "rgba(159,178,222,0.35)",
-        "cat_text": "#48608F",
-        "filter_bg": "rgba(255,255,255,0.86)",
-        "filter_border": "rgba(120,140,200,0.35)",
-        "filter_hover": "rgba(159,178,222,0.22)",
-        "filter_active_1": "#B9C7E8",
-        "filter_active_2": "#9FB2DE",
-        "filter_active_border": "rgba(120,140,200,0.45)",
-        "filter_shadow": "rgba(120,140,200,0.16)",
-        "date_text": "#3A4F8A"
+        "app_bg_1": "#EEF2F8",
+        "app_bg_2": "#E1E7F2",
+
+        "container_bg": "rgba(255,255,255,0.78)",
+
+        "input_border": "rgba(90,110,160,0.30)",
+        "input_bg": "rgba(255,255,255,0.92)",
+
+        "button_bg_1": "#A9B8E3",
+        "button_bg_2": "#8FA4D6",
+        "button_border": "rgba(90,110,160,0.35)",
+        "button_text": "#2F416D",
+        "button_shadow": "rgba(90,110,160,0.16)",
+
+        "line": "rgba(90,110,160,0.18)",
+
+        "metric_border": "rgba(90,110,160,0.20)",
+        "expander_border": "rgba(90,110,160,0.18)",
+        "form_border": "rgba(90,110,160,0.15)",
+
+        "table_head_bg": "rgba(143,164,214,0.55)",
+        "table_head_border": "rgba(90,110,160,0.25)",
+        "table_head_text": "#3E568A",
+
+        "row_hover": "rgba(143,164,214,0.20)",
+
+        "amount_text": "#2F447A",
+
+        "cat_bg": "rgba(143,164,214,0.30)",
+        "cat_text": "#3E568A",
+
+        "filter_bg": "rgba(255,255,255,0.90)",
+        "filter_border": "rgba(90,110,160,0.30)",
+        "filter_hover": "rgba(143,164,214,0.25)",
+
+        "filter_active_1": "#A9B8E3",
+        "filter_active_2": "#8FA4D6",
+        "filter_active_border": "rgba(90,110,160,0.45)",
+        "filter_shadow": "rgba(90,110,160,0.18)",
+
+        "date_text": "#2F447A"
     },
     "blackberry": {
         "app_bg_1": "#FBF7FF",
