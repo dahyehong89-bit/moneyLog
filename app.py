@@ -958,6 +958,14 @@ div[data-baseweb="tab-highlight"] {{
     border-radius: 999px !important;
 }}
 
+div[data-testid="stDataFrame"] * {{
+    font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
+}}
+
+div[data-testid="stDataFrameGlideDataEditor"] * {{
+    font-family: "LeeJieun", "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
+}}
+
 /* ===== 모바일 전용 ===== */
 @media (max-width: 768px) {{
     .block-container {{
@@ -1415,7 +1423,8 @@ def card_detail_dialog():
 
     show_df = detail_df.copy()
     show_df["날짜"] = show_df["date_dt"].dt.strftime("%Y-%m-%d")
-    show_df["금액"] = show_df["amount"].abs().astype(int)
+    show_df["금액_num"] = show_df["amount"].abs().astype(int)
+    show_df["금액"] = show_df["금액_num"].apply(lambda x: f"{x:,}원")
 
     cols = ["날짜"]
 
@@ -1440,7 +1449,12 @@ def card_detail_dialog():
         hide_index=True
     )
 
-    st.markdown(f"**합계: {int(show_df['금액'].sum()):,}원**")
+    st.markdown(
+        f"<div style='text-align:right; font-weight:800; font-size:15px; margin-top:10px;'>"
+        f"💰 합계: {int(show_df['금액_num'].sum()):,}원"
+        f"</div>",
+        unsafe_allow_html=True
+    )
 
 def render_card_detail_row(label, amount, method_name, key_suffix, display_label=None):
     if display_label is None:
