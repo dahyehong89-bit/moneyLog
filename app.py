@@ -15,7 +15,7 @@ FILE = "money.csv"
 CHECKLIST_FILE = "checklist.csv"
 COLUMNS = ["date", "amount", "category", "method", "memo"]
 
-CATEGORY_OPTIONS = ["쇼핑", "외식", "배달", "커피", "편의점", "고정비", "사건비"]
+CATEGORY_OPTIONS = ["쇼핑", "외식", "배달", "커피", "편의점", "미용", "고정비", "사건비"]
 METHOD_OPTIONS = ["현대카드", "신한카드", "사건비통장"]
 DEFAULT_METHOD = "현대카드"
 MONTHLY_BUDGET = 600000
