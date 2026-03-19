@@ -1705,11 +1705,10 @@ with tab1:
             "#D6D6D6",
             "#4A4A4A"
         )
-        
+
         st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
 
         with st.container(border=True):
-            st.caption("현대카드 세부내역")
 
             if hyundai_shopping > 0:
                 render_card_detail_row("쇼핑", hyundai_shopping, "현대카드", "shopping", "🛒 쇼핑")
@@ -1733,8 +1732,9 @@ with tab1:
             "#3E7C91"
         )
 
+        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+
         with st.container(border=True):
-            st.caption("신한카드 세부내역")
 
             if shinhan_fuel > 0:
                 render_card_detail_row("주유", shinhan_fuel, "신한카드", "fuel", "⛽ 주유")
@@ -1758,8 +1758,10 @@ with tab1:
             "#8A6A00"
         )
 
+        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+
         with st.container(border=True):
-            st.caption(f"사건비통장 세부내역 · 지출 {incident_spent:,}원 / 환급 {incident_refund:,}원")
+            st.caption(f"지출 {incident_spent:,}원 / 💰 환급 {incident_refund:,}원")
 
             if incident_hospital > 0:
                 render_card_detail_row("병원비", incident_hospital, "사건비통장", "hospital", "🏥 병원비")
@@ -1773,12 +1775,6 @@ with tab1:
                 render_card_detail_row("경조사", incident_event, "사건비통장", "event", "🙏 경조사")
             if incident_other > 0:
                 render_card_detail_row("기타", incident_other, "사건비통장", "other", "🧾 기타")
-
-            if incident_refund > 0:
-                st.markdown(
-                    f"<div style='text-align:right; font-size:13px; opacity:0.8; margin-top:6px;'>💰 환급 {incident_refund:,}원</div>",
-                    unsafe_allow_html=True
-                )
 
     with card_col4:
         render_budget_card(
