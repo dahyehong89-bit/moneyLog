@@ -1074,226 +1074,7 @@ div[data-baseweb="tab-highlight"] {{
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------
-# 상단 제목 + 오늘 날짜
-# -------------------
-weekday = ["월", "화", "수", "목", "금", "토", "일"]
-today = datetime.today()
-today_str = f"{today.strftime('%Y.%m.%d')} ({weekday[today.weekday()]})"
 
-title_left, title_right = st.columns([3, 1])
-
-with title_left:
-    st.title("💸 빠른 가계부")
-
-with title_right:
-    st.markdown(
-        f"""
-        <div style="text-align:right;margin-top:10px;">
-            <div style="font-size:14px;color:{theme["date_text"]};font-weight:700;">
-                오늘
-            </div>
-            <div style="font-size:20px;font-weight:800;color:{theme["date_text"]};">
-                {today_str}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-# 공통 월 데이터
-month_key = datetime.today().strftime("%Y-%m")
-month_df = df.copy()
-month_df["date_dt"] = pd.to_datetime(month_df["date"], errors="coerce")
-month_df = month_df[month_df["date_dt"].dt.strftime("%Y-%m") == month_key]
-
-# 예산은 현대카드만
-spent = int(
-    month_df[month_df["method"] == BUDGET_METHOD]["amount"]
-    .abs()
-    .sum()
-)
-remaining = MONTHLY_BUDGET - spent
-percent = min(spent / MONTHLY_BUDGET, 1.0) if MONTHLY_BUDGET > 0 else 0
-status = budget_status(spent)
-
-# 카드별 월 합계
-card_raw_sum = month_df.groupby("method")["amount"].sum()
-
-hyundai_amount = abs(int(card_raw_sum.get("현대카드", 0)))
-shinhan_amount = abs(int(card_raw_sum.get("신한카드", 0)))
-
-# 현대카드 세부내역
-hyundai_df = month_df[month_df["method"] == "현대카드"].copy()
-
-hyundai_shopping = abs(int(
-    hyundai_df[hyundai_df["category"] == "쇼핑"]["amount"].sum()
-))
-hyundai_eatout = abs(int(
-    hyundai_df[hyundai_df["category"] == "외식"]["amount"].sum()
-))
-hyundai_delivery = abs(int(
-    hyundai_df[hyundai_df["category"] == "배달"]["amount"].sum()
-))
-hyundai_coffee = abs(int(
-    hyundai_df[hyundai_df["category"] == "커피"]["amount"].sum()
-))
-hyundai_convenience = abs(int(
-    hyundai_df[hyundai_df["category"] == "편의점"]["amount"].sum()
-))
-
-hyundai_known_total = (
-    hyundai_shopping
-    + hyundai_eatout
-    + hyundai_delivery
-    + hyundai_coffee
-    + hyundai_convenience
-)
-
-hyundai_other = max(hyundai_amount - hyundai_known_total, 0)
-
-st.markdown(f"### 현대카드 {hyundai_amount:,}원")
-
-if hyundai_shopping > 0:
-    render_card_detail_row("쇼핑", hyundai_shopping, "현대카드", "shopping")
-
-if hyundai_eatout > 0:
-    render_card_detail_row("외식", hyundai_eatout, "현대카드", "eatout")
-
-if hyundai_delivery > 0:
-    render_card_detail_row("배달", hyundai_delivery, "현대카드", "delivery")
-
-if hyundai_coffee > 0:
-    render_card_detail_row("커피", hyundai_coffee, "현대카드", "coffee")
-
-if hyundai_convenience > 0:
-    render_card_detail_row("편의점", hyundai_convenience, "현대카드", "convenience")
-
-if hyundai_other > 0:
-    render_card_detail_row("기타", hyundai_other, "현대카드", "other")
-
-# -----------------------------
-# 신한카드 세부내역
-# -----------------------------
-shinhan_df = month_df[month_df["method"] == "신한카드"].copy()
-
-shinhan_fuel = abs(int(
-    shinhan_df[shinhan_df["memo"].astype(str).str.contains("주유", na=False)]["amount"].sum()
-))
-shinhan_phone = abs(int(
-    shinhan_df[shinhan_df["memo"].astype(str).str.contains("통신비", na=False)]["amount"].sum()
-))
-shinhan_internet = abs(int(
-    shinhan_df[shinhan_df["memo"].astype(str).str.contains("인터넷", na=False)]["amount"].sum()
-))
-shinhan_wow = abs(int(
-    shinhan_df[shinhan_df["memo"].astype(str).str.contains("쿠팡와우", na=False)]["amount"].sum()
-))
-shinhan_emoji = abs(int(
-    shinhan_df[shinhan_df["memo"].astype(str).str.contains("이모티콘", na=False)]["amount"].sum()
-))
-
-shinhan_known_total = (
-    shinhan_fuel
-    + shinhan_phone
-    + shinhan_internet
-    + shinhan_wow
-    + shinhan_emoji
-)
-
-shinhan_other = max(shinhan_amount - shinhan_known_total, 0)
-
-st.markdown(f"### 신한카드 {shinhan_amount:,}원")
-
-if shinhan_fuel > 0:
-    render_card_detail_row("주유", shinhan_fuel, "신한카드", "fuel")
-
-if shinhan_phone > 0:
-    render_card_detail_row("통신비", shinhan_phone, "신한카드", "phone")
-
-if shinhan_internet > 0:
-    render_card_detail_row("인터넷", shinhan_internet, "신한카드", "internet")
-
-if shinhan_wow > 0:
-    render_card_detail_row("쿠팡와우", shinhan_wow, "신한카드", "wow")
-
-if shinhan_emoji > 0:
-    render_card_detail_row("이모티콘", shinhan_emoji, "신한카드", "emoji")
-
-if shinhan_other > 0:
-    render_card_detail_row("기타", shinhan_other, "신한카드", "other")
-
-# 사건비통장: 지출 / 환급 / 순금액
-incident_df = month_df[month_df["method"] == "사건비통장"].copy()
-
-incident_spent = abs(int(incident_df[incident_df["amount"] < 0]["amount"].sum()))
-incident_refund = int(incident_df[incident_df["amount"] > 0]["amount"].sum())
-
-# -----------------------------
-# 사건비통장 세부 분류
-# -----------------------------
-incident_expense_df = incident_df[incident_df["amount"] < 0].copy()
-
-if not incident_expense_df.empty:
-    incident_expense_df["detail_category"] = incident_expense_df["memo"].apply(classify_incident_memo)
-else:
-    incident_expense_df["detail_category"] = pd.Series(dtype="object")
-
-incident_hospital = abs(int(
-    incident_expense_df[incident_expense_df["detail_category"] == "병원비"]["amount"].sum()
-))
-
-incident_medicine = abs(int(
-    incident_expense_df[incident_expense_df["detail_category"] == "약값"]["amount"].sum()
-))
-
-incident_checkup = abs(int(
-    incident_expense_df[incident_expense_df["detail_category"] == "검진"]["amount"].sum()
-))
-
-incident_gift = abs(int(
-    incident_expense_df[incident_expense_df["detail_category"] == "선물"]["amount"].sum()
-))
-
-incident_event = abs(int(
-    incident_expense_df[incident_expense_df["detail_category"] == "경조사"]["amount"].sum()
-))
-
-incident_known_total = (
-    incident_hospital
-    + incident_medicine
-    + incident_checkup
-    + incident_gift
-    + incident_event
-)
-
-incident_other = max(incident_spent - incident_known_total, 0)
-
-st.markdown(f"### 사건비통장 {incident_amount:,}원")
-st.caption(f"지출 {incident_spent:,}원 / 환급 {incident_refund:,}원")
-
-if incident_hospital > 0:
-    render_card_detail_row("병원비", incident_hospital, "사건비통장", "hospital")
-
-if incident_medicine > 0:
-    render_card_detail_row("약값", incident_medicine, "사건비통장", "medicine")
-
-if incident_checkup > 0:
-    render_card_detail_row("검진", incident_checkup, "사건비통장", "checkup")
-
-if incident_gift > 0:
-    render_card_detail_row("선물", incident_gift, "사건비통장", "gift")
-
-if incident_event > 0:
-    render_card_detail_row("경조사", incident_event, "사건비통장", "event")
-
-if incident_other > 0:
-    render_card_detail_row("기타", incident_other, "사건비통장", "other")
-
-# 순금액
-incident_amount = incident_spent - incident_refund
-
-total_amount = hyundai_amount + shinhan_amount + incident_amount
 
 # 탭
 tab1, tab2, tab3 = st.tabs(["🏠 개인 가계부", "📊 내역", "🏦 생활비 통장"])
@@ -1648,6 +1429,227 @@ def render_card_detail_row(label, amount, method_name, key_suffix):
             f"<div style='text-align:right;'><b>{amount:,}원</b></div>",
             unsafe_allow_html=True
         )
+
+# -------------------
+# 상단 제목 + 오늘 날짜
+# -------------------
+weekday = ["월", "화", "수", "목", "금", "토", "일"]
+today = datetime.today()
+today_str = f"{today.strftime('%Y.%m.%d')} ({weekday[today.weekday()]})"
+
+title_left, title_right = st.columns([3, 1])
+
+with title_left:
+    st.title("💸 빠른 가계부")
+
+with title_right:
+    st.markdown(
+        f"""
+        <div style="text-align:right;margin-top:10px;">
+            <div style="font-size:14px;color:{theme["date_text"]};font-weight:700;">
+                오늘
+            </div>
+            <div style="font-size:20px;font-weight:800;color:{theme["date_text"]};">
+                {today_str}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# 공통 월 데이터
+month_key = datetime.today().strftime("%Y-%m")
+month_df = df.copy()
+month_df["date_dt"] = pd.to_datetime(month_df["date"], errors="coerce")
+month_df = month_df[month_df["date_dt"].dt.strftime("%Y-%m") == month_key]
+
+# 예산은 현대카드만
+spent = int(
+    month_df[month_df["method"] == BUDGET_METHOD]["amount"]
+    .abs()
+    .sum()
+)
+remaining = MONTHLY_BUDGET - spent
+percent = min(spent / MONTHLY_BUDGET, 1.0) if MONTHLY_BUDGET > 0 else 0
+status = budget_status(spent)
+
+# 카드별 월 합계
+card_raw_sum = month_df.groupby("method")["amount"].sum()
+
+hyundai_amount = abs(int(card_raw_sum.get("현대카드", 0)))
+shinhan_amount = abs(int(card_raw_sum.get("신한카드", 0)))
+
+# 현대카드 세부내역
+hyundai_df = month_df[month_df["method"] == "현대카드"].copy()
+
+hyundai_shopping = abs(int(
+    hyundai_df[hyundai_df["category"] == "쇼핑"]["amount"].sum()
+))
+hyundai_eatout = abs(int(
+    hyundai_df[hyundai_df["category"] == "외식"]["amount"].sum()
+))
+hyundai_delivery = abs(int(
+    hyundai_df[hyundai_df["category"] == "배달"]["amount"].sum()
+))
+hyundai_coffee = abs(int(
+    hyundai_df[hyundai_df["category"] == "커피"]["amount"].sum()
+))
+hyundai_convenience = abs(int(
+    hyundai_df[hyundai_df["category"] == "편의점"]["amount"].sum()
+))
+
+hyundai_known_total = (
+    hyundai_shopping
+    + hyundai_eatout
+    + hyundai_delivery
+    + hyundai_coffee
+    + hyundai_convenience
+)
+
+hyundai_other = max(hyundai_amount - hyundai_known_total, 0)
+
+st.markdown(f"### 현대카드 {hyundai_amount:,}원")
+
+if hyundai_shopping > 0:
+    render_card_detail_row("쇼핑", hyundai_shopping, "현대카드", "shopping")
+
+if hyundai_eatout > 0:
+    render_card_detail_row("외식", hyundai_eatout, "현대카드", "eatout")
+
+if hyundai_delivery > 0:
+    render_card_detail_row("배달", hyundai_delivery, "현대카드", "delivery")
+
+if hyundai_coffee > 0:
+    render_card_detail_row("커피", hyundai_coffee, "현대카드", "coffee")
+
+if hyundai_convenience > 0:
+    render_card_detail_row("편의점", hyundai_convenience, "현대카드", "convenience")
+
+if hyundai_other > 0:
+    render_card_detail_row("기타", hyundai_other, "현대카드", "other")
+
+# -----------------------------
+# 신한카드 세부내역
+# -----------------------------
+shinhan_df = month_df[month_df["method"] == "신한카드"].copy()
+
+shinhan_fuel = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("주유", na=False)]["amount"].sum()
+))
+shinhan_phone = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("통신비", na=False)]["amount"].sum()
+))
+shinhan_internet = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("인터넷", na=False)]["amount"].sum()
+))
+shinhan_wow = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("쿠팡와우", na=False)]["amount"].sum()
+))
+shinhan_emoji = abs(int(
+    shinhan_df[shinhan_df["memo"].astype(str).str.contains("이모티콘", na=False)]["amount"].sum()
+))
+
+shinhan_known_total = (
+    shinhan_fuel
+    + shinhan_phone
+    + shinhan_internet
+    + shinhan_wow
+    + shinhan_emoji
+)
+
+shinhan_other = max(shinhan_amount - shinhan_known_total, 0)
+
+st.markdown(f"### 신한카드 {shinhan_amount:,}원")
+
+if shinhan_fuel > 0:
+    render_card_detail_row("주유", shinhan_fuel, "신한카드", "fuel")
+
+if shinhan_phone > 0:
+    render_card_detail_row("통신비", shinhan_phone, "신한카드", "phone")
+
+if shinhan_internet > 0:
+    render_card_detail_row("인터넷", shinhan_internet, "신한카드", "internet")
+
+if shinhan_wow > 0:
+    render_card_detail_row("쿠팡와우", shinhan_wow, "신한카드", "wow")
+
+if shinhan_emoji > 0:
+    render_card_detail_row("이모티콘", shinhan_emoji, "신한카드", "emoji")
+
+if shinhan_other > 0:
+    render_card_detail_row("기타", shinhan_other, "신한카드", "other")
+
+# 사건비통장: 지출 / 환급 / 순금액
+incident_df = month_df[month_df["method"] == "사건비통장"].copy()
+
+incident_spent = abs(int(incident_df[incident_df["amount"] < 0]["amount"].sum()))
+incident_refund = int(incident_df[incident_df["amount"] > 0]["amount"].sum())
+
+# -----------------------------
+# 사건비통장 세부 분류
+# -----------------------------
+incident_expense_df = incident_df[incident_df["amount"] < 0].copy()
+
+if not incident_expense_df.empty:
+    incident_expense_df["detail_category"] = incident_expense_df["memo"].apply(classify_incident_memo)
+else:
+    incident_expense_df["detail_category"] = pd.Series(dtype="object")
+
+incident_hospital = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "병원비"]["amount"].sum()
+))
+
+incident_medicine = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "약값"]["amount"].sum()
+))
+
+incident_checkup = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "검진"]["amount"].sum()
+))
+
+incident_gift = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "선물"]["amount"].sum()
+))
+
+incident_event = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "경조사"]["amount"].sum()
+))
+
+incident_known_total = (
+    incident_hospital
+    + incident_medicine
+    + incident_checkup
+    + incident_gift
+    + incident_event
+)
+
+incident_other = max(incident_spent - incident_known_total, 0)
+
+st.markdown(f"### 사건비통장 {incident_amount:,}원")
+st.caption(f"지출 {incident_spent:,}원 / 환급 {incident_refund:,}원")
+
+if incident_hospital > 0:
+    render_card_detail_row("병원비", incident_hospital, "사건비통장", "hospital")
+
+if incident_medicine > 0:
+    render_card_detail_row("약값", incident_medicine, "사건비통장", "medicine")
+
+if incident_checkup > 0:
+    render_card_detail_row("검진", incident_checkup, "사건비통장", "checkup")
+
+if incident_gift > 0:
+    render_card_detail_row("선물", incident_gift, "사건비통장", "gift")
+
+if incident_event > 0:
+    render_card_detail_row("경조사", incident_event, "사건비통장", "event")
+
+if incident_other > 0:
+    render_card_detail_row("기타", incident_other, "사건비통장", "other")
+
+# 순금액
+incident_amount = incident_spent - incident_refund
+
+total_amount = hyundai_amount + shinhan_amount + incident_amount
 
 with tab1:
     # -------------------
