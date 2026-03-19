@@ -950,15 +950,7 @@ st.set_page_config(page_title="빠른 가계부", layout="wide")
 df = load_df()
 load_font()
 
-theme_list = list(THEMES.keys())
-
-theme_name = st.sidebar.selectbox(
-    "🎨 테마 선택",
-    theme_list,
-    index=theme_list.index("navy"),  # 👈 여기만 변경
-    key="theme_select"
-)
-
+theme_name = st.session_state.get("theme_select", "navy")
 theme = THEMES[theme_name]
 
 st.markdown(f"""
