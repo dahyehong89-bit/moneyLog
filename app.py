@@ -1074,7 +1074,32 @@ div[data-baseweb="tab-highlight"] {{
 </style>
 """, unsafe_allow_html=True)
 
+# -------------------
+# 상단 제목 + 오늘 날짜
+# -------------------
+weekday = ["월", "화", "수", "목", "금", "토", "일"]
+today = datetime.today()
+today_str = f"{today.strftime('%Y.%m.%d')} ({weekday[today.weekday()]})"
 
+title_left, title_right = st.columns([3, 1])
+
+with title_left:
+    st.title("💸 빠른 가계부")
+
+with title_right:
+    st.markdown(
+        f"""
+        <div style="text-align:right;margin-top:10px;">
+            <div style="font-size:14px;color:{theme["date_text"]};font-weight:700;">
+                오늘
+            </div>
+            <div style="font-size:20px;font-weight:800;color:{theme["date_text"]};">
+                {today_str}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # 탭
 tab1, tab2, tab3 = st.tabs(["🏠 개인 가계부", "📊 내역", "🏦 생활비 통장"])
@@ -1438,33 +1463,6 @@ def render_card_detail_row(label, amount, method_name, key_suffix, display_label
             unsafe_allow_html=True
         )
         
-# -------------------
-# 상단 제목 + 오늘 날짜
-# -------------------
-weekday = ["월", "화", "수", "목", "금", "토", "일"]
-today = datetime.today()
-today_str = f"{today.strftime('%Y.%m.%d')} ({weekday[today.weekday()]})"
-
-title_left, title_right = st.columns([3, 1])
-
-with title_left:
-    st.title("💸 빠른 가계부")
-
-with title_right:
-    st.markdown(
-        f"""
-        <div style="text-align:right;margin-top:10px;">
-            <div style="font-size:14px;color:{theme["date_text"]};font-weight:700;">
-                오늘
-            </div>
-            <div style="font-size:20px;font-weight:800;color:{theme["date_text"]};">
-                {today_str}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
 # 공통 월 데이터
 month_key = datetime.today().strftime("%Y-%m")
 month_df = df.copy()
