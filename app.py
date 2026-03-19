@@ -1532,6 +1532,9 @@ hyundai_coffee = abs(int(
 hyundai_convenience = abs(int(
     hyundai_df[hyundai_df["category"] == "편의점"]["amount"].sum()
 ))
+hyundai_beauty = abs(int(
+    hyundai_df[hyundai_df["category"] == "미용"]["amount"].sum()
+))
 
 hyundai_known_total = (
     hyundai_shopping
@@ -1539,6 +1542,7 @@ hyundai_known_total = (
     + hyundai_delivery
     + hyundai_coffee
     + hyundai_convenience
+    + hyundai_beauty
 )
 
 hyundai_other = max(hyundai_amount - hyundai_known_total, 0)
@@ -1752,6 +1756,8 @@ with tab1:
                 render_card_detail_row("커피", hyundai_coffee, "현대카드", "coffee", "☕ 커피")
             if hyundai_convenience > 0:
                 render_card_detail_row("편의점", hyundai_convenience, "현대카드", "convenience", "🏪 편의점")
+            if hyundai_beauty > 0:
+                render_card_detail_row("미용", hyundai_beauty, "현대카드", "beauty", "💅 미용")
             if hyundai_other > 0:
                 render_card_detail_row("기타", hyundai_other, "현대카드", "other", "🧾 기타")
 
