@@ -2296,12 +2296,14 @@ with tab2:
     
     spent_total = int(view[view["amount"] < 0]["amount"].abs().sum())
     refund_total = int(view[view["amount"] > 0]["amount"].sum())
+    net_total = spent_total - refund_total
 
     st.markdown(
         f"<div style='text-align:right; font-size:13px; opacity:0.75;'>"
         f"🔎 현재 보기: {record_filter} &nbsp;&nbsp; | &nbsp;&nbsp; "
         f"💸 지출 {spent_total:,}원 &nbsp;&nbsp; | &nbsp;&nbsp; "
-        f"💰 환급 {refund_total:,}원"
+        f"💰 환급 {refund_total:,}원 &nbsp;&nbsp; | &nbsp;&nbsp; "
+        f"📊 순지출 {net_total:,}원"
         f"</div>",
         unsafe_allow_html=True
     )
