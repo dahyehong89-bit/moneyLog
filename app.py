@@ -400,7 +400,8 @@ THEMES = {
         "filter_active_border": "rgba(90,110,160,0.45)",
         "filter_shadow": "rgba(90,110,160,0.18)",
 
-        "date_text": "#2F447A"
+        "date_text": "#2F447A",
+        "container_bg": "rgba(255,255,255,0.65)"
     },
     "blackberry": {
         "app_bg_1": "#FBF7FF",
