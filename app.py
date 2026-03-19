@@ -1372,7 +1372,7 @@ def get_card_detail_df(month_df, method_name, detail_name):
         else:
             df["detail_category"] = pd.Series(dtype="object")
 
-        known = ["병원비", "약값", "검진", "선물", "경조사"]
+        known = ["병원비", "약값", "검진", "선물", "경조사", "미용"]
 
         if detail_name == "기타":
             df = df[~df["detail_category"].isin(known)].copy()
