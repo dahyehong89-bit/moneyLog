@@ -1362,6 +1362,35 @@ def get_card_detail_df(month_df, method_name, detail_name):
 
     if "date_dt" not in df.columns:
         df["date_dt"] = pd.to_datetime(df["date"], errors="coerce")
+    
+    # 통합 카테고리용
+    if method_name == "통합" and detail_name == "미용":
+        df = month_df.copy()
+
+        if "date_dt" not in df.columns:
+            df["date_dt"] = pd.to_datetime(df["date"], errors="coerce")
+
+        # 현대카드 미용
+        hyundai_beauty_df = df[
+            (df["method"] == "현대카드") &
+            (df["category"] == "미용") &
+            (df["amount"] < 0)
+        ].copy()
+
+        # 사건비통장 미용
+        incident_beauty_df = df[
+            (df["method"] == "사건비통장") &
+            (df["amount"] < 0)
+        ].copy()
+
+        if not incident_beauty_df.empty:
+            incident_beauty_df["detail_category"] = incident_beauty_df["memo"].apply(classify_incident_memo)
+            incident_beauty_df = incident_beauty_df[
+                incident_beauty_df["detail_category"] == "미용"
+            ].copy()
+
+        merged_df = pd.concat([hyundai_beauty_df, incident_beauty_df], ignore_index=True)
+        return merged_df.sort_values(by="date_dt", ascending=False)
 
     # 사건비통장
     if method_name == "사건비통장":
@@ -1441,6 +1470,9 @@ def card_detail_dialog():
 
     cols = ["날짜"]
 
+    if "method" in show_df.columns and method_name == "통합":
+        cols.append("method")
+
     if "memo" in show_df.columns:
         cols.append("memo")
 
@@ -1450,10 +1482,17 @@ def card_detail_dialog():
     if method_name == "사건비통장" and "detail_category" in show_df.columns:
         cols.append("detail_category")
 
+    if method_name == "통합":
+        if "category" in show_df.columns:
+            cols.append("category")
+        if "detail_category" in show_df.columns:
+            cols.append("detail_category")
+
     cols.append("금액")
 
     st.dataframe(
         show_df[cols].rename(columns={
+            "method": "결제수단",
             "memo": "사용처/메모",
             "category": "카테고리",
             "detail_category": "세부분류"
@@ -1833,19 +1872,7 @@ with tab1:
         )
         
         with st.container(border=True):
-            st.markdown(
-                f"""
-                <div style="
-                    text-align:center;
-                    font-size:15px;
-                    color:{theme["amount_text"]};
-                ">
-                    💅 미용 총 지출 <br>
-                    <b style="font-size:18px;">{total_beauty:,}원</b>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            render_card_detail_row("미용", total_beauty, "통합", "total_beauty", "💅 미용 총 지출")
 
     st.divider()
 
