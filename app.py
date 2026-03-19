@@ -1074,6 +1074,8 @@ div[data-baseweb="tab-highlight"] {{
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+
 # -------------------
 # 상단 제목 + 오늘 날짜
 # -------------------
