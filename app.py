@@ -466,9 +466,7 @@ def classify_incident_memo(memo: str) -> str:
             return category
 
     return "기타"
-st.write(classify_incident_memo("젤네일"))
-st.write(classify_incident_memo("손젤"))
-st.write(classify_incident_memo("미용실"))
+
 def parse_quick_input(text: str, default_category: str, default_method: str) -> dict:
     text = (text or "").strip()
     if not text:
