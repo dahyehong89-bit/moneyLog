@@ -36,6 +36,11 @@ AUTO_CATEGORY = {
     "마트": "쇼핑",
     "우유": "쇼핑",
     "편의점": "편의점",
+    "젤네일": "미용",
+    "손젤": "미용",
+    "발젤": "미용",
+    "네일": "미용",
+    "미용실": "미용",
 }
 
 AUTO_SHINHAN = [
@@ -402,10 +407,14 @@ def auto_card_and_category(text: str, default_category: str, default_method: str
 def is_incident_expense_text(text: str) -> bool:
     t = (text or "").strip()
 
-    for keywords in INCIDENT_EXPENSE_KEYWORDS.values():
+    incident_only_categories = ["병원비", "약값", "검진", "선물", "경조사"]
+
+    for category in incident_only_categories:
+        keywords = INCIDENT_EXPENSE_KEYWORDS.get(category, [])
         for keyword in keywords:
             if keyword in t:
                 return True
+
     return False
 
 def split_fuel_memo(memo: str):
