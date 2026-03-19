@@ -1634,6 +1634,8 @@ incident_amount = incident_spent - incident_refund
 
 total_amount = hyundai_amount + shinhan_amount + incident_amount
 
+total_beauty = hyundai_beauty + incident_beauty
+
 with tab1:
     # -------------------
     # 상단 예산 현황
@@ -1730,6 +1732,22 @@ with tab1:
     # 카드별 이번달 사용
     # -------------------
     st.subheader("💳 카드별 이번달 사용")
+
+    st.markdown(
+        f"""
+        <div style="
+            margin-bottom:10px;
+            padding:10px 14px;
+            border-radius:14px;
+            background:rgba(255,255,255,0.6);
+            border:1px solid {theme["line"]};
+            font-size:14px;
+        ">
+            💅 미용 총 지출: <b>{total_beauty:,}원</b>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     card_col1, card_col2, card_col3, card_col4 = st.columns(4)
 
