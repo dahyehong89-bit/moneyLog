@@ -77,9 +77,7 @@ INCIDENT_EXPENSE_KEYWORDS = {
     "선물": ["선물", "생일선물", "생선", "꽃", "케이크"],
     "경조사": ["조의금", "부의금", "축의금", "결혼식", "장례식", "부고", "상가", "근조", "화환"]    
 }
-st.write(classify_incident_memo("젤네일"))
-st.write(classify_incident_memo("손젤"))
-st.write(classify_incident_memo("미용실"))
+
 # -----------------------
 # 테마 설정
 # -----------------------
@@ -468,7 +466,9 @@ def classify_incident_memo(memo: str) -> str:
             return category
 
     return "기타"
-
+st.write(classify_incident_memo("젤네일"))
+st.write(classify_incident_memo("손젤"))
+st.write(classify_incident_memo("미용실"))
 def parse_quick_input(text: str, default_category: str, default_method: str) -> dict:
     text = (text or "").strip()
     if not text:
