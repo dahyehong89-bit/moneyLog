@@ -447,12 +447,23 @@ def build_fuel_memo(memo: str, fuel_price_clean: str, amount_clean: str) -> str:
     return final_memo
 
 def classify_incident_memo(memo: str) -> str:
-    memo_text = (memo or "").strip()
+    memo_text = str(memo or "").strip().lower()
+    memo_text_no_space = memo_text.replace(" ", "")
 
+    all_pairs = []
     for category, keywords in INCIDENT_CATEGORY_KEYWORDS.items():
         for keyword in keywords:
-            if keyword in memo_text:
-                return category
+            kw = str(keyword).strip().lower()
+            all_pairs.append((kw, category))
+
+    # 긴 키워드부터 먼저 검사
+    all_pairs.sort(key=lambda x: len(x[0]), reverse=True)
+
+    for keyword, category in all_pairs:
+        keyword_no_space = keyword.replace(" ", "")
+
+        if keyword in memo_text or keyword_no_space in memo_text_no_space:
+            return category
 
     return "기타"
 
