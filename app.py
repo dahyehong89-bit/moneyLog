@@ -1625,6 +1625,9 @@ incident_known_total = (
 
 incident_other = max(incident_spent - incident_known_total, 0)
 
+# 순금액
+incident_amount = incident_spent - incident_refund
+
 st.markdown(f"### 사건비통장 {incident_amount:,}원")
 st.caption(f"지출 {incident_spent:,}원 / 환급 {incident_refund:,}원")
 
@@ -1645,9 +1648,6 @@ if incident_event > 0:
 
 if incident_other > 0:
     render_card_detail_row("기타", incident_other, "사건비통장", "other")
-
-# 순금액
-incident_amount = incident_spent - incident_refund
 
 total_amount = hyundai_amount + shinhan_amount + incident_amount
 
