@@ -1761,8 +1761,6 @@ with tab1:
         st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
 
         with st.container(border=True):
-            st.caption(f"지출 {incident_spent:,}원 / 💰 환급 {incident_refund:,}원")
-
             if incident_hospital > 0:
                 render_card_detail_row("병원비", incident_hospital, "사건비통장", "hospital", "🏥 병원비")
             if incident_medicine > 0:
@@ -1775,6 +1773,8 @@ with tab1:
                 render_card_detail_row("경조사", incident_event, "사건비통장", "event", "🙏 경조사")
             if incident_other > 0:
                 render_card_detail_row("기타", incident_other, "사건비통장", "other", "🧾 기타")
+            
+            st.caption(f"지출 {incident_spent:,}원 / 💰 환급 {incident_refund:,}원")
 
     with card_col4:
         render_budget_card(
