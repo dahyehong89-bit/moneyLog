@@ -1733,22 +1733,6 @@ with tab1:
     # -------------------
     st.subheader("💳 카드별 이번달 사용")
 
-    st.markdown(
-        f"""
-        <div style="
-            margin-bottom:10px;
-            padding:10px 14px;
-            border-radius:14px;
-            background:rgba(255,255,255,0.6);
-            border:1px solid {theme["line"]};
-            font-size:14px;
-        ">
-            💅 미용 총 지출: <b>{total_beauty:,}원</b>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
     card_col1, card_col2, card_col3, card_col4 = st.columns(4)
 
     with card_col1:
@@ -1846,6 +1830,21 @@ with tab1:
             "#FFEFF6",
             "#FFC4D6",
             "#A85E74"
+        )
+        st.markdown(
+        f"""
+            <div style="
+                margin-bottom:10px;
+                padding:10px 14px;
+                border-radius:14px;
+                background:rgba(255,255,255,0.6);
+                border:1px solid {theme["line"]};
+                font-size:14px;
+            ">
+                💅 미용 총 지출: <b>{total_beauty:,}원</b>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
     st.divider()
