@@ -1879,6 +1879,8 @@ with tab1:
             "#FFC4D6",
             "#A85E74"
         )
+
+        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
         
         with st.container(border=True):
             render_card_detail_row("미용", total_beauty, "통합", "total_beauty", "💅 미용 총 지출")
