@@ -1415,21 +1415,29 @@ def card_detail_dialog():
 
     st.markdown(f"**합계: {int(show_df['금액'].sum()):,}원**")
 
-def render_card_detail_row(label, amount, method_name, key_suffix):
+def render_card_detail_row(label, amount, method_name, key_suffix, display_label=None):
+    if display_label is None:
+        display_label = label
+
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        if st.button(label, key=f"card_detail_{method_name}_{key_suffix}"):
+        if st.button(
+            display_label,
+            key=f"card_detail_{method_name}_{key_suffix}",
+            use_container_width=True,
+            type="secondary"
+        ):
             st.session_state["card_detail_method"] = method_name
             st.session_state["card_detail_name"] = label
             card_detail_dialog()
 
     with col2:
         st.markdown(
-            f"<div style='text-align:right;'><b>{amount:,}원</b></div>",
+            f"<div style='text-align:right; padding-top:4px;'><b>{amount:,}원</b></div>",
             unsafe_allow_html=True
         )
-
+        
 # -------------------
 # 상단 제목 + 오늘 날짜
 # -------------------
@@ -1508,26 +1516,6 @@ hyundai_known_total = (
 
 hyundai_other = max(hyundai_amount - hyundai_known_total, 0)
 
-st.markdown(f"### 현대카드 {hyundai_amount:,}원")
-
-if hyundai_shopping > 0:
-    render_card_detail_row("쇼핑", hyundai_shopping, "현대카드", "shopping")
-
-if hyundai_eatout > 0:
-    render_card_detail_row("외식", hyundai_eatout, "현대카드", "eatout")
-
-if hyundai_delivery > 0:
-    render_card_detail_row("배달", hyundai_delivery, "현대카드", "delivery")
-
-if hyundai_coffee > 0:
-    render_card_detail_row("커피", hyundai_coffee, "현대카드", "coffee")
-
-if hyundai_convenience > 0:
-    render_card_detail_row("편의점", hyundai_convenience, "현대카드", "convenience")
-
-if hyundai_other > 0:
-    render_card_detail_row("기타", hyundai_other, "현대카드", "other")
-
 # -----------------------------
 # 신한카드 세부내역
 # -----------------------------
@@ -1558,26 +1546,6 @@ shinhan_known_total = (
 )
 
 shinhan_other = max(shinhan_amount - shinhan_known_total, 0)
-
-st.markdown(f"### 신한카드 {shinhan_amount:,}원")
-
-if shinhan_fuel > 0:
-    render_card_detail_row("주유", shinhan_fuel, "신한카드", "fuel")
-
-if shinhan_phone > 0:
-    render_card_detail_row("통신비", shinhan_phone, "신한카드", "phone")
-
-if shinhan_internet > 0:
-    render_card_detail_row("인터넷", shinhan_internet, "신한카드", "internet")
-
-if shinhan_wow > 0:
-    render_card_detail_row("쿠팡와우", shinhan_wow, "신한카드", "wow")
-
-if shinhan_emoji > 0:
-    render_card_detail_row("이모티콘", shinhan_emoji, "신한카드", "emoji")
-
-if shinhan_other > 0:
-    render_card_detail_row("기타", shinhan_other, "신한카드", "other")
 
 # 사건비통장: 지출 / 환급 / 순금액
 incident_df = month_df[month_df["method"] == "사건비통장"].copy()
@@ -1627,27 +1595,6 @@ incident_other = max(incident_spent - incident_known_total, 0)
 
 # 순금액
 incident_amount = incident_spent - incident_refund
-
-st.markdown(f"### 사건비통장 {incident_amount:,}원")
-st.caption(f"지출 {incident_spent:,}원 / 환급 {incident_refund:,}원")
-
-if incident_hospital > 0:
-    render_card_detail_row("병원비", incident_hospital, "사건비통장", "hospital")
-
-if incident_medicine > 0:
-    render_card_detail_row("약값", incident_medicine, "사건비통장", "medicine")
-
-if incident_checkup > 0:
-    render_card_detail_row("검진", incident_checkup, "사건비통장", "checkup")
-
-if incident_gift > 0:
-    render_card_detail_row("선물", incident_gift, "사건비통장", "gift")
-
-if incident_event > 0:
-    render_card_detail_row("경조사", incident_event, "사건비통장", "event")
-
-if incident_other > 0:
-    render_card_detail_row("기타", incident_other, "사건비통장", "other")
 
 total_amount = hyundai_amount + shinhan_amount + incident_amount
 
