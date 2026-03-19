@@ -1690,102 +1690,102 @@ with tab1:
 
     st.divider()
 
-        # -------------------
-        # 카드별 이번달 사용
-        # -------------------
-        st.subheader("💳 카드별 이번달 사용")
+    # -------------------
+    # 카드별 이번달 사용
+    # -------------------
+    st.subheader("💳 카드별 이번달 사용")
 
-        card_col1, card_col2, card_col3, card_col4 = st.columns(4)
+    card_col1, card_col2, card_col3, card_col4 = st.columns(4)
 
-        with card_col1:
-            render_budget_card(
-                "현대카드",
-                f"{hyundai_amount:,}원",
-                "#F4F4F4",
-                "#D6D6D6",
-                "#4A4A4A"
-            )
+    with card_col1:
+        render_budget_card(
+            "현대카드",
+            f"{hyundai_amount:,}원",
+            "#F4F4F4",
+            "#D6D6D6",
+            "#4A4A4A"
+        )
 
-            with st.container(border=True):
-                st.caption("현대카드 세부내역")
+        with st.container(border=True):
+            st.caption("현대카드 세부내역")
 
-                if hyundai_shopping > 0:
-                    render_card_detail_row("쇼핑", hyundai_shopping, "현대카드", "shopping", "🛒 쇼핑")
-                if hyundai_eatout > 0:
-                    render_card_detail_row("외식", hyundai_eatout, "현대카드", "eatout", "🍚 외식")
-                if hyundai_delivery > 0:
-                    render_card_detail_row("배달", hyundai_delivery, "현대카드", "delivery", "🛵 배달")
-                if hyundai_coffee > 0:
-                    render_card_detail_row("커피", hyundai_coffee, "현대카드", "coffee", "☕ 커피")
-                if hyundai_convenience > 0:
-                    render_card_detail_row("편의점", hyundai_convenience, "현대카드", "convenience", "🏪 편의점")
-                if hyundai_other > 0:
-                    render_card_detail_row("기타", hyundai_other, "현대카드", "other", "🧾 기타")
+            if hyundai_shopping > 0:
+                render_card_detail_row("쇼핑", hyundai_shopping, "현대카드", "shopping", "🛒 쇼핑")
+            if hyundai_eatout > 0:
+                render_card_detail_row("외식", hyundai_eatout, "현대카드", "eatout", "🍚 외식")
+            if hyundai_delivery > 0:
+                render_card_detail_row("배달", hyundai_delivery, "현대카드", "delivery", "🛵 배달")
+            if hyundai_coffee > 0:
+                render_card_detail_row("커피", hyundai_coffee, "현대카드", "coffee", "☕ 커피")
+            if hyundai_convenience > 0:
+                render_card_detail_row("편의점", hyundai_convenience, "현대카드", "convenience", "🏪 편의점")
+            if hyundai_other > 0:
+                render_card_detail_row("기타", hyundai_other, "현대카드", "other", "🧾 기타")
 
-        with card_col2:
-            render_budget_card(
-                "신한카드",
-                f"{shinhan_amount:,}원",
-                "#F2FBFF",
-                "#BFE8F7",
-                "#3E7C91"
-            )
+    with card_col2:
+        render_budget_card(
+            "신한카드",
+            f"{shinhan_amount:,}원",
+            "#F2FBFF",
+            "#BFE8F7",
+            "#3E7C91"
+        )
 
-            with st.container(border=True):
-                st.caption("신한카드 세부내역")
+        with st.container(border=True):
+            st.caption("신한카드 세부내역")
 
-                if shinhan_fuel > 0:
-                    render_card_detail_row("주유", shinhan_fuel, "신한카드", "fuel", "⛽ 주유")
-                if shinhan_phone > 0:
-                    render_card_detail_row("통신비", shinhan_phone, "신한카드", "phone", "📱 통신비")
-                if shinhan_internet > 0:
-                    render_card_detail_row("인터넷", shinhan_internet, "신한카드", "internet", "🌐 인터넷")
-                if shinhan_wow > 0:
-                    render_card_detail_row("쿠팡와우", shinhan_wow, "신한카드", "wow", "📦 쿠팡와우")
-                if shinhan_emoji > 0:
-                    render_card_detail_row("이모티콘", shinhan_emoji, "신한카드", "emoji", "💬 이모티콘")
-                if shinhan_other > 0:
-                    render_card_detail_row("기타", shinhan_other, "신한카드", "other", "🧾 기타")
+            if shinhan_fuel > 0:
+                render_card_detail_row("주유", shinhan_fuel, "신한카드", "fuel", "⛽ 주유")
+            if shinhan_phone > 0:
+                render_card_detail_row("통신비", shinhan_phone, "신한카드", "phone", "📱 통신비")
+            if shinhan_internet > 0:
+                render_card_detail_row("인터넷", shinhan_internet, "신한카드", "internet", "🌐 인터넷")
+            if shinhan_wow > 0:
+                render_card_detail_row("쿠팡와우", shinhan_wow, "신한카드", "wow", "📦 쿠팡와우")
+            if shinhan_emoji > 0:
+                render_card_detail_row("이모티콘", shinhan_emoji, "신한카드", "emoji", "💬 이모티콘")
+            if shinhan_other > 0:
+                render_card_detail_row("기타", shinhan_other, "신한카드", "other", "🧾 기타")
 
-        with card_col3:
-            render_budget_card(
-                "사건비통장",
-                f"{incident_amount:,}원",
-                "#FFF8CC",
-                "#F2E18B",
-                "#8A6A00"
-            )
+    with card_col3:
+        render_budget_card(
+            "사건비통장",
+            f"{incident_amount:,}원",
+            "#FFF8CC",
+            "#F2E18B",
+            "#8A6A00"
+        )
 
-            with st.container(border=True):
-                st.caption(f"사건비통장 세부내역 · 지출 {incident_spent:,}원 / 환급 {incident_refund:,}원")
+        with st.container(border=True):
+            st.caption(f"사건비통장 세부내역 · 지출 {incident_spent:,}원 / 환급 {incident_refund:,}원")
 
-                if incident_hospital > 0:
-                    render_card_detail_row("병원비", incident_hospital, "사건비통장", "hospital", "🏥 병원비")
-                if incident_medicine > 0:
-                    render_card_detail_row("약값", incident_medicine, "사건비통장", "medicine", "💊 약값")
-                if incident_checkup > 0:
-                    render_card_detail_row("검진", incident_checkup, "사건비통장", "checkup", "🩺 검진")
-                if incident_gift > 0:
-                    render_card_detail_row("선물", incident_gift, "사건비통장", "gift", "🎁 선물")
-                if incident_event > 0:
-                    render_card_detail_row("경조사", incident_event, "사건비통장", "event", "🙏 경조사")
-                if incident_other > 0:
-                    render_card_detail_row("기타", incident_other, "사건비통장", "other", "🧾 기타")
+            if incident_hospital > 0:
+                render_card_detail_row("병원비", incident_hospital, "사건비통장", "hospital", "🏥 병원비")
+            if incident_medicine > 0:
+                render_card_detail_row("약값", incident_medicine, "사건비통장", "medicine", "💊 약값")
+            if incident_checkup > 0:
+                render_card_detail_row("검진", incident_checkup, "사건비통장", "checkup", "🩺 검진")
+            if incident_gift > 0:
+                render_card_detail_row("선물", incident_gift, "사건비통장", "gift", "🎁 선물")
+            if incident_event > 0:
+                render_card_detail_row("경조사", incident_event, "사건비통장", "event", "🙏 경조사")
+            if incident_other > 0:
+                render_card_detail_row("기타", incident_other, "사건비통장", "other", "🧾 기타")
 
-                if incident_refund > 0:
-                    st.markdown(
-                        f"<div style='text-align:right; font-size:13px; opacity:0.8; margin-top:6px;'>💰 환급 {incident_refund:,}원</div>",
-                        unsafe_allow_html=True
-                    )
+            if incident_refund > 0:
+                st.markdown(
+                    f"<div style='text-align:right; font-size:13px; opacity:0.8; margin-top:6px;'>💰 환급 {incident_refund:,}원</div>",
+                    unsafe_allow_html=True
+                )
 
-        with card_col4:
-            render_budget_card(
-                "이번달 총 지출",
-                f"{total_amount:,}원",
-                "#FFEFF6",
-                "#FFC4D6",
-                "#A85E74"
-            )
+    with card_col4:
+        render_budget_card(
+            "이번달 총 지출",
+            f"{total_amount:,}원",
+            "#FFEFF6",
+            "#FFC4D6",
+            "#A85E74"
+        )
 
     st.divider()
 
