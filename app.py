@@ -2294,11 +2294,14 @@ with tab2:
     elif record_filter == "환급":
         view = view[(view["method"] == "사건비통장") & (view["amount"] > 0)]
     
-    filtered_total = int(view["amount"].abs().sum()) if not view.empty else 0
+    spent_total = int(view[view["amount"] < 0]["amount"].abs().sum())
+    refund_total = int(view[view["amount"] > 0]["amount"].sum())
+
     st.markdown(
         f"<div style='text-align:right; font-size:13px; opacity:0.75;'>"
         f"🔎 현재 보기: {record_filter} &nbsp;&nbsp; | &nbsp;&nbsp; "
-        f"💰 총금액: {filtered_total:,}원"
+        f"💸 지출 {spent_total:,}원 &nbsp;&nbsp; | &nbsp;&nbsp; "
+        f"💰 환급 {refund_total:,}원"
         f"</div>",
         unsafe_allow_html=True
     )
