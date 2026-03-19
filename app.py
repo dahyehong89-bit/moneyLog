@@ -1824,27 +1824,24 @@ with tab1:
             )
 
     with card_col4:
-        
+        render_budget_card(
+            "이번달 총 지출",
+            f"{total_amount:,}원",
+            "#FFEFF6",
+            "#FFC4D6",
+            "#A85E74"
+        )
         
         with st.container(border=True):
-            render_budget_card(
-                "이번달 총 지출",
-                f"{total_amount:,}원",
-                "#FFEFF6",
-                "#FFC4D6",
-                "#A85E74"
-            )
             st.markdown(
                 f"""
                 <div style="
-                    margin-bottom:10px;
-                    padding:10px 14px;
-                    border-radius:14px;
-                    background:rgba(255,255,255,0.6);
-                    border:1px solid {theme["line"]};
-                    font-size:14px;
+                    text-align:center;
+                    font-size:15px;
+                    color:{theme["amount_text"]};
                 ">
-                    💅 미용 총 지출: <b>{total_beauty:,}원</b>
+                    💅 미용 총 지출 <br>
+                    <b style="font-size:18px;">{total_beauty:,}원</b>
                 </div>
                 """,
                 unsafe_allow_html=True
