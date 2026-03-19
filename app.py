@@ -955,7 +955,7 @@ theme_list = list(THEMES.keys())
 theme_name = st.sidebar.selectbox(
     "🎨 테마 선택",
     theme_list,
-    index=theme_list.index("네이비"),  # 👈 여기만 변경
+    index=theme_list.index("navy"),  # 👈 여기만 변경
     key="theme_select"
 )
 
