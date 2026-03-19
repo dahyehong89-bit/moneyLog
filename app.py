@@ -1610,12 +1610,17 @@ incident_event = abs(int(
     incident_expense_df[incident_expense_df["detail_category"] == "경조사"]["amount"].sum()
 ))
 
+incident_beauty = abs(int(
+    incident_expense_df[incident_expense_df["detail_category"] == "미용"]["amount"].sum()
+))
+
 incident_known_total = (
     incident_hospital
     + incident_medicine
     + incident_checkup
     + incident_gift
     + incident_event
+    + incident_beauty
 )
 
 incident_other = max(incident_spent - incident_known_total, 0)
@@ -1794,10 +1799,12 @@ with tab1:
                 render_card_detail_row("약값", incident_medicine, "사건비통장", "medicine", "💊 약값")
             if incident_checkup > 0:
                 render_card_detail_row("검진", incident_checkup, "사건비통장", "checkup", "🩺 검진")
+            if incident_beauty > 0:
+                render_card_detail_row("미용", incident_beauty, "사건비통장", "beauty", "💅 미용")
             if incident_gift > 0:
                 render_card_detail_row("선물", incident_gift, "사건비통장", "gift", "🎁 선물")
             if incident_event > 0:
-                render_card_detail_row("경조사", incident_event, "사건비통장", "event", "🙏 경조사")
+                render_card_detail_row("경조사", incident_event, "사건비통장", "event", "🙏 경조사")            
             if incident_other > 0:
                 render_card_detail_row("기타", incident_other, "사건비통장", "other", "🧾 기타")
             
