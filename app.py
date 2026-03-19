@@ -1705,6 +1705,8 @@ with tab1:
             "#D6D6D6",
             "#4A4A4A"
         )
+        
+        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
 
         with st.container(border=True):
             st.caption("현대카드 세부내역")
