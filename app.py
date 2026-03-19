@@ -1774,7 +1774,12 @@ with tab1:
             if incident_other > 0:
                 render_card_detail_row("기타", incident_other, "사건비통장", "other", "🧾 기타")
             
-            st.caption(f"지출 {incident_spent:,}원 / 💰 환급 {incident_refund:,}원")
+            st.markdown(
+                f"<div style='text-align:right; font-size:13px; opacity:0.7;'>"
+                f"지출 {incident_spent:,}원 / 💰 환급 {incident_refund:,}원"
+                f"</div>",
+                unsafe_allow_html=True
+            )
 
     with card_col4:
         render_budget_card(
