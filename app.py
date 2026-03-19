@@ -84,7 +84,7 @@ THEMES = {
         "app_bg_1": "#EEF2F8",
         "app_bg_2": "#E1E7F2",
 
-        "container_bg": "rgba(255,255,255,0.78)",
+        "container_bg": "rgba(255,255,255,0.65)",
 
         "input_border": "rgba(90,110,160,0.30)",
         "input_bg": "rgba(255,255,255,0.92)",
@@ -122,7 +122,6 @@ THEMES = {
         "filter_shadow": "rgba(90,110,160,0.18)",
 
         "date_text": "#2F447A",
-        "container_bg": "rgba(255,255,255,0.65)"
     },
 }
 
