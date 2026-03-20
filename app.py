@@ -2544,45 +2544,5 @@ with tab2:
                 
     st.divider()
 
-    # =========================
-    # 그래프
-    # =========================
-    st.subheader("📊 요약 그래프")
-
-    expense_view = view[view["amount"] < 0]
-
-    if not expense_view.empty:
-        top_cat = (
-            expense_view.groupby("category")["amount"]
-            .sum()
-            .abs()
-            .sort_values(ascending=False)
-        )
-
-        st.subheader("🔥 이번달 지출 TOP")
-        top3 = top_cat.head(3)
-        cols = st.columns(len(top3))
-
-        for i, (cat, val) in enumerate(top3.items()):
-            cols[i].metric(cat, f"{int(val):,} 원")
-
-    if not view.empty:
-        st.caption("카테고리별 지출")
-        if not expense_view.empty:
-            st.bar_chart(
-                expense_view.groupby("category")["amount"]
-                .sum()
-                .abs()
-                .sort_values(ascending=False)
-            )
-
-        st.caption("결제수단별 순금액")
-        method_sum = view.groupby("method")["amount"].sum().abs().sort_values(ascending=False)
-
-        if not method_sum.empty:
-            st.bar_chart(method_sum)
-
-    st.caption(f"데이터 파일: {FILE} / {CHECKLIST_FILE}")
-
 with tab3:
     render_living_tab(get_worksheet, render_budget_card)
