@@ -5,6 +5,8 @@ import socket
 from io import BytesIO
 from datetime import date, datetime
 from living import render_living_tab
+from datetime import datetime, date
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import streamlit as st
@@ -34,7 +36,7 @@ AUTO_CATEGORY = {
     "올리브영": "쇼핑",
     "편의점": "쇼핑",
     "마트": "쇼핑",
-    "우유": "쇼핑",
+    "우유": "쇼핑",  
     "편의점": "편의점",
     "젤네일": "미용",
     "손젤": "미용",
@@ -533,7 +535,8 @@ def parse_quick_input(text: str, default_category: str, default_method: str) -> 
 
 
 def get_month_options(df: pd.DataFrame):
-    current_month = datetime.today().strftime("%Y-%m")
+    KST = ZoneInfo("Asia/Seoul")
+    current_month = datetime.now(KST).strftime("%Y-%m")
 
     if df.empty:
         return [current_month]
@@ -1110,7 +1113,8 @@ st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
 # 상단 제목 + 오늘 날짜
 # -------------------
 weekday = ["월", "화", "수", "목", "금", "토", "일"]
-today = datetime.today()
+KST = ZoneInfo("Asia/Seoul")
+today = datetime.now(KST)
 today_str = f"{today.strftime('%Y.%m.%d')} ({weekday[today.weekday()]})"
 
 title_left, title_right = st.columns([3, 1])
@@ -1541,7 +1545,7 @@ def render_card_detail_row(label, amount, method_name, key_suffix, display_label
         )
         
 # 공통 월 데이터
-month_key = datetime.today().strftime("%Y-%m")
+month_key = datetime.now(KST).strftime("%Y-%m")
 month_df = df.copy()
 month_df["date_dt"] = pd.to_datetime(month_df["date"], errors="coerce")
 month_df = month_df[month_df["date_dt"].dt.strftime("%Y-%m") == month_key]
@@ -2084,8 +2088,10 @@ with tab2:
     top_filter_left, top_filter_right = st.columns([1, 1])
 
     with top_filter_left:
+        KST = ZoneInfo("Asia/Seoul")
+
         month_options = get_month_options(df)
-        current_month = datetime.today().strftime("%Y-%m")
+        current_month = datetime.now(KST).strftime("%Y-%m")
 
         if "selected_month" not in st.session_state or st.session_state["selected_month"] not in month_options:
             st.session_state["selected_month"] = current_month
