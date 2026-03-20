@@ -1148,3 +1148,5 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             with c8:
                 if st.button("✏", key=f"cash_edit_{rid}", use_container_width=True):
                     edit_cash_dialog(rid)
+    
+    st.divider()
