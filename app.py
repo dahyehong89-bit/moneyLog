@@ -2061,8 +2061,9 @@ with tab1:
                         if st.button(label, use_container_width=True, key=f"btn_{memo}"):
                             open_quick_edit(amount, "고정비", memo, "신한카드")
     
-    with st.expander("ddddddddddd", expanded=False):
-        st.write("ddddddddddd")
+    with st.expander("11111", expanded=False):
+        st.subheader("22222")
+        st.write("33333")
  
     st.divider()
 
