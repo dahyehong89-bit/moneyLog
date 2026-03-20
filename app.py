@@ -2062,7 +2062,7 @@ with tab1:
                             open_quick_edit(amount, "고정비", memo, "신한카드")
     
     with st.expander("ddddddddddd", expanded=False):
-        ddddddddd
+        st.write("ddddddddddd")
  
     st.divider()
 
