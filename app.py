@@ -2060,27 +2060,7 @@ with tab1:
                     with cols[j]:
                         if st.button(label, use_container_width=True, key=f"btn_{memo}"):
                             open_quick_edit(amount, "고정비", memo, "신한카드")
-
-    # -------------------
-    # 폰에서도 쓰기 안내
-    # -------------------
-    local_ip = get_local_ip()
-    with st.expander("📱 폰에서도 쓰기", expanded=False):
-        if local_ip:
-            st.markdown(
-                f"""
-같은 와이파이에서 폰 브라우저로 아래 주소 열면 돼:
-
-`http://{local_ip}:8501`
-
-`run.bat`은 아래처럼 쓰면 더 안정적이야:
-
-`python -m streamlit run app.py --server.address 0.0.0.0`
-"""
-            )
-        else:
-            st.write("로컬 IP를 찾지 못했어요.")
-    
+ 
     st.divider()
 
 with tab2:
