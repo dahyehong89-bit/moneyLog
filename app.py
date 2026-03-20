@@ -2080,6 +2080,8 @@ with tab1:
             )
         else:
             st.write("로컬 IP를 찾지 못했어요.")
+    
+    st.divider()
 
 with tab2:
     # =========================
