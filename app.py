@@ -2060,6 +2060,9 @@ with tab1:
                     with cols[j]:
                         if st.button(label, use_container_width=True, key=f"btn_{memo}"):
                             open_quick_edit(amount, "고정비", memo, "신한카드")
+    
+    with st.expander("ddddddddddd", expanded=False):
+        ddddddddd
  
     st.divider()
 
