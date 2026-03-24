@@ -2042,22 +2042,22 @@ with tab1:
                 key="manual_fuel_price"
             )
 
+            method = st.selectbox(
+                "결제수단",
+                METHOD_OPTIONS,
+                index=METHOD_OPTIONS.index(DEFAULT_METHOD),
+                key="manual_method"
+            )
+
             non_expense = st.checkbox(
                 "지출에 반영 안 함 (비지출 기록)",
                 value=False,
                 key="manual_non_expense"
             )
 
-            method = st.selectbox(
-                "결제수단",
-                METHOD_OPTIONS,
-                index=METHOD_OPTIONS.index(DEFAULT_METHOD),
-                key="manual_method",
-                disabled=non_expense
-            )
-
             if non_expense:
                 st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
+                method = ""
 
         submitted_manual = st.form_submit_button("추가", use_container_width=True)
 
