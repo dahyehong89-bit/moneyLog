@@ -1202,12 +1202,7 @@ def edit_dialog(rid: int):
                 index=cat_index,
                 key=f"edit_cat_{rid}"
             )
-            method = st.selectbox(
-                "결제수단",
-                METHOD_OPTIONS,
-                index=method_index,
-                key=f"edit_method_{rid}"
-            )
+
             d = st.date_input(
                 "날짜",
                 value=pd.to_datetime(row["date"], errors="coerce"),
@@ -1241,6 +1236,17 @@ def edit_dialog(rid: int):
                 key=f"edit_non_expense_{rid}"
             )
 
+            if not non_expense:
+                method = st.selectbox(
+                    "결제수단",
+                    METHOD_OPTIONS,
+                    index=method_index,
+                    key=f"edit_method_{rid}"
+                )
+            else:
+                method = ""
+                st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
+
         col_cancel, col_save = st.columns(2)
 
         with col_cancel:
@@ -1264,11 +1270,16 @@ def edit_dialog(rid: int):
                 amount_clean,
                 is_non_expense=non_expense
             )
-            final_category, final_method = auto_card_and_category(
-                final_memo,
-                category,
-                method or DEFAULT_METHOD
-            )
+
+            if non_expense:
+                final_category = category
+                final_method = ""
+            else:
+                final_category, final_method = auto_card_and_category(
+                    final_memo,
+                    category,
+                    method or DEFAULT_METHOD
+                )
 
             amount_value = int(amount_clean)
 
@@ -1363,9 +1374,8 @@ def quick_add_dialog():
     
         with q1:
             category = st.selectbox("카테고리", CATEGORY_OPTIONS, index=cat_index, key="quick_edit_cat")
-            method = st.selectbox("결제수단", METHOD_OPTIONS, index=method_index, key="quick_edit_method")
             d = st.date_input("날짜", value=item["date"], key="quick_edit_date")
-    
+
         with q2:
             memo = st.text_input("메모", value=base_memo, key="quick_edit_memo")
 
@@ -1385,9 +1395,20 @@ def quick_add_dialog():
 
             non_expense = st.checkbox(
                 "지출에 반영 안 함 (비지출 기록)",
-                value=base_is_non_expense or item_non_expense,
+                value=False,
                 key="quick_edit_non_expense"
             )
+
+            if not non_expense:
+                method = st.selectbox(
+                    "결제수단",
+                    METHOD_OPTIONS,
+                    index=method_index,
+                    key="quick_edit_method"
+                )
+            else:
+                method = ""
+                st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
 
         col_cancel, col_save = st.columns(2)
 
@@ -1414,11 +1435,16 @@ def quick_add_dialog():
                 amount_clean,
                 is_non_expense=non_expense
             )
-            final_category, final_method = auto_card_and_category(
-                final_memo,
-                category,
-                method or DEFAULT_METHOD
-            )
+
+            if non_expense:
+                final_category = category
+                final_method = ""
+            else:
+                final_category, final_method = auto_card_and_category(
+                    final_memo,
+                    category,
+                    method or DEFAULT_METHOD
+                )
 
             amount_value = int(amount_clean)
 
@@ -1993,17 +2019,23 @@ with tab1:
 
         with m3:
             fuel_price = st.text_input("리터당 가격", value="", placeholder="주유일 때만 입력", key="manual_fuel_price")
-            method = st.selectbox(
-                "결제수단",
-                METHOD_OPTIONS,
-                index=METHOD_OPTIONS.index(DEFAULT_METHOD),
-                key="manual_method"
-            )
+
             non_expense = st.checkbox(
                 "지출에 반영 안 함 (비지출 기록)",
                 value=False,
                 key="manual_non_expense"
             )
+
+            if not non_expense:
+                method = st.selectbox(
+                    "결제수단",
+                    METHOD_OPTIONS,
+                    index=METHOD_OPTIONS.index(DEFAULT_METHOD),
+                    key="manual_method"
+                )
+            else:
+                method = ""
+                st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
 
         submitted_manual = st.form_submit_button("추가", use_container_width=True)
 
@@ -2024,11 +2056,16 @@ with tab1:
                 amount_clean,
                 is_non_expense=non_expense
             )
-            final_category, final_method = auto_card_and_category(
-                final_memo,
-                category,
-                method or DEFAULT_METHOD
-            )
+
+            if non_expense:
+                final_category = category
+                final_method = ""
+            else:
+                final_category, final_method = auto_card_and_category(
+                    final_memo,
+                    category,
+                    method or DEFAULT_METHOD
+                )
 
             amount_value = int(amount_clean)
 
