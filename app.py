@@ -2037,6 +2037,15 @@ with tab1:
         with m3:
             fuel_price = st.text_input("리터당 가격", value="", placeholder="주유일 때만 입력", key="manual_fuel_price")
 
+            c_left, c_right = st.columns([2, 1])
+
+            with c_right:
+                non_expense = st.checkbox(
+                    "지출에 반영 안 함 (지출 제외)",
+                    value=False,
+                    key="manual_non_expense"
+                )
+
             if not non_expense:
                 method = st.selectbox(
                     "결제수단",
@@ -2047,12 +2056,6 @@ with tab1:
             else:
                 method = ""
                 st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
-            
-            non_expense = st.checkbox(
-                    "지출에 반영 안 함 (지출 제외)",
-                    value=False,
-                    key="manual_non_expense"
-                )
 
         submitted_manual = st.form_submit_button("추가", use_container_width=True)
 
