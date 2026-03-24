@@ -487,6 +487,11 @@ def build_fuel_memo(
 
         return " / ".join(parts)
 
+    if is_non_expense:
+        if final_memo:
+            return f"{final_memo} / [비지출]"
+        return "[비지출]"
+
     return final_memo
 
 def classify_incident_memo(memo: str) -> str:
