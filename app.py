@@ -1209,6 +1209,14 @@ def edit_dialog(rid: int):
                 key=f"edit_date_{rid}"
             )
 
+            method = st.selectbox(
+                "결제수단",
+                METHOD_OPTIONS,
+                index=method_index,
+                key=f"edit_method_{rid}",
+                disabled=False
+            )
+
         with q2:
             memo = st.text_input(
                 "메모",
@@ -1230,22 +1238,15 @@ def edit_dialog(rid: int):
                 key=f"edit_fuel_price_{rid}"
             )
 
-            non_expense = st.checkbox(
-                "지출에 반영 안 함 (비지출 기록)",
-                value=base_is_non_expense,
-                key=f"edit_non_expense_{rid}"
-            )
+        non_expense = st.checkbox(
+            "지출에 반영 안 함 (비지출 기록)",
+            value=base_is_non_expense,
+            key=f"edit_non_expense_{rid}"
+        )
 
-            if not non_expense:
-                method = st.selectbox(
-                    "결제수단",
-                    METHOD_OPTIONS,
-                    index=method_index,
-                    key=f"edit_method_{rid}"
-                )
-            else:
-                method = ""
-                st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
+        if non_expense:
+            st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
+            method = ""
 
         col_cancel, col_save = st.columns(2)
 
@@ -1384,18 +1385,12 @@ def quick_add_dialog():
                 key="quick_edit_date"
             )
 
-            non_expense = st.checkbox(
-                "지출에 반영 안 함 (비지출 기록)",
-                value=False,
-                key="quick_edit_non_expense"
-            )
-
             method = st.selectbox(
                 "결제수단",
                 METHOD_OPTIONS,
                 index=method_index,
                 key="quick_edit_method",
-                disabled=non_expense
+                disabled=False
             )
 
         with q2:
@@ -1405,10 +1400,9 @@ def quick_add_dialog():
                 key="quick_edit_memo"
             )
 
-            default_amount = base_actual_amount if base_is_non_expense and base_actual_amount else f"{abs(int(item['amount']))}"
             amount_text = st.text_input(
                 "금액",
-                value=f"{int(default_amount):,}" if str(default_amount).isdigit() else "",
+                value=f"{abs(int(item['amount'])):,}",
                 key="quick_edit_amount"
             )
 
@@ -1419,14 +1413,19 @@ def quick_add_dialog():
                 key="quick_edit_fuel_price"
             )
 
-            if non_expense:
-                st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
+        non_expense = st.checkbox(
+            "지출에 반영 안 함 (비지출 기록)",
+            value=False,
+            key="quick_edit_non_expense"
+        )
+
+        if non_expense:
+            st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
+            method = ""
 
         col_cancel, col_save = st.columns(2)
-
         with col_cancel:
             canceled = st.form_submit_button("취소", use_container_width=True)
-        
         with col_save:
             saved = st.form_submit_button("💾 저장", use_container_width=True)
 
