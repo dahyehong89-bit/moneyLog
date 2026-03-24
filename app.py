@@ -1243,7 +1243,7 @@ def edit_dialog(rid: int):
                 key=f"edit_fuel_price_{rid}"
             )
 
-        c_left, c_right = st.columns([2, 1])
+        c_left, c_right = st.columns([1, 1])
 
         with c_right:
             non_expense = st.checkbox(
@@ -1421,7 +1421,7 @@ def quick_add_dialog():
                 key="quick_edit_fuel_price"
             )
 
-        c_left, c_right = st.columns([2, 1])
+        c_left, c_right = st.columns([1, 1])
 
         with c_right:
             non_expense = st.checkbox(
