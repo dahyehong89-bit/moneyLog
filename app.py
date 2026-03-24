@@ -1359,8 +1359,6 @@ def quick_add_dialog():
         st.warning("등록할 항목이 없어요.")
         return
 
-    item_non_expense = bool(item.get("non_expense", False))
-
     current_cat = str(item["category"])
     cat_index = CATEGORY_OPTIONS.index(current_cat) if current_cat in CATEGORY_OPTIONS else 0
 
@@ -1371,13 +1369,41 @@ def quick_add_dialog():
 
     with st.form("quick_add_edit_form"):
         q1, q2 = st.columns(2)
-    
+
         with q1:
-            category = st.selectbox("카테고리", CATEGORY_OPTIONS, index=cat_index, key="quick_edit_cat")
-            d = st.date_input("날짜", value=item["date"], key="quick_edit_date")
+            category = st.selectbox(
+                "카테고리",
+                CATEGORY_OPTIONS,
+                index=cat_index,
+                key="quick_edit_cat"
+            )
+
+            d = st.date_input(
+                "날짜",
+                value=item["date"],
+                key="quick_edit_date"
+            )
+
+            non_expense = st.checkbox(
+                "지출에 반영 안 함 (비지출 기록)",
+                value=False,
+                key="quick_edit_non_expense"
+            )
+
+            method = st.selectbox(
+                "결제수단",
+                METHOD_OPTIONS,
+                index=method_index,
+                key="quick_edit_method",
+                disabled=non_expense
+            )
 
         with q2:
-            memo = st.text_input("메모", value=base_memo, key="quick_edit_memo")
+            memo = st.text_input(
+                "메모",
+                value=base_memo,
+                key="quick_edit_memo"
+            )
 
             default_amount = base_actual_amount if base_is_non_expense and base_actual_amount else f"{abs(int(item['amount']))}"
             amount_text = st.text_input(
@@ -1393,21 +1419,7 @@ def quick_add_dialog():
                 key="quick_edit_fuel_price"
             )
 
-            non_expense = st.checkbox(
-                "지출에 반영 안 함 (비지출 기록)",
-                value=False,
-                key="quick_edit_non_expense"
-            )
-
-            if not non_expense:
-                method = st.selectbox(
-                    "결제수단",
-                    METHOD_OPTIONS,
-                    index=method_index,
-                    key="quick_edit_method"
-                )
-            else:
-                method = ""
+            if non_expense:
                 st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
 
         col_cancel, col_save = st.columns(2)
@@ -2577,8 +2589,11 @@ with tab2:
     
             c4.markdown(amount_html, unsafe_allow_html=True)
     
-            method = str(r["method"])
-            if method == "신한카드":
+            method = str(r["method"]).strip()
+
+            if not method:
+                method_html = "<span style='opacity:0.5;'>-</span>"
+            elif method == "신한카드":
                 method_html = f"<span class='method-shinhan'>{method}</span>"
             elif method == "사건비통장":
                 method_html = f"<span class='method-incident'>{method}</span>"
