@@ -2188,13 +2188,7 @@ with tab1:
                 for j, (label, amount, memo) in enumerate(shinhan_fixed_buttons[i:i+cols_per_row]):
                     with cols[j]:
                         if st.button(label, use_container_width=True, key=f"btn_{memo}"):
-                            open_quick_edit(
-                                amount,
-                                "고정비",
-                                memo,
-                                "신한카드",
-                                non_expense=(memo == "주유")
-                            )
+                            open_quick_edit(amount, "고정비", memo, "신한카드")
     
     with st.expander("11111", expanded=False):
         st.subheader("22222")
