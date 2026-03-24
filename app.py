@@ -421,18 +421,28 @@ def is_incident_expense_text(text: str) -> bool:
 
 def split_fuel_memo(memo: str):
     memo = (memo or "").strip()
-    m = re.search(r"리터당\s*([\d,]+)원", memo)
 
     fuel_price = ""
+    actual_amount = ""
+    is_non_expense = "[비지출]" in memo
+
+    fuel_match = re.search(r"리터당\s*([\d,]+)원", memo)
+    actual_match = re.search(r"실제\s*([\d,]+)원", memo)
+
+    if fuel_match:
+        fuel_price = fuel_match.group(1).replace(",", "")
+
+    if actual_match:
+        actual_amount = actual_match.group(1).replace(",", "")
+
     clean_memo = memo
+    clean_memo = re.sub(r"\s*/?\s*\[비지출\]", "", clean_memo).strip()
+    clean_memo = re.sub(r"\s*/?\s*실제\s*[\d,]+원", "", clean_memo).strip()
+    clean_memo = re.sub(r"\s*/?\s*리터당\s*[\d,]+원", "", clean_memo).strip()
+    clean_memo = re.sub(r"\s*/?\s*[\d.]+L", "", clean_memo).strip()
+    clean_memo = re.sub(r"\s*/\s*", " / ", clean_memo).strip(" /")
 
-    if m:
-        fuel_price = m.group(1).replace(",", "")
-        clean_memo = re.sub(r"\s*/?\s*리터당\s*[\d,]+원", "", memo).strip()
-        clean_memo = re.sub(r"\s*/?\s*[\d.]+L", "", clean_memo).strip()
-
-    return clean_memo, fuel_price
-
+    return clean_memo, fuel_price, actual_amount, is_non_expense
 
 def is_incident_income(method: str, memo: str) -> bool:
     if method != "사건비통장":
@@ -442,18 +452,40 @@ def is_incident_income(method: str, memo: str) -> bool:
     return any(k in memo_text for k in INCIDENT_INCOME_KEYWORDS)
 
 
-def build_fuel_memo(memo: str, fuel_price_clean: str, amount_clean: str) -> str:
+def build_fuel_memo(
+    memo: str,
+    fuel_price_clean: str,
+    amount_clean: str,
+    is_non_expense: bool = False
+) -> str:
     final_memo = (memo or "").strip()
 
     if fuel_price_clean:
         fuel_price_int = int(fuel_price_clean)
         amount_int = int(amount_clean)
-        liters = abs(amount_int) / fuel_price_int
-        liters_str = f"{liters:.2f}L"
+
+        liters_str = ""
+        if fuel_price_int > 0 and amount_int > 0:
+            liters = amount_int / fuel_price_int
+            liters_str = f"{liters:.2f}L"
+
+        parts = []
 
         if final_memo:
-            return f"{final_memo} / 리터당 {fuel_price_int:,}원 / {liters_str}"
-        return f"주유 / 리터당 {fuel_price_int:,}원 / {liters_str}"
+            parts.append(final_memo)
+        else:
+            parts.append("주유")
+
+        if is_non_expense:
+            parts.append("[비지출]")
+            parts.append(f"실제 {amount_int:,}원")
+
+        parts.append(f"리터당 {fuel_price_int:,}원")
+
+        if liters_str:
+            parts.append(liters_str)
+
+        return " / ".join(parts)
 
     return final_memo
 
@@ -1158,7 +1190,7 @@ def edit_dialog(rid: int):
     current_method = str(row["method"]).strip() if str(row["method"]).strip() else DEFAULT_METHOD
     method_index = METHOD_OPTIONS.index(current_method) if current_method in METHOD_OPTIONS else 0
 
-    base_memo, base_fuel_price = split_fuel_memo(str(row["memo"]))
+    base_memo, base_fuel_price, base_actual_amount, base_is_non_expense = split_fuel_memo(str(row["memo"]))
 
     with st.form(f"edit_form_{rid}"):
         q1, q2 = st.columns(2)
@@ -1188,16 +1220,25 @@ def edit_dialog(rid: int):
                 value=base_memo,
                 key=f"edit_memo_{rid}"
             )
+
+            default_amount = base_actual_amount if base_is_non_expense and base_actual_amount else f"{abs(int(row['amount']))}"
             amount = st.text_input(
                 "금액",
-                value=f"{abs(int(row['amount'])):,}",
+                value=f"{int(default_amount):,}" if str(default_amount).isdigit() else "",
                 key=f"edit_amount_{rid}"
             )
+
             fuel_price = st.text_input(
                 "리터당 가격",
                 value=base_fuel_price,
                 placeholder="주유일 때만 입력",
                 key=f"edit_fuel_price_{rid}"
+            )
+
+            non_expense = st.checkbox(
+                "지출에 반영 안 함 (비지출 기록)",
+                value=base_is_non_expense,
+                key=f"edit_non_expense_{rid}"
             )
 
         col_cancel, col_save = st.columns(2)
@@ -1217,7 +1258,12 @@ def edit_dialog(rid: int):
         elif fuel_price_clean and not re.fullmatch(r"\d+", fuel_price_clean):
             st.error("리터당 가격은 숫자만 입력해줘.")
         else:
-            final_memo = build_fuel_memo(memo, fuel_price_clean, amount_clean)
+            final_memo = build_fuel_memo(
+                memo,
+                fuel_price_clean,
+                amount_clean,
+                is_non_expense=non_expense
+            )
             final_category, final_method = auto_card_and_category(
                 final_memo,
                 category,
@@ -1225,7 +1271,10 @@ def edit_dialog(rid: int):
             )
 
             amount_value = int(amount_clean)
-            if is_incident_income(final_method, final_memo):
+
+            if non_expense:
+                final_amount = 0
+            elif is_incident_income(final_method, final_memo):
                 final_amount = amount_value
             else:
                 final_amount = -amount_value
@@ -1273,24 +1322,33 @@ def add_quick(amount: int, category: str, memo: str = "", method: str = DEFAULT_
     st.rerun()
 
 
-def open_quick_edit(amount: int, category: str, memo: str = "", method: str = DEFAULT_METHOD):
+def open_quick_edit(
+    amount: int,
+    category: str,
+    memo: str = "",
+    method: str = DEFAULT_METHOD,
+    non_expense: bool = False
+):
     st.session_state.pending_quick_entry = {
         "date": date.today(),
         "amount": abs(int(amount)),
         "category": category,
         "method": method,
         "memo": memo,
+        "non_expense": non_expense,
     }
     quick_add_dialog()
 
 
 @st.dialog("📝 빠른 입력 수정")
 def quick_add_dialog():
-    item = st.session_state.get("pending_quick_entry")
-
+    item = st.session_state.get("pending_quick_entry")    
+    
     if not item:
         st.warning("등록할 항목이 없어요.")
         return
+
+    item_non_expense = bool(item.get("non_expense", False))
 
     current_cat = str(item["category"])
     cat_index = CATEGORY_OPTIONS.index(current_cat) if current_cat in CATEGORY_OPTIONS else 0
@@ -1298,7 +1356,7 @@ def quick_add_dialog():
     current_method = str(item["method"]).strip() if str(item["method"]).strip() else DEFAULT_METHOD
     method_index = METHOD_OPTIONS.index(current_method) if current_method in METHOD_OPTIONS else 0
 
-    base_memo, base_fuel_price = split_fuel_memo(str(item["memo"]))
+    base_memo, base_fuel_price, base_actual_amount, base_is_non_expense = split_fuel_memo(str(item["memo"]))
 
     with st.form("quick_add_edit_form"):
         q1, q2 = st.columns(2)
@@ -1310,12 +1368,25 @@ def quick_add_dialog():
     
         with q2:
             memo = st.text_input("메모", value=base_memo, key="quick_edit_memo")
-            amount_text = st.text_input("금액", value=f"{abs(int(item['amount'])):,}", key="quick_edit_amount")
+
+            default_amount = base_actual_amount if base_is_non_expense and base_actual_amount else f"{abs(int(item['amount']))}"
+            amount_text = st.text_input(
+                "금액",
+                value=f"{int(default_amount):,}" if str(default_amount).isdigit() else "",
+                key="quick_edit_amount"
+            )
+
             fuel_price = st.text_input(
                 "리터당 가격",
                 value=base_fuel_price,
                 placeholder="주유일 때만 입력",
                 key="quick_edit_fuel_price"
+            )
+
+            non_expense = st.checkbox(
+                "지출에 반영 안 함 (비지출 기록)",
+                value=base_is_non_expense or item_non_expense,
+                key="quick_edit_non_expense"
             )
 
         col_cancel, col_save = st.columns(2)
@@ -1337,7 +1408,12 @@ def quick_add_dialog():
         elif fuel_price_clean and not re.fullmatch(r"\d+", fuel_price_clean):
             st.error("리터당 가격은 숫자만 입력해줘.")
         else:
-            final_memo = build_fuel_memo(memo, fuel_price_clean, amount_clean)
+            final_memo = build_fuel_memo(
+                memo,
+                fuel_price_clean,
+                amount_clean,
+                is_non_expense=non_expense
+            )
             final_category, final_method = auto_card_and_category(
                 final_memo,
                 category,
@@ -1345,7 +1421,10 @@ def quick_add_dialog():
             )
 
             amount_value = int(amount_clean)
-            if is_incident_income(final_method, final_memo):
+
+            if non_expense:
+                final_amount = 0
+            elif is_incident_income(final_method, final_memo):
                 final_amount = amount_value
             else:
                 final_amount = -amount_value
@@ -1920,6 +1999,11 @@ with tab1:
                 index=METHOD_OPTIONS.index(DEFAULT_METHOD),
                 key="manual_method"
             )
+            non_expense = st.checkbox(
+                "지출에 반영 안 함 (비지출 기록)",
+                value=False,
+                key="manual_non_expense"
+            )
 
         submitted_manual = st.form_submit_button("추가", use_container_width=True)
 
@@ -1934,7 +2018,12 @@ with tab1:
         elif fuel_price_clean and not re.fullmatch(r"\d+", fuel_price_clean):
             st.error("리터당 가격은 숫자만 입력해줘.")
         else:
-            final_memo = build_fuel_memo(memo, fuel_price_clean, amount_clean)
+            final_memo = build_fuel_memo(
+                memo,
+                fuel_price_clean,
+                amount_clean,
+                is_non_expense=non_expense
+            )
             final_category, final_method = auto_card_and_category(
                 final_memo,
                 category,
@@ -1942,7 +2031,10 @@ with tab1:
             )
 
             amount_value = int(amount_clean)
-            if is_incident_income(final_method, final_memo):
+
+            if non_expense:
+                final_amount = 0
+            elif is_incident_income(final_method, final_memo):
                 final_amount = amount_value
             else:
                 final_amount = -amount_value
@@ -2059,7 +2151,13 @@ with tab1:
                 for j, (label, amount, memo) in enumerate(shinhan_fixed_buttons[i:i+cols_per_row]):
                     with cols[j]:
                         if st.button(label, use_container_width=True, key=f"btn_{memo}"):
-                            open_quick_edit(amount, "고정비", memo, "신한카드")
+                            open_quick_edit(
+                                amount,
+                                "고정비",
+                                memo,
+                                "신한카드",
+                                non_expense=(memo == "주유")
+                            )
     
     with st.expander("11111", expanded=False):
         st.subheader("22222")
@@ -2433,11 +2531,18 @@ with tab2:
             c2.markdown(f"<div class='row-box'><span class='cat-tag'>{r['category']}</span></div>", unsafe_allow_html=True)
             c3.markdown(f"<div class='row-box'>{r['memo']}</div>", unsafe_allow_html=True)
     
-            amount_display = f"{abs(int(r['amount'])):,}원"
-            if int(r["amount"]) > 0:
-                amount_html = f"<div class='row-box amount-text'>➕ {amount_display}</div>"
+            memo_text = str(r["memo"])
+            actual_match = re.search(r"실제\s*([\d,]+)원", memo_text)
+
+            if "[비지출]" in memo_text and actual_match:
+                actual_display = f"{actual_match.group(1)}원"
+                amount_html = f"<div class='row-box amount-text'>⛽ 비지출 · {actual_display}</div>"
             else:
-                amount_html = f"<div class='row-box amount-text'>💸 {amount_display}</div>"
+                amount_display = f"{abs(int(r['amount'])):,}원"
+                if int(r["amount"]) > 0:
+                    amount_html = f"<div class='row-box amount-text'>➕ {amount_display}</div>"
+                else:
+                    amount_html = f"<div class='row-box amount-text'>💸 {amount_display}</div>"
     
             c4.markdown(amount_html, unsafe_allow_html=True)
     
