@@ -1238,7 +1238,7 @@ def edit_dialog(rid: int):
                 key=f"edit_fuel_price_{rid}"
             )
 
-        c_left, c_right = st.columns([3, 1])
+        c_left, c_right = st.columns([2, 1])
 
         with c_right:
             non_expense = st.checkbox(
@@ -1416,7 +1416,7 @@ def quick_add_dialog():
                 key="quick_edit_fuel_price"
             )
 
-        c_left, c_right = st.columns([3, 1])
+        c_left, c_right = st.columns([2, 1])
 
         with c_right:
             non_expense = st.checkbox(
@@ -2037,7 +2037,7 @@ with tab1:
         with m3:
             fuel_price = st.text_input("리터당 가격", value="", placeholder="주유일 때만 입력", key="manual_fuel_price")
 
-            c_left, c_right = st.columns([3, 1])
+            c_left, c_right = st.columns([2, 1])
 
             with c_right:
                 non_expense = st.checkbox(
