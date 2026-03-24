@@ -1238,11 +1238,14 @@ def edit_dialog(rid: int):
                 key=f"edit_fuel_price_{rid}"
             )
 
-        non_expense = st.checkbox(
-            "지출에 반영 안 함 (비지출 기록)",
-            value=base_is_non_expense,
-            key=f"edit_non_expense_{rid}"
-        )
+        c_left, c_right = st.columns([3, 1])
+
+        with c_right:
+            non_expense = st.checkbox(
+                "지출에 반영 안 함 (지출 제외)",
+                value=base_is_non_expense,
+                key=f"edit_non_expense_{rid}"
+            )
 
         if non_expense:
             st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
@@ -1413,11 +1416,14 @@ def quick_add_dialog():
                 key="quick_edit_fuel_price"
             )
 
-        non_expense = st.checkbox(
-            "지출에 반영 안 함 (비지출 기록)",
-            value=False,
-            key="quick_edit_non_expense"
-        )
+        c_left, c_right = st.columns([3, 1])
+
+        with c_right:
+            non_expense = st.checkbox(
+                "지출에 반영 안 함 (지출 제외)",
+                value=False,
+                key="quick_edit_non_expense"
+            )
 
         if non_expense:
             st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
@@ -2031,11 +2037,14 @@ with tab1:
         with m3:
             fuel_price = st.text_input("리터당 가격", value="", placeholder="주유일 때만 입력", key="manual_fuel_price")
 
-            non_expense = st.checkbox(
-                "지출에 반영 안 함 (비지출 기록)",
-                value=False,
-                key="manual_non_expense"
-            )
+            c_left, c_right = st.columns([3, 1])
+
+            with c_right:
+                non_expense = st.checkbox(
+                    "지출에 반영 안 함 (지출 제외)",
+                    value=False,
+                    key="manual_non_expense"
+                )
 
             if not non_expense:
                 method = st.selectbox(
