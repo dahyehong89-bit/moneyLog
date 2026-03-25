@@ -736,7 +736,7 @@ def get_budget_review(spent: int, budget: int = MONTHLY_BUDGET):
             "text": "#2F7A4A",
         }
 
-def get_monthly_budget_reviews(df: pd.DataFrame, months: int = 6) -> pd.DataFrame:
+def get_monthly_budget_reviews(df: pd.DataFrame, months: int = 3) -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame(columns=["month", "spent", "diff", "result_text", "comment"])
 
@@ -751,6 +751,12 @@ def get_monthly_budget_reviews(df: pd.DataFrame, months: int = 6) -> pd.DataFram
         return pd.DataFrame(columns=["month", "spent", "diff", "result_text", "comment"])
 
     temp["month"] = temp["date_dt"].dt.strftime("%Y-%m")
+
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    current_month = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m")
+    temp = temp[temp["month"] != current_month]
 
     month_sum = (
         temp.groupby("month")["amount"]
