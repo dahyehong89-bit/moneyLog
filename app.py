@@ -3058,6 +3058,8 @@ with tab2:
         calendar_df = df.copy()
         render_month_calendar(calendar_df, month, theme)
 
+        st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+
         calendar_summary_df = get_calendar_day_summary(calendar_df, month)
         calendar_no_spend_days = get_final_no_spend_days(calendar_df, month)
 
