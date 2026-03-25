@@ -2149,6 +2149,7 @@ with tab1:
                 unsafe_allow_html=True
             )
 
+    st.divider()
 
     # -------------------
     # 카드별 이번달 사용
