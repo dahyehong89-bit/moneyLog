@@ -706,6 +706,78 @@ def budget_status(spent: int):
             "text": "#257A45",
         }
 
+def get_budget_review(spent: int, budget: int = MONTHLY_BUDGET):
+    diff = budget - spent
+
+    if diff < 0:
+        return {
+            "result_text": f"{abs(diff):,}원 초과",
+            "comment": "조금 오버했어요 🥲 다음 달엔 더 잘해보자!",
+            "bg": "#FFF1F3",
+            "border": "#F3B7C3",
+            "text": "#B4546A",
+        }
+
+    elif diff == 0:
+        return {
+            "result_text": "예산 딱 맞춤",
+            "comment": "와… 이건 진짜 계획형 인간 😮✨",
+            "bg": "#F8F4FF",
+            "border": "#D8C7F3",
+            "text": "#6E56A0",
+        }
+
+    else:
+        return {
+            "result_text": f"{diff:,}원 남김",
+            "comment": "잘 참았다 👏 예산 세이브 성공!",
+            "bg": "#EEF9F1",
+            "border": "#BFE5C8",
+            "text": "#2F7A4A",
+        }
+
+def get_monthly_budget_reviews(df: pd.DataFrame, months: int = 6) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame(columns=["month", "spent", "diff", "result_text", "comment"])
+
+    temp = df.copy()
+    temp["date_dt"] = pd.to_datetime(temp["date"], errors="coerce")
+    temp = temp.dropna(subset=["date_dt"]).copy()
+
+    # 예산 기준은 현대카드만
+    temp = temp[temp["method"] == BUDGET_METHOD].copy()
+
+    if temp.empty:
+        return pd.DataFrame(columns=["month", "spent", "diff", "result_text", "comment"])
+
+    temp["month"] = temp["date_dt"].dt.strftime("%Y-%m")
+
+    month_sum = (
+        temp.groupby("month")["amount"]
+        .sum()
+        .reset_index()
+    )
+
+    month_sum["spent"] = month_sum["amount"].abs().astype(int)
+    month_sum = month_sum.sort_values("month", ascending=False).head(months).copy()
+
+    results = []
+    for _, row in month_sum.iterrows():
+        spent = int(row["spent"])
+        review = get_budget_review(spent, MONTHLY_BUDGET)
+
+        results.append({
+            "month": row["month"],
+            "spent": spent,
+            "diff": MONTHLY_BUDGET - spent,
+            "result_text": review["result_text"],
+            "comment": review["comment"],
+            "bg": review["bg"],
+            "border": review["border"],
+            "text": review["text"],
+        })
+
+    return pd.DataFrame(results)
 
 def render_budget_card(title: str, value: str, bg: str, border: str, text: str):
     st.markdown(
@@ -1289,7 +1361,7 @@ def edit_dialog(rid: int):
             fuel_price = st.text_input(
                 "리터당 가격",
                 value=base_fuel_price,
-                placeholder="주유일 때만 입력",
+                placeholder="주유일 때만 입력", 
                 key=f"edit_fuel_price_{rid}"
             )
 
@@ -2046,6 +2118,37 @@ with tab1:
                     st.rerun()
 
     st.divider()
+    st.subheader("📅 월별 예산 결산")
+
+    review_df = get_monthly_budget_reviews(df, months=6)
+
+    if review_df.empty:
+        st.caption("아직 결산할 데이터가 없어요.")
+    else:
+        for _, r in review_df.iterrows():
+            st.markdown(
+                f"""
+                <div style="
+                    background:{r['bg']};
+                    border:1px solid {r['border']};
+                    border-radius:18px;
+                    padding:14px 16px;
+                    margin-bottom:10px;
+                ">
+                    <div style="font-size:14px; font-weight:800; color:{r['text']}; margin-bottom:6px;">
+                        {r['month']} 결산
+                    </div>
+                    <div style="font-size:18px; font-weight:800; color:{r['text']}; margin-bottom:4px;">
+                        사용 {int(r['spent']):,}원 · {r['result_text']}
+                    </div>
+                    <div style="font-size:14px; color:{r['text']};">
+                        {r['comment']}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
 
     # -------------------
     # 카드별 이번달 사용
