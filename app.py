@@ -515,6 +515,56 @@ def classify_incident_memo(memo: str) -> str:
 
     return "기타"
 
+def extract_fuel_stats_df(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame(columns=["date_dt", "date", "unit_price", "fuel_amount", "liters"])
+
+    fuel_df = df.copy()
+    fuel_df["memo"] = fuel_df["memo"].astype(str)
+    fuel_df["date_dt"] = pd.to_datetime(fuel_df["date"], errors="coerce")
+
+    # 리터당 가격
+    fuel_df["unit_price"] = fuel_df["memo"].str.extract(r"리터당\s*([\d,]+)원")[0]
+    fuel_df["unit_price"] = (
+        fuel_df["unit_price"]
+        .astype(str)
+        .str.replace(",", "", regex=False)
+    )
+    fuel_df["unit_price"] = pd.to_numeric(fuel_df["unit_price"], errors="coerce")
+
+    # 리터
+    fuel_df["liters"] = fuel_df["memo"].str.extract(r"([\d.]+)L")[0]
+    fuel_df["liters"] = pd.to_numeric(fuel_df["liters"], errors="coerce")
+
+    # 실제 금액 (비지출 주유용)
+    fuel_df["actual_amount"] = fuel_df["memo"].str.extract(r"실제\s*([\d,]+)원")[0]
+    fuel_df["actual_amount"] = (
+        fuel_df["actual_amount"]
+        .astype(str)
+        .str.replace(",", "", regex=False)
+    )
+    fuel_df["actual_amount"] = pd.to_numeric(fuel_df["actual_amount"], errors="coerce")
+
+    # 실제 주유금액 계산
+    # 비지출이면 memo의 실제 금액 사용, 아니면 amount 절대값 사용
+    fuel_df["fuel_amount"] = fuel_df["actual_amount"]
+    fuel_df.loc[fuel_df["fuel_amount"].isna(), "fuel_amount"] = fuel_df["amount"].abs()
+
+    # liters 없으면 금액 / 단가로 계산
+    missing_liters = (
+        fuel_df["liters"].isna()
+        & fuel_df["unit_price"].notna()
+        & (fuel_df["unit_price"] > 0)
+        & fuel_df["fuel_amount"].notna()
+    )
+    fuel_df.loc[missing_liters, "liters"] = (
+        fuel_df.loc[missing_liters, "fuel_amount"] / fuel_df.loc[missing_liters, "unit_price"]
+    )
+
+    fuel_df = fuel_df.dropna(subset=["date_dt"]).sort_values("date_dt")
+
+    return fuel_df[["date_dt", "date", "unit_price", "fuel_amount", "liters"]].copy()
+
 def parse_quick_input(text: str, default_category: str, default_method: str) -> dict:
     text = (text or "").strip()
     if not text:
@@ -1603,11 +1653,65 @@ def card_detail_dialog():
         st.write("내역이 없어요.")
         return
 
+    # ⛽ 주유 그래프/요약
+    if method_name == "신한카드" and detail_name == "주유":
+        fuel_stats_df = extract_fuel_stats_df(detail_df)
+
+        if not fuel_stats_df.empty:
+            total_fuel_amount = int(fuel_stats_df["fuel_amount"].fillna(0).sum())
+            total_liters = float(fuel_stats_df["liters"].fillna(0).sum())
+
+            valid_unit_price = fuel_stats_df["unit_price"].dropna()
+            avg_unit_price = int(valid_unit_price.mean()) if not valid_unit_price.empty else 0
+
+            mc1, mc2, mc3 = st.columns(3)
+            with mc1:
+                st.metric("총 주유금액", f"{total_fuel_amount:,}원")
+            with mc2:
+                st.metric("총 주유 리터", f"{total_liters:.2f}L")
+            with mc3:
+                st.metric("평균 리터당 가격", f"{avg_unit_price:,}원")
+
+            chart_option = st.selectbox(
+                "그래프 보기",
+                ["리터당 가격", "주유금액", "주유리터"],
+                key="fuel_chart_option"
+            )
+
+            chart_df = fuel_stats_df.copy()
+            chart_df["날짜"] = chart_df["date_dt"].dt.strftime("%m-%d")
+
+            if chart_option == "리터당 가격":
+                st.line_chart(
+                    chart_df.set_index("날짜")[["unit_price"]],
+                    use_container_width=True
+                )
+            elif chart_option == "주유금액":
+                st.line_chart(
+                    chart_df.set_index("날짜")[["fuel_amount"]],
+                    use_container_width=True
+                )
+            elif chart_option == "주유리터":
+                st.line_chart(
+                    chart_df.set_index("날짜")[["liters"]],
+                    use_container_width=True
+                )
+
+            st.caption("날짜별 주유 단가, 금액, 리터 변화를 볼 수 있어요.")
+
     show_df = detail_df.copy()
     show_df["날짜"] = show_df["date_dt"].dt.strftime("%Y-%m-%d")
     show_df["금액_num"] = show_df["amount"].abs().astype(int)
     show_df["금액"] = show_df["금액_num"].apply(lambda x: f"{x:,}원")
 
+    if method_name == "신한카드" and detail_name == "주유":
+        fuel_stats_df = extract_fuel_stats_df(detail_df).reset_index(drop=True)
+        show_df = show_df.reset_index(drop=True)
+        show_df = pd.concat(
+            [show_df, fuel_stats_df[["unit_price", "fuel_amount", "liters"]]],
+            axis=1
+        )
+        
     cols = ["날짜"]
 
     if "method" in show_df.columns and method_name == "통합":
@@ -1615,6 +1719,18 @@ def card_detail_dialog():
 
     if "memo" in show_df.columns:
         cols.append("memo")
+        if method_name == "신한카드" and detail_name == "주유":
+            if "unit_price" in show_df.columns:
+                show_df["unit_price_text"] = show_df["unit_price"].apply(
+                    lambda x: f"{int(x):,}원" if pd.notna(x) else "-"
+                )
+                cols.append("unit_price_text")
+
+            if "liters" in show_df.columns:
+                show_df["liters_text"] = show_df["liters"].apply(
+                    lambda x: f"{x:.2f}L" if pd.notna(x) else "-"
+                )
+                cols.append("liters_text")
 
     if method_name == "현대카드" and "category" in show_df.columns:
         cols.append("category")
@@ -1635,7 +1751,9 @@ def card_detail_dialog():
             "method": "결제수단",
             "memo": "사용처/메모",
             "category": "카테고리",
-            "detail_category": "세부분류"
+            "detail_category": "세부분류",
+            "unit_price_text": "리터당 가격",
+            "liters_text": "주유량",
         }),
         use_container_width=True,
         hide_index=True
