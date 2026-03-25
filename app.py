@@ -3081,6 +3081,8 @@ with tab2:
 
         st.caption("💡 초록 배경은 무지출데이, ⛽는 주유 기록이 있는 날이에요.")
 
+        st.divider()
+        
         st.subheader("📅 날짜별 세부내역")
 
         selected_calendar_date = st.date_input(
