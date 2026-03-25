@@ -325,6 +325,108 @@ def load_checklist_df() -> pd.DataFrame:
     except Exception:
         return pd.DataFrame(columns=["month", "item", "checked"])
 
+@st.cache_data(ttl=60)
+def load_no_spend_df() -> pd.DataFrame:
+    try:
+        ws = get_worksheet("no_spend_days")
+        values = ws.get_all_records()
+
+        if not values:
+            return pd.DataFrame(columns=["date", "checked"])
+
+        df = pd.DataFrame(values).fillna("")
+
+        for c in ["date", "checked"]:
+            if c not in df.columns:
+                df[c] = ""
+
+        df = df[["date", "checked"]].copy()
+        df["date"] = df["date"].astype(str)
+        df["checked"] = df["checked"].astype(str).map(
+            lambda x: str(x).lower() in ["true", "1", "yes"]
+        )
+
+        return df
+
+    except Exception:
+        return pd.DataFrame(columns=["date", "checked"])
+
+
+def save_no_spend_df(df: pd.DataFrame) -> None:
+    ws = get_worksheet("no_spend_days")
+
+    save_data = df[["date", "checked"]].copy().fillna("")
+    rows = [["date", "checked"]] + save_data.values.tolist()
+
+    ws.clear()
+    ws.update(rows)
+    load_no_spend_df.clear()
+
+def update_no_spend_day(date_str: str, checked_value: bool) -> None:
+    no_spend_df = load_no_spend_df()
+    mask = no_spend_df["date"] == date_str
+
+    if mask.any():
+        no_spend_df.loc[mask, "checked"] = checked_value
+    else:
+        add_row = pd.DataFrame([{
+            "date": date_str,
+            "checked": checked_value,
+        }])
+        no_spend_df = pd.concat([no_spend_df, add_row], ignore_index=True)
+
+    save_no_spend_df(no_spend_df)
+
+def get_auto_no_spend_days(df: pd.DataFrame, month_key: str) -> set:
+    if df.empty:
+        return set()
+
+    temp = df.copy()
+    temp["date_dt"] = pd.to_datetime(temp["date"], errors="coerce")
+    temp = temp.dropna(subset=["date_dt"]).copy()
+    temp["month"] = temp["date_dt"].dt.strftime("%Y-%m")
+
+    month_df = temp[temp["month"] == month_key].copy()
+    if month_df.empty:
+        return set()
+
+    # 해당 월의 1일 ~ 오늘(현재월이면) / 월말(과거월이면) 범위
+    selected_year, selected_month = map(int, month_key.split("-"))
+    start_date = pd.Timestamp(year=selected_year, month=selected_month, day=1)
+
+    KST = ZoneInfo("Asia/Seoul")
+    today = pd.Timestamp(datetime.now(KST).date())
+
+    if month_key == today.strftime("%Y-%m"):
+        end_date = today
+    else:
+        end_date = (start_date + pd.offsets.MonthEnd(1))
+
+    all_days = pd.date_range(start=start_date, end=end_date, freq="D")
+    all_day_str = {d.strftime("%Y-%m-%d") for d in all_days}
+
+    # 실지출 있는 날짜
+    spend_days = set(
+        month_df[month_df["amount"] < 0]["date"].astype(str).tolist()
+    )
+
+    # 실지출 없으면 자동 무지출
+    auto_no_spend_days = all_day_str - spend_days
+    return auto_no_spend_days
+
+def get_final_no_spend_days(df: pd.DataFrame, month_key: str) -> set:
+    auto_days = get_auto_no_spend_days(df, month_key)
+
+    manual_df = load_no_spend_df()
+    manual_df = manual_df[manual_df["checked"] == True].copy()
+
+    manual_days = set()
+    for d in manual_df["date"].astype(str):
+        if d.startswith(month_key):
+            manual_days.add(d)
+
+    return auto_days | manual_days
+
 def save_checklist_df(df: pd.DataFrame) -> None:
     ws = get_worksheet("checklist")
 
@@ -2124,6 +2226,41 @@ with tab1:
                     st.rerun()
 
     st.divider()
+    st.subheader("🪙 이번달 무지출데이")
+
+    no_spend_days = get_final_no_spend_days(df, month_key)
+    no_spend_count = len(no_spend_days)
+
+    st.markdown(
+        f"""
+        <div style="
+            background: rgba(255,255,255,0.55);
+            border: 1px solid {theme["metric_border"]};
+            border-radius: 18px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        ">
+            <div style="font-size:14px; color:{theme["button_text"]}; margin-bottom:6px; font-weight:700;">
+                이번달 무지출데이
+            </div>
+            <div style="font-size:28px; font-weight:800; color:{theme["button_text"]};">
+                {no_spend_count}일
+            </div>
+            <div style="font-size:13px; opacity:0.75; margin-top:6px;">
+                자동 집계 + 수동 추가 포함
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    if no_spend_days:
+        recent_no_spend = sorted(no_spend_days, reverse=True)[:7]
+        st.caption("최근 무지출데이: " + ", ".join(recent_no_spend))
+    else:
+        st.caption("아직 기록된 무지출데이가 없어요.")
+
+    st.divider()
     st.subheader("📅 월별 예산 결산")
 
     review_df = get_monthly_budget_reviews(df, months=6)
@@ -2287,7 +2424,12 @@ with tab1:
                 index=CATEGORY_OPTIONS.index("쇼핑"),
                 key="manual_cat"
             )
-
+            no_spend_only = st.checkbox(
+                "이 날짜를 무지출데이로 기록",
+                value=False,
+                key="manual_no_spend_only"
+            )
+            
         with m2:
             memo = st.text_input("메모", value="", key="manual_memo")
             amount_text = st.text_input("금액", value="", placeholder="금액 입력", key="manual_amount")
@@ -2320,6 +2462,11 @@ with tab1:
         submitted_manual = st.form_submit_button("추가", use_container_width=True)
 
     if submitted_manual:
+        if no_spend_only:
+            update_no_spend_day(str(d), True)
+            st.success(f"✅ {str(d)} 무지출데이로 기록했어요!")
+            st.rerun()
+
         amount_clean = amount_text.replace(",", "").strip()
         fuel_price_clean = fuel_price.replace(",", "").strip()
 
@@ -2367,7 +2514,7 @@ with tab1:
             save_df(df)
             st.success("✅ 저장 완료!")
             st.rerun()
-
+    
     st.divider()
 
     # =========================
