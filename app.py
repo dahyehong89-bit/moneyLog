@@ -3065,15 +3065,95 @@ with tab2:
         cal_refund = int(calendar_summary_df["refund"].sum()) if not calendar_summary_df.empty else 0
         cal_no_spend = len(calendar_no_spend_days)
 
-        c1, c2, c3 = st.columns(3)
+        cal_net = cal_spent - cal_refund
+
+        c1, c2, c3, c4 = st.columns(4)
         with c1:
             st.metric("월 지출 합계", f"{cal_spent:,}원")
         with c2:
             st.metric("월 환급 합계", f"{cal_refund:,}원")
         with c3:
+            st.metric("월 순지출", f"{cal_net:,}원")
+        with c4:
             st.metric("무지출데이", f"{cal_no_spend}일")
 
         st.caption("💡 초록 배경은 무지출데이, ⛽는 주유 기록이 있는 날이에요.")
+
+        st.subheader("📅 날짜별 세부내역")
+
+        selected_calendar_date = st.date_input(
+            "날짜 선택",
+            value=pd.to_datetime(f"{month}-01").date(),
+            key="calendar_detail_date"
+        )
+
+        selected_date_str = str(selected_calendar_date)
+
+        day_detail_df = calendar_df.copy()
+        day_detail_df["date_dt"] = pd.to_datetime(day_detail_df["date"], errors="coerce")
+        day_detail_df = day_detail_df[day_detail_df["date"] == selected_date_str].copy()
+
+        manual_no_spend_df = load_no_spend_df()
+        manual_no_spend_checked = False
+        if not manual_no_spend_df.empty:
+            manual_no_spend_checked = bool(
+                manual_no_spend_df[
+                    (manual_no_spend_df["date"] == selected_date_str) &
+                    (manual_no_spend_df["checked"] == True)
+                ].shape[0] > 0
+            )
+
+        auto_no_spend_days = get_auto_no_spend_days(calendar_df, month)
+        is_auto_no_spend = selected_date_str in auto_no_spend_days
+        is_final_no_spend = selected_date_str in calendar_no_spend_days
+
+        if day_detail_df.empty:
+            if is_final_no_spend:
+                if manual_no_spend_checked and not is_auto_no_spend:
+                    st.success(f"{selected_date_str} · 🪙 수동으로 기록한 무지출데이예요!")
+                else:
+                    st.success(f"{selected_date_str} · 🪙 자동 집계된 무지출데이예요!")
+            else:
+                st.info("선택한 날짜의 내역이 없어요.")
+        else:
+            show_day_df = day_detail_df.copy()
+            show_day_df["금액_num"] = show_day_df["amount"].abs().astype(int)
+            show_day_df["금액"] = show_day_df["금액_num"].apply(lambda x: f"{x:,}원")
+
+            day_cols = ["date", "category", "memo", "method", "금액"]
+
+            st.dataframe(
+                show_day_df[day_cols].rename(columns={
+                    "date": "날짜",
+                    "category": "카테고리",
+                    "memo": "메모",
+                    "method": "결제수단",
+                }),
+                use_container_width=True,
+                hide_index=True
+            )
+
+            day_spent = int(show_day_df[show_day_df["amount"] < 0]["amount"].abs().sum())
+            day_refund = int(show_day_df[show_day_df["amount"] > 0]["amount"].sum())
+            day_net = day_spent - day_refund
+
+            st.markdown(
+                f"""
+                <div style="text-align:right; font-size:14px; font-weight:700; margin-top:8px;">
+                    💸 지출 {day_spent:,}원 &nbsp;&nbsp; | &nbsp;&nbsp;
+                    💰 환급 {day_refund:,}원 &nbsp;&nbsp; | &nbsp;&nbsp;
+                    📊 순지출 {day_net:,}원
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            if is_final_no_spend:
+                if manual_no_spend_checked and not is_auto_no_spend:
+                    st.caption("🪙 이 날짜는 수동으로 무지출데이 추가한 날이에요.")
+                else:
+                    st.caption("🪙 이 날짜는 자동 집계된 무지출데이예요.")
+
         st.divider()
 
     current_view_key = f"{month}|{q}|{st.session_state.get('record_filter', '전체')}"
