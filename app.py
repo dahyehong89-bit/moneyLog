@@ -1271,10 +1271,6 @@ def edit_dialog(rid: int):
                 key=f"edit_method_{rid}",
                 disabled=False
             )
-            
-            if non_expense:
-                st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
-                method = ""
 
         with q2:
             memo = st.text_input(
