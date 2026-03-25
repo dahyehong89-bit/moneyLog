@@ -1302,9 +1302,9 @@ def edit_dialog(rid: int):
                 key=f"edit_non_expense_{rid}"
             )
 
-        if non_expense:
-            st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
-            method = ""
+            if non_expense:
+                st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
+                method = ""
 
         col_cancel, col_save = st.columns(2)
 
