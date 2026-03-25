@@ -1582,6 +1582,18 @@ def get_card_detail_df(month_df, method_name, detail_name):
         merged_df = pd.concat([hyundai_beauty_df, incident_beauty_df], ignore_index=True)
         return merged_df.sort_values(by="date_dt", ascending=False)
 
+    if method_name == "통합" and detail_name == "주유":
+        df = month_df.copy()
+
+        if "date_dt" not in df.columns:
+            df["date_dt"] = pd.to_datetime(df["date"], errors="coerce")
+
+        fuel_df = df[
+            df["memo"].astype(str).str.contains("주유", na=False)
+        ].copy()
+
+        return fuel_df.sort_values(by="date_dt", ascending=False)
+
     # 사건비통장
     if method_name == "사건비통장":
         df = df[df["amount"] < 0].copy()
@@ -1653,8 +1665,8 @@ def card_detail_dialog():
         st.write("내역이 없어요.")
         return
 
-    # ⛽ 주유 그래프/요약
-    if method_name == "신한카드" and detail_name == "주유":
+    # ⛽ 통합 주유 그래프/요약
+    if method_name == "통합" and detail_name == "주유":
         fuel_stats_df = extract_fuel_stats_df(detail_df)
 
         if not fuel_stats_df.empty:
@@ -1675,7 +1687,7 @@ def card_detail_dialog():
             chart_option = st.selectbox(
                 "그래프 보기",
                 ["리터당 가격", "주유금액", "주유리터"],
-                key="fuel_chart_option"
+                key="fuel_chart_option_total"
             )
 
             chart_df = fuel_stats_df.copy()
@@ -1697,21 +1709,22 @@ def card_detail_dialog():
                     use_container_width=True
                 )
 
-            st.caption("날짜별 주유 단가, 금액, 리터 변화를 볼 수 있어요.")
-
+            st.caption("비지출 주유까지 포함한 전체 주유 기록 기준이에요.")
+        
     show_df = detail_df.copy()
-    show_df["날짜"] = show_df["date_dt"].dt.strftime("%Y-%m-%d")
-    show_df["금액_num"] = show_df["amount"].abs().astype(int)
-    show_df["금액"] = show_df["금액_num"].apply(lambda x: f"{x:,}원")
 
-    if method_name == "신한카드" and detail_name == "주유":
+    if method_name == "통합" and detail_name == "주유":
         fuel_stats_df = extract_fuel_stats_df(detail_df).reset_index(drop=True)
         show_df = show_df.reset_index(drop=True)
         show_df = pd.concat(
             [show_df, fuel_stats_df[["unit_price", "fuel_amount", "liters"]]],
             axis=1
         )
-        
+
+    show_df["날짜"] = show_df["date_dt"].dt.strftime("%Y-%m-%d")
+    show_df["금액_num"] = show_df["amount"].abs().astype(int)
+    show_df["금액"] = show_df["금액_num"].apply(lambda x: f"{x:,}원")
+
     cols = ["날짜"]
 
     if "method" in show_df.columns and method_name == "통합":
@@ -1719,18 +1732,19 @@ def card_detail_dialog():
 
     if "memo" in show_df.columns:
         cols.append("memo")
-        if method_name == "신한카드" and detail_name == "주유":
-            if "unit_price" in show_df.columns:
-                show_df["unit_price_text"] = show_df["unit_price"].apply(
-                    lambda x: f"{int(x):,}원" if pd.notna(x) else "-"
-                )
-                cols.append("unit_price_text")
 
-            if "liters" in show_df.columns:
-                show_df["liters_text"] = show_df["liters"].apply(
-                    lambda x: f"{x:.2f}L" if pd.notna(x) else "-"
-                )
-                cols.append("liters_text")
+    if method_name == "통합" and detail_name == "주유":
+        if "unit_price" in show_df.columns:
+            show_df["unit_price_text"] = show_df["unit_price"].apply(
+                lambda x: f"{int(x):,}원" if pd.notna(x) else "-"
+            )
+            cols.append("unit_price_text")
+
+        if "liters" in show_df.columns:
+            show_df["liters_text"] = show_df["liters"].apply(
+                lambda x: f"{x:.2f}L" if pd.notna(x) else "-"
+            )
+            cols.append("liters_text")
 
     if method_name == "현대카드" and "category" in show_df.columns:
         cols.append("category")
@@ -1753,7 +1767,7 @@ def card_detail_dialog():
             "category": "카테고리",
             "detail_category": "세부분류",
             "unit_price_text": "리터당 가격",
-            "liters_text": "주유량",
+            "liters_text": "주유량",            
         }),
         use_container_width=True,
         hide_index=True
@@ -1874,6 +1888,14 @@ shinhan_known_total = (
 )
 
 shinhan_other = max(shinhan_amount - shinhan_known_total, 0)
+
+fuel_all_df = month_df[
+    month_df["memo"].astype(str).str.contains("주유", na=False)
+].copy()
+
+fuel_all_stats_df = extract_fuel_stats_df(fuel_all_df)
+
+total_fuel_amount_all = int(fuel_all_stats_df["fuel_amount"].fillna(0).sum()) if not fuel_all_stats_df.empty else 0
 
 # 사건비통장: 지출 / 환급 / 순금액
 incident_df = month_df[month_df["method"] == "사건비통장"].copy()
@@ -2133,6 +2155,9 @@ with tab1:
         
         with st.container(border=True):
             render_card_detail_row("미용", total_beauty, "통합", "total_beauty", "💅 미용 총 지출")
+
+            if total_fuel_amount_all > 0:
+                render_card_detail_row("주유", total_fuel_amount_all, "통합", "total_fuel", "⛽ 주유 총 지출")
 
     st.divider()
 
