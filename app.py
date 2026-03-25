@@ -1480,9 +1480,9 @@ def quick_add_dialog():
                 key="quick_edit_non_expense"
             )
 
-        if non_expense:
-            st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
-            method = ""
+            if non_expense:
+                st.caption("비지출 기록은 결제수단을 저장하지 않아요.")
+                method = ""
 
         col_cancel, col_save = st.columns(2)
         with col_cancel:
