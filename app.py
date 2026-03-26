@@ -2463,15 +2463,23 @@ with tab1:
             msg = f"🔥 {streak}일 연속 성공중!!"
 
         with st.container(border=True):
-            st.markdown(f"**무지출데이** {no_spend_count}일")
-            st.markdown(f"<div style='font-size:28px; font-weight:800; margin-top:4px;'>{msg}</div>", unsafe_allow_html=True)                
+            st.markdown(f"**🪙 무지출데이 {no_spend_count}일**")
+
+            st.markdown(
+                f"""
+                <div style='font-size:26px; font-weight:800; margin-top:6px;'>
+                    {msg}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         if no_spend_days:
             recent_no_spend = sorted(no_spend_days)[-7:]
             recent_no_spend_short = [
                 f"{int(d.split('-')[1])}/{int(d.split('-')[2])}" for d in recent_no_spend
             ]
-            st.caption("최근 무지출데이: " + ", ".join(recent_no_spend_short))
+            st.caption("📅 최근: " + ", ".join(recent_no_spend_short))
         else:
             st.caption("아직 기록된 무지출데이가 없어요.")
 
