@@ -527,13 +527,13 @@ def render_month_calendar(df: pd.DataFrame, month_key: str, theme: dict):
 
     .money-calendar-day {{
         font-weight: 800;
-        font-size: 15px;
+        font-size: 18px;
         color: {theme["button_text"]};
         margin-bottom: 2px;
     }}
 
     .money-calendar-line {{
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.35;
         color: {theme["button_text"]};
         word-break: keep-all;
@@ -3082,7 +3082,7 @@ with tab2:
         st.caption("💡 초록 배경은 무지출데이, ⛽는 주유 기록이 있는 날이에요.")
 
         st.divider()
-        
+
         st.subheader("📅 날짜별 세부내역")
 
         selected_calendar_date = st.date_input(
