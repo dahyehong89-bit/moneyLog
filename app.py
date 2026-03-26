@@ -578,11 +578,11 @@ def render_month_calendar(df: pd.DataFrame, month_key: str, theme: dict):
         }}
 
         .money-calendar-day {{
-            font-size: 13px;
+            font-size: 15px;
         }}
 
         .money-calendar-line {{
-            font-size: 10px;
+            font-size: 12px;
             line-height: 1.2;
         }}
     }}
