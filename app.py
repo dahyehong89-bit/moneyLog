@@ -2465,9 +2465,11 @@ with tab1:
         with st.container(border=True):
             st.markdown(f"**🪙 무지출데이 {no_spend_count}일**")
 
+            color = "#2F7A4A" if "성공" in msg else "#B4546A"
+
             st.markdown(
                 f"""
-                <div style='font-size:26px; font-weight:800; margin-bottom:calc(-1px + 1rem);'>
+                <div style='font-size:26px; font-weight:800; margin-bottom:calc(-1px + 1rem); color:{color};'>
                     {msg}
                 </div>
                 """,
