@@ -2427,8 +2427,8 @@ with tab1:
                     update_checklist_item(month_key, row["item"], checked_now)
                     st.rerun()
 
-        st.divider()
-
+    st.divider()
+    
     left_info, right_info = st.columns([1, 1.4])
 
     with left_info:
