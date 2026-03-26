@@ -2428,7 +2428,7 @@ with tab1:
                     st.rerun()
 
     st.divider()
-    
+
     left_info, right_info = st.columns([1, 1.4])
 
     with left_info:
@@ -2463,7 +2463,10 @@ with tab1:
 
         if no_spend_days:
             recent_no_spend = sorted(no_spend_days, reverse=True)[:7]
-            st.caption("최근 무지출데이: " + ", ".join(recent_no_spend))
+            recent_no_spend_short = [
+                f"{int(d.split('-')[1])}/{int(d.split('-')[2])}" for d in recent_no_spend
+            ]
+            st.caption("최근 무지출데이: " + ", ".join(recent_no_spend_short))
         else:
             st.caption("아직 기록된 무지출데이가 없어요.")
 
