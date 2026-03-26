@@ -3045,6 +3045,9 @@ with tab2:
 
     st.divider()
 
+    if "record_view_mode" not in st.session_state:
+        st.session_state["record_view_mode"] = "calendar"
+
     view_mode = st.radio(
         "보기 방식",
         options=["list", "calendar"],
@@ -3086,9 +3089,20 @@ with tab2:
 
         st.subheader("📅 날짜별 세부내역")
 
+        KST = ZoneInfo("Asia/Seoul")
+        today_date = datetime.now(KST).date()
+        today_month_str = today_date.strftime("%Y-%m")
+
+        default_calendar_date = today_date if month == today_month_str else pd.to_datetime(f"{month}-01").date()
+
+        if "calendar_detail_date" not in st.session_state:
+            st.session_state["calendar_detail_date"] = default_calendar_date
+        elif st.session_state["calendar_detail_date"].strftime("%Y-%m") != month:
+            st.session_state["calendar_detail_date"] = default_calendar_date
+
         selected_calendar_date = st.date_input(
             "날짜 선택",
-            value=pd.to_datetime(f"{month}-01").date(),
+            value=st.session_state["calendar_detail_date"],
             key="calendar_detail_date"
         )
 
