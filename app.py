@@ -2466,7 +2466,7 @@ with tab1:
             f"""
             <div style="
                 background: rgba(255,255,255,0.55);
-                border: 1px solid {theme["metric_border"]};
+                border: 1px solid {theme['metric_border']};
                 border-radius: 18px;
                 padding: 14px 16px;
                 margin-bottom: 10px;
