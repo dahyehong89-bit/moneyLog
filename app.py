@@ -2462,39 +2462,20 @@ with tab1:
         else:
             msg = f"🔥 {streak}일 연속 성공중!!"
 
-        st.markdown(
-            f"""
-            <div style="
-                background: rgba(255,255,255,0.55);
-                border: 1px solid {theme['metric_border']};
-                border-radius: 18px;
-                padding: 14px 16px;
-                margin-bottom: 10px;
-                min-height: 160px;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-                <div>
-                    <div style="font-size:14px; font-weight:700;">
-                        이번달 무지출데이
-                    </div>
-                    <div style="font-size:32px; font-weight:800; margin-top:4px;">
-                        {no_spend_count}일
-                    </div>
-                </div>
+        with st.container(border=True):
+            st.markdown("**이번달 무지출데이**")
+            st.markdown(f"<div style='font-size:32px; font-weight:800;'>{no_spend_count}일</div>", unsafe_allow_html=True)
+            st.caption(msg)
+            st.caption("자동 집계 + 수동 추가 포함")
 
-                <div style="font-size:13px; margin-top:8px; font-weight:600;">
-                    {msg}
-                </div>
-
-                <div style="font-size:12px; opacity:0.7;">
-                    자동 집계 + 수동 추가 포함
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        if no_spend_days:
+            recent_no_spend = sorted(no_spend_days)[-7:]
+            recent_no_spend_short = [
+                f"{int(d.split('-')[1])}/{int(d.split('-')[2])}" for d in recent_no_spend
+            ]
+            st.caption("최근 무지출데이: " + ", ".join(recent_no_spend_short))
+        else:
+            st.caption("아직 기록된 무지출데이가 없어요.")
 
     with right_info:
         st.subheader("📅 월별 예산 결산")
