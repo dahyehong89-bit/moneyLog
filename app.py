@@ -2464,34 +2464,34 @@ with tab1:
 
         st.markdown(
             f"""
-            <div style="
-                background: rgba(255,255,255,0.55);
-                border: 1px solid {theme['metric_border']};
-                border-radius: 18px;
-                padding: 14px 16px;
-                margin-bottom: 10px;
-                min-height: 160px;
-                display:flex;
-                flex-direction:column;
-                justify-content:space-between;
-            ">
-                <div>
-                    <div style="font-size:14px; font-weight:700;">
-                        이번달 무지출데이
+                <div style="
+                    background: rgba(255,255,255,0.55);
+                    border: 1px solid {theme['metric_border']};
+                    border-radius: 18px;
+                    padding: 14px 16px;
+                    margin-bottom: 10px;
+                    min-height: 160px;
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:space-between;
+                ">
+                    <div>
+                        <div style="font-size:14px; font-weight:700;">
+                            이번달 무지출데이
+                        </div>
+                        <div style="font-size:32px; font-weight:800; margin-top:4px;">
+                            {no_spend_count}일
+                        </div>
                     </div>
-                    <div style="font-size:32px; font-weight:800; margin-top:4px;">
-                        {no_spend_count}일
+
+                    <div style="font-size:13px; margin-top:8px; font-weight:600;">
+                        {msg}
+                    </div>
+
+                    <div style="font-size:12px; opacity:0.7;">
+                        자동 집계 + 수동 추가 포함
                     </div>
                 </div>
-
-                <div style="font-size:13px; margin-top:8px; font-weight:600;">
-                    {msg}
-                </div>
-
-                <div style="font-size:12px; opacity:0.7;">
-                    자동 집계 + 수동 추가 포함
-                </div>
-            </div>
             """,
             unsafe_allow_html=True
         )
