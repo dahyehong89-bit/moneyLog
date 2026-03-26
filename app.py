@@ -3047,12 +3047,13 @@ with tab2:
 
     view_mode = st.radio(
         "보기 방식",
-        ["📋 리스트", "🗓 달력"],
+        options=["list", "calendar"],
+        format_func=lambda x: "📋 리스트" if x == "list" else "🗓 달력",
         horizontal=True,
         key="record_view_mode"
     )
 
-    if view_mode == "🗓 달력":
+    if view_mode == "calendar":
         st.subheader("🗓 월별 달력 보기")
 
         calendar_df = df.copy()
@@ -3168,7 +3169,7 @@ with tab2:
         st.session_state["record_page"] = 1
         st.session_state["last_view_key"] = current_view_key
 
-    if view_mode == "📋 리스트":
+    if view_mode == "list":
         # =========================
         # 기록 보기 필터
         # =========================
