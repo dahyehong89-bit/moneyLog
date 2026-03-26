@@ -2466,11 +2466,7 @@ with tab1:
 
         with ns1:
             with st.container(border=True):
-                st.markdown("**무지출데이**")
-                st.markdown(
-                    f"<div style='font-size:32px; font-weight:800; margin-top:4px;'>{no_spend_count}일</div>",
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"**무지출데이** {no_spend_count}일")
 
         with ns2:
             with st.container(border=True):
