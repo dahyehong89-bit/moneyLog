@@ -2470,11 +2470,7 @@ with tab1:
 
         with ns2:
             with st.container(border=True):
-                st.markdown("**응원!**")
-                st.markdown(
-                    f"<div style='font-size:28px; font-weight:800; margin-top:4px;'>{msg}</div>",
-                    unsafe_allow_html=True
-                )
+                st.markdown(f"<div style='font-size:28px; font-weight:800; margin-top:4px;'>{msg}</div>", unsafe_allow_html=True)
 
         if no_spend_days:
             recent_no_spend = sorted(no_spend_days)[-7:]
