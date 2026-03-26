@@ -2467,7 +2467,7 @@ with tab1:
 
             st.markdown(
                 f"""
-                <div style='font-size:26px; font-weight:800; margin-top:6px;'>
+                <div style='font-size:26px; font-weight:800; margin-bottom:calc(-1px + 1rem);'>
                     {msg}
                 </div>
                 """,
