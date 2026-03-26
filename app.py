@@ -2462,7 +2462,7 @@ with tab1:
         )
 
         if no_spend_days:
-            recent_no_spend = sorted(no_spend_days, reverse=True)[:7]
+            recent_no_spend = sorted(no_spend_days)[-7:]
             recent_no_spend_short = [
                 f"{int(d.split('-')[1])}/{int(d.split('-')[2])}" for d in recent_no_spend
             ]
