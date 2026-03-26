@@ -3056,6 +3056,9 @@ with tab2:
         key="record_view_mode"
     )
 
+    calendar_df = df.copy()
+    calendar_df["date_dt"] = pd.to_datetime(calendar_df["date"], errors="coerce")
+
     if view_mode == "calendar":
         st.subheader("📅 날짜별 세부내역")
 
