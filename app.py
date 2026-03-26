@@ -2462,15 +2462,9 @@ with tab1:
         else:
             msg = f"🔥 {streak}일 연속 성공중!!"
 
-        ns1, ns2 = st.columns(2)
-
-        with ns1:
-            with st.container(border=True):
-                st.markdown(f"**무지출데이** {no_spend_count}일")
-
-        with ns2:
-            with st.container(border=True):
-                st.markdown(f"<div style='font-size:28px; font-weight:800; margin-top:4px;'>{msg}</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(f"**무지출데이** {no_spend_count}일")
+            st.markdown(f"<div style='font-size:28px; font-weight:800; margin-top:4px;'>{msg}</div>", unsafe_allow_html=True)                
 
         if no_spend_days:
             recent_no_spend = sorted(no_spend_days)[-7:]
