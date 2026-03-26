@@ -3102,7 +3102,6 @@ with tab2:
 
         selected_calendar_date = st.date_input(
             "날짜 선택",
-            value=st.session_state["calendar_detail_date"],
             key="calendar_detail_date"
         )
 
