@@ -2427,72 +2427,77 @@ with tab1:
                     update_checklist_item(month_key, row["item"], checked_now)
                     st.rerun()
 
-    st.divider()
-    st.subheader("🪙 이번달 무지출데이")
+        st.divider()
 
-    no_spend_days = get_final_no_spend_days(df, month_key)
-    no_spend_count = len(no_spend_days)
+    left_info, right_info = st.columns([1, 1.4])
 
-    st.markdown(
-        f"""
-        <div style="
-            background: rgba(255,255,255,0.55);
-            border: 1px solid {theme["metric_border"]};
-            border-radius: 18px;
-            padding: 14px 16px;
-            margin-bottom: 10px;
-        ">
-            <div style="font-size:14px; color:{theme["button_text"]}; margin-bottom:6px; font-weight:700;">
-                이번달 무지출데이
-            </div>
-            <div style="font-size:28px; font-weight:800; color:{theme["button_text"]};">
-                {no_spend_count}일
-            </div>
-            <div style="font-size:13px; opacity:0.75; margin-top:6px;">
-                자동 집계 + 수동 추가 포함
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    with left_info:
+        st.subheader("🪙 이번달 무지출데이")
 
-    if no_spend_days:
-        recent_no_spend = sorted(no_spend_days, reverse=True)[:7]
-        st.caption("최근 무지출데이: " + ", ".join(recent_no_spend))
-    else:
-        st.caption("아직 기록된 무지출데이가 없어요.")
+        no_spend_days = get_final_no_spend_days(df, month_key)
+        no_spend_count = len(no_spend_days)
 
-    st.divider()
-    st.subheader("📅 월별 예산 결산")
-
-    review_df = get_monthly_budget_reviews(df, months=6)
-
-    if review_df.empty:
-        st.caption("아직 결산할 데이터가 없어요.")
-    else:
-        for _, r in review_df.iterrows():
-            st.markdown(
-                f"""
-                <div style="
-                    background:{r['bg']};
-                    border:1px solid {r['border']};
-                    border-radius:18px;
-                    padding:14px 16px;
-                    margin-bottom:10px;
-                ">
-                    <div style="font-size:14px; font-weight:800; color:{r['text']}; margin-bottom:6px;">
-                        {r['month']} 결산
-                    </div>
-                    <div style="font-size:18px; font-weight:800; color:{r['text']}; margin-bottom:4px;">
-                        사용 {int(r['spent']):,}원 · {r['result_text']}
-                    </div>
-                    <div style="font-size:14px; color:{r['text']};">
-                        {r['comment']}
-                    </div>
+        st.markdown(
+            f"""
+            <div style="
+                background: rgba(255,255,255,0.55);
+                border: 1px solid {theme["metric_border"]};
+                border-radius: 18px;
+                padding: 14px 16px;
+                margin-bottom: 10px;
+                min-height: 140px;
+            ">
+                <div style="font-size:14px; color:{theme["button_text"]}; margin-bottom:6px; font-weight:700;">
+                    이번달 무지출데이
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
+                <div style="font-size:32px; font-weight:800; color:{theme["button_text"]};">
+                    {no_spend_count}일
+                </div>
+                <div style="font-size:13px; opacity:0.75; margin-top:6px;">
+                    자동 집계 + 수동 추가 포함
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        if no_spend_days:
+            recent_no_spend = sorted(no_spend_days, reverse=True)[:7]
+            st.caption("최근 무지출데이: " + ", ".join(recent_no_spend))
+        else:
+            st.caption("아직 기록된 무지출데이가 없어요.")
+
+    with right_info:
+        st.subheader("📅 월별 예산 결산")
+
+        review_df = get_monthly_budget_reviews(df, months=6)
+
+        if review_df.empty:
+            st.caption("아직 결산할 데이터가 없어요.")
+        else:
+            for _, r in review_df.iterrows():
+                st.markdown(
+                    f"""
+                    <div style="
+                        background:{r['bg']};
+                        border:1px solid {r['border']};
+                        border-radius:18px;
+                        padding:14px 16px;
+                        margin-bottom:10px;
+                    ">
+                        <div style="font-size:14px; font-weight:800; color:{r['text']}; margin-bottom:6px;">
+                            {r['month']} 결산
+                        </div>
+                        <div style="font-size:18px; font-weight:800; color:{r['text']}; margin-bottom:4px;">
+                            사용 {int(r['spent']):,}원 · {r['result_text']}
+                        </div>
+                        <div style="font-size:14px; color:{r['text']};">
+                            {r['comment']}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
     st.divider()
 
