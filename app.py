@@ -2437,7 +2437,6 @@ with tab1:
         no_spend_days = get_final_no_spend_days(df, month_key)
         no_spend_count = len(no_spend_days)
 
-        # 🔥 연속 streak 계산
         from datetime import timedelta
         today = datetime.now(ZoneInfo("Asia/Seoul")).date()
         no_spend_set = set(no_spend_days)
@@ -2452,7 +2451,6 @@ with tab1:
             else:
                 break
 
-        # 🔥 메시지
         if streak == 0:
             msg = "🙂 오늘부터 다시 시작!"
         elif streak == 1:
@@ -2478,7 +2476,7 @@ with tab1:
                 justify-content:space-between;
             ">
                 <div>
-                    <div style="font-size:14px; color:{theme["button_text"]}; font-weight:700;">
+                    <div style="font-size:14px; font-weight:700;">
                         이번달 무지출데이
                     </div>
                     <div style="font-size:32px; font-weight:800; margin-top:4px;">
@@ -2498,14 +2496,6 @@ with tab1:
             unsafe_allow_html=True
         )
 
-        if no_spend_days:
-            recent_no_spend = sorted(no_spend_days)[-7:]
-            recent_no_spend_short = [
-                f"{int(d.split('-')[1])}/{int(d.split('-')[2])}" for d in recent_no_spend
-            ]
-            st.caption("최근 무지출데이: " + ", ".join(recent_no_spend_short))
-        else:
-            st.caption("아직 기록된 무지출데이가 없어요.")
     with right_info:
         st.subheader("📅 월별 예산 결산")
 
