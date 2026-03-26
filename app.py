@@ -489,9 +489,9 @@ def render_month_calendar(df: pd.DataFrame, month_key: str, theme: dict):
     }}
 
     .money-calendar-head {{
-        background: {theme["table_head_bg"]};
-        border: 1px solid {theme["table_head_border"]};
-        color: {theme["table_head_text"]};
+        background: {theme['table_head_bg']};
+        border: 1px solid {theme['table_head_border']};
+        color: {theme['table_head_text']};
         border-radius: 12px;
         padding: 8px 6px;
         text-align: center;
@@ -502,7 +502,7 @@ def render_month_calendar(df: pd.DataFrame, month_key: str, theme: dict):
     .money-calendar-cell {{
         min-height: 112px;
         background: rgba(255,255,255,0.72);
-        border: 1px solid {theme["metric_border"]};
+        border: 1px solid {theme['metric_border']};
         border-radius: 16px;
         padding: 8px;
         box-sizing: border-box;
@@ -513,12 +513,12 @@ def render_month_calendar(df: pd.DataFrame, month_key: str, theme: dict):
 
     .money-calendar-cell.empty {{
         background: rgba(255,255,255,0.28);
-        border: 1px dashed {theme["metric_border"]};
+        border: 1px dashed {theme['metric_border']};
     }}
 
     .money-calendar-cell.today {{
-        border: 2px solid {theme["filter_active_border"]};
-        box-shadow: 0 4px 14px {theme["filter_shadow"]};
+        border: 2px solid {theme['filter_active_border']};
+        box-shadow: 0 4px 14px {theme['filter_shadow']};
     }}
 
     .money-calendar-cell.no-spend {{
@@ -528,14 +528,14 @@ def render_month_calendar(df: pd.DataFrame, month_key: str, theme: dict):
     .money-calendar-day {{
         font-weight: 800;
         font-size: 18px;
-        color: {theme["button_text"]};
+        color: {theme['button_text']};
         margin-bottom: 2px;
     }}
 
     .money-calendar-line {{
         font-size: 14px;
         line-height: 1.35;
-        color: {theme["button_text"]};
+        color: {theme['button_text']};
         word-break: keep-all;
     }}
 
@@ -1148,7 +1148,7 @@ div[data-testid="stSelectbox"] * {{
 
 /* ===== 배경 ===== */
 html, body, [data-testid="stAppViewContainer"] {{
-    background: linear-gradient(180deg, {theme["app_bg_1"]} 0%, {theme["app_bg_2"]} 100%) !important;
+    background: linear-gradient(180deg, {theme['app_bg_1']} 0%, {theme['app_bg_2']} 100%) !important;
 }}
 
 [data-testid="stAppViewContainer"] > .main {{
@@ -1162,7 +1162,7 @@ html, body, [data-testid="stAppViewContainer"] {{
     padding-left: 0.8rem !important;
     padding-right: 0.8rem !important;
     max-width: 1400px;
-    background: {theme["container_bg"]};
+    background: {theme['container_bg']};
     border-radius: 24px;
 }}
 
@@ -1180,32 +1180,32 @@ h3, h4 {{
 hr {{
     border: none;
     height: 1px;
-    background: {theme["line"]};
+    background: {theme['line']};
     margin: 1.1rem 0;
 }}
 
 /* ===== 입력창 ===== */
 input, textarea {{
     border-radius: 14px !important;
-    border: 1px solid {theme["input_border"]} !important;
-    background: {theme["input_bg"]} !important;
+    border: 1px solid {theme['input_border']} !important;
+    background: {theme['input_bg']} !important;
 }}
 
 [data-baseweb="select"] > div {{
     border-radius: 14px !important;
-    border: 1px solid {theme["input_border"]} !important;
-    background: {theme["input_bg"]} !important;
+    border: 1px solid {theme['input_border']} !important;
+    background: {theme['input_bg']} !important;
     cursor: pointer !important;
 }}
 
 /* ===== 기본 버튼 ===== */
 button:not([kind="primary"]) {{
     border-radius: 16px !important;
-    border: 1px solid {theme["button_border"]} !important;
-    background: linear-gradient(180deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
-    color: {theme["button_text"]} !important;
+    border: 1px solid {theme['button_border']} !important;
+    background: linear-gradient(180deg, {theme['button_bg_1']}, {theme['button_bg_2']}) !important;
+    color: {theme['button_text']} !important;
     font-weight: 700 !important;
-    box-shadow: 0 10px 18px {theme["button_shadow"]} !important;
+    box-shadow: 0 10px 18px {theme['button_shadow']} !important;
     transition: all 0.15s ease !important;
 }}
 
@@ -1215,29 +1215,29 @@ button:hover {{
 
 /* ===== 필터 버튼 상태 ===== */
 button[kind="secondary"] {{
-    background: {theme["filter_bg"]} !important;
-    border: 1px solid {theme["filter_border"]} !important;
-    color: {theme["button_text"]} !important;
+    background: {theme['filter_bg']} !important;
+    border: 1px solid {theme['filter_border']} !important;
+    color: {theme['button_text']} !important;
     box-shadow: none !important;
 }}
 
 button[kind="secondary"]:hover {{
-    background: {theme["filter_hover"]} !important;
-    border: 1px solid {theme["filter_active_border"]} !important;
+    background: {theme['filter_hover']} !important;
+    border: 1px solid {theme['filter_active_border']} !important;
     transform: translateY(-1px);
 }}
 
 button[kind="primary"] {{
-    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
-    border: 1px solid {theme["filter_active_border"]} !important;
-    color: {theme["button_text"]} !important;
-    box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
+    background: linear-gradient(180deg, {theme['filter_active_1']}, {theme['filter_active_2']}) !important;
+    border: 1px solid {theme['filter_active_border']} !important;
+    color: {theme['button_text']} !important;
+    box-shadow: 0 8px 16px {theme['filter_shadow']} !important;
     font-weight: 800 !important;
 }}
 
 button[kind="primary"]:hover {{
-    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
-    border: 1px solid {theme["filter_active_border"]} !important;
+    background: linear-gradient(180deg, {theme['filter_active_1']}, {theme['filter_active_2']}) !important;
+    border: 1px solid {theme['filter_active_border']} !important;
 }}
 
 /* ===== metric / form ===== */
@@ -1245,12 +1245,12 @@ button[kind="primary"]:hover {{
     background: rgba(255,255,255,0.60);
     border-radius: 16px;
     padding: 10px;
-    border: 1px solid {theme["metric_border"]};
+    border: 1px solid {theme['metric_border']};
 }}
 
 [data-testid="stForm"] {{
     background: rgba(255,255,255,0.45);
-    border: 1px solid {theme["form_border"]};
+    border: 1px solid {theme['form_border']};
     border-radius: 18px;
     padding: 14px;
 }}
@@ -1258,12 +1258,12 @@ button[kind="primary"]:hover {{
 /* ===== 테이블 ===== */
 .table-head {{
     font-weight: 800;
-    background: {theme["table_head_bg"]};
-    border: 1px solid {theme["table_head_border"]};
+    background: {theme['table_head_bg']};
+    border: 1px solid {theme['table_head_border']};
     border-radius: 12px;
     padding: 8px 10px;
     text-align: center;
-    color: {theme["table_head_text"]};
+    color: {theme['table_head_text']};
     margin-bottom: 4px;
     font-size: 14px;
 }}
@@ -1277,18 +1277,18 @@ button[kind="primary"]:hover {{
 }}
 
 .row-box:hover {{
-    background: {theme["row_hover"]};
+    background: {theme['row_hover']};
 }}
 
 .amount-text {{
     font-weight: 800;
-    color: {theme["amount_text"]};
+    color: {theme['amount_text']};
 }}
 
 /* ===== 태그 ===== */
 .cat-tag {{
-    background: {theme["cat_bg"]};
-    color: {theme["cat_text"]};
+    background: {theme['cat_bg']};
+    color: {theme['cat_text']};
     padding: 4px 10px;
     border-radius: 999px;
     font-weight: 700;
@@ -1339,13 +1339,13 @@ div[data-testid="stButton"] button {{
 }}
 
 div[data-testid="stButton"] button:hover {{
-    background: {theme["filter_hover"]} !important;
+    background: {theme['filter_hover']} !important;
 }}
 
 /* 👇 클릭된 상태 느낌 */
 div[data-testid="stButton"] button[kind="secondary"]:focus {{
-    background: {theme["filter_active_1"]} !important;
-    box-shadow: 0 0 0 2px {theme["filter_active_border"]} !important;
+    background: {theme['filter_active_1']} !important;
+    box-shadow: 0 0 0 2px {theme['filter_active_border']} !important;
 }}
 
 /* ===== 체크박스 ===== */
@@ -1365,8 +1365,8 @@ div[role="radiogroup"] * {{
 }}
 
 div[role="radiogroup"] label {{
-    background: {theme["filter_bg"]} !important;
-    border: 1px solid {theme["filter_border"]} !important;
+    background: {theme['filter_bg']} !important;
+    border: 1px solid {theme['filter_border']} !important;
     border-radius: 14px !important;
     padding: 8px 14px !important;
     min-height: 42px !important;
@@ -1379,15 +1379,15 @@ div[role="radiogroup"] label {{
 }}
 
 div[role="radiogroup"] label:hover {{
-    background: {theme["filter_hover"]} !important;
+    background: {theme['filter_hover']} !important;
     transform: translateY(-1px);
 }}
 
 div[role="radiogroup"] label:has(input:checked) {{
-    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
-    border: 1px solid {theme["filter_active_border"]} !important;
-    box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
-    color: {theme["button_text"]} !important;
+    background: linear-gradient(180deg, {theme['filter_active_1']}, {theme['filter_active_2']}) !important;
+    border: 1px solid {theme['filter_active_border']} !important;
+    box-shadow: 0 8px 16px {theme['filter_shadow']} !important;
+    color: {theme['button_text']} !important;
 }}
 
 div[role="radiogroup"] label > div:first-child {{
@@ -1406,10 +1406,10 @@ div[role="radiogroup"] [data-testid="stMarkdownContainer"] + div {{
 
 /* ===== 탭 ===== */
 button[data-baseweb="tab"] {{
-    background: {theme["filter_bg"]} !important;
-    border: 1px solid {theme["filter_border"]} !important;
+    background: {theme['filter_bg']} !important;
+    border: 1px solid {theme['filter_border']} !important;
     border-radius: 14px !important;
-    color: {theme["button_text"]} !important;
+    color: {theme['button_text']} !important;
     font-weight: 700 !important;
     padding: 10px 18px !important;
     height: auto !important;
@@ -1419,15 +1419,15 @@ button[data-baseweb="tab"] {{
 }}
 
 button[data-baseweb="tab"]:hover {{
-    background: {theme["filter_hover"]} !important;
+    background: {theme['filter_hover']} !important;
     transform: translateY(-1px);
 }}
 
 button[data-baseweb="tab"][aria-selected="true"] {{
-    background: linear-gradient(180deg, {theme["filter_active_1"]}, {theme["filter_active_2"]}) !important;
-    border: 1px solid {theme["filter_active_border"]} !important;
-    color: {theme["button_text"]} !important;
-    box-shadow: 0 8px 16px {theme["filter_shadow"]} !important;
+    background: linear-gradient(180deg, {theme['filter_active_1']}, {theme['filter_active_2']}) !important;
+    border: 1px solid {theme['filter_active_border']} !important;
+    color: {theme['button_text']} !important;
+    box-shadow: 0 8px 16px {theme['filter_shadow']} !important;
 }}
 
 div[data-baseweb="tab-border"] {{
@@ -1441,14 +1441,14 @@ div[data-baseweb="tab-highlight"] {{
 /* ===== 진행바 ===== */
 [data-testid="stProgress"] [data-baseweb="progress-bar"] > div {{
     background: rgba(255,255,255,0.55) !important;
-    border: 1px solid {theme["metric_border"]} !important;
+    border: 1px solid {theme['metric_border']} !important;
     border-radius: 999px !important;
     overflow: hidden !important;
 }}
 
 [data-testid="stProgress"] [role="progressbar"] div[style*="width"],
 [data-testid="stProgress"] [data-baseweb="progress-bar"] div div div {{
-    background: linear-gradient(90deg, {theme["button_bg_1"]}, {theme["button_bg_2"]}) !important;
+    background: linear-gradient(90deg, {theme['button_bg_1']}, {theme['button_bg_2']}) !important;
     border-radius: 999px !important;
 }}
 
@@ -1595,10 +1595,10 @@ with title_right:
     st.markdown(
         f"""
         <div style="text-align:right;margin-top:10px;">
-            <div style="font-size:14px;color:{theme["date_text"]};font-weight:700;">
+            <div style="font-size:14px;color:{theme['date_text']};font-weight:700;">
                 오늘
             </div>
-            <div style="font-size:20px;font-weight:800;color:{theme["date_text"]};">
+            <div style="font-size:20px;font-weight:800;color:{theme['date_text']};">
                 {today_str}
             </div>
         </div>
@@ -2464,34 +2464,34 @@ with tab1:
 
         st.markdown(
             f"""
-                <div style="
-                    background: rgba(255,255,255,0.55);
-                    border: 1px solid {theme['metric_border']};
-                    border-radius: 18px;
-                    padding: 14px 16px;
-                    margin-bottom: 10px;
-                    min-height: 160px;
-                    display:flex;
-                    flex-direction:column;
-                    justify-content:space-between;
-                ">
-                    <div>
-                        <div style="font-size:14px; font-weight:700;">
-                            이번달 무지출데이
-                        </div>
-                        <div style="font-size:32px; font-weight:800; margin-top:4px;">
-                            {no_spend_count}일
-                        </div>
+            <div style="
+                background: rgba(255,255,255,0.55);
+                border: 1px solid {theme['metric_border']};
+                border-radius: 18px;
+                padding: 14px 16px;
+                margin-bottom: 10px;
+                min-height: 160px;
+                display:flex;
+                flex-direction:column;
+                justify-content:space-between;
+            ">
+                <div>
+                    <div style="font-size:14px; font-weight:700;">
+                        이번달 무지출데이
                     </div>
-
-                    <div style="font-size:13px; margin-top:8px; font-weight:600;">
-                        {msg}
-                    </div>
-
-                    <div style="font-size:12px; opacity:0.7;">
-                        자동 집계 + 수동 추가 포함
+                    <div style="font-size:32px; font-weight:800; margin-top:4px;">
+                        {no_spend_count}일
                     </div>
                 </div>
+
+                <div style="font-size:13px; margin-top:8px; font-weight:600;">
+                    {msg}
+                </div>
+
+                <div style="font-size:12px; opacity:0.7;">
+                    자동 집계 + 수동 추가 포함
+                </div>
+            </div>
             """,
             unsafe_allow_html=True
         )
