@@ -2471,16 +2471,14 @@ with tab1:
                     f"<div style='font-size:32px; font-weight:800; margin-top:4px;'>{no_spend_count}일</div>",
                     unsafe_allow_html=True
                 )
-                st.caption("자동 + 수동 포함")
 
         with ns2:
             with st.container(border=True):
                 st.markdown("**응원!**")
                 st.markdown(
-                    f"<div style='font-size:28px; font-weight:800; margin-top:4px;'>{streak}일</div>",
+                    f"<div style='font-size:28px; font-weight:800; margin-top:4px;'>{msg}</div>",
                     unsafe_allow_html=True
                 )
-                st.caption(msg)
 
         if no_spend_days:
             recent_no_spend = sorted(no_spend_days)[-7:]
