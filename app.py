@@ -2437,6 +2437,33 @@ with tab1:
         no_spend_days = get_final_no_spend_days(df, month_key)
         no_spend_count = len(no_spend_days)
 
+        # 🔥 연속 streak 계산
+        from datetime import timedelta
+        today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+        no_spend_set = set(no_spend_days)
+
+        streak = 0
+        for i in range(0, 30):
+            check_day = today - timedelta(days=i)
+            check_str = check_day.strftime("%Y-%m-%d")
+
+            if check_str in no_spend_set:
+                streak += 1
+            else:
+                break
+
+        # 🔥 메시지
+        if streak == 0:
+            msg = "🙂 오늘부터 다시 시작!"
+        elif streak == 1:
+            msg = "🔥 하루 성공중! 좀만 더!"
+        elif streak == 2:
+            msg = "🔥 이틀째 성공! 화이팅!"
+        elif streak == 3:
+            msg = "🔥 3일 연속 성공! 이얄~"
+        else:
+            msg = f"🔥 {streak}일 연속 성공중!!"
+
         st.markdown(
             f"""
             <div style="
@@ -2445,15 +2472,25 @@ with tab1:
                 border-radius: 18px;
                 padding: 14px 16px;
                 margin-bottom: 10px;
-                min-height: 140px;
+                min-height: 160px;
+                display:flex;
+                flex-direction:column;
+                justify-content:space-between;
             ">
-                <div style="font-size:14px; color:{theme["button_text"]}; margin-bottom:6px; font-weight:700;">
-                    이번달 무지출데이
+                <div>
+                    <div style="font-size:14px; color:{theme["button_text"]}; font-weight:700;">
+                        이번달 무지출데이
+                    </div>
+                    <div style="font-size:32px; font-weight:800; margin-top:4px;">
+                        {no_spend_count}일
+                    </div>
                 </div>
-                <div style="font-size:32px; font-weight:800; color:{theme["button_text"]};">
-                    {no_spend_count}일
+
+                <div style="font-size:13px; margin-top:8px; font-weight:600;">
+                    {msg}
                 </div>
-                <div style="font-size:13px; opacity:0.75; margin-top:6px;">
+
+                <div style="font-size:12px; opacity:0.7;">
                     자동 집계 + 수동 추가 포함
                 </div>
             </div>
@@ -2469,7 +2506,6 @@ with tab1:
             st.caption("최근 무지출데이: " + ", ".join(recent_no_spend_short))
         else:
             st.caption("아직 기록된 무지출데이가 없어요.")
-
     with right_info:
         st.subheader("📅 월별 예산 결산")
 
