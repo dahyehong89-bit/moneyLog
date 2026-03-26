@@ -2462,11 +2462,25 @@ with tab1:
         else:
             msg = f"🔥 {streak}일 연속 성공중!!"
 
-        with st.container(border=True):
-            st.markdown("**이번달 무지출데이**")
-            st.markdown(f"<div style='font-size:32px; font-weight:800;'>{no_spend_count}일</div>", unsafe_allow_html=True)
-            st.caption(msg)
-            st.caption("자동 집계 + 수동 추가 포함")
+        ns1, ns2 = st.columns(2)
+
+        with ns1:
+            with st.container(border=True):
+                st.markdown("**무지출데이**")
+                st.markdown(
+                    f"<div style='font-size:32px; font-weight:800; margin-top:4px;'>{no_spend_count}일</div>",
+                    unsafe_allow_html=True
+                )
+                st.caption("자동 + 수동 포함")
+
+        with ns2:
+            with st.container(border=True):
+                st.markdown("**응원!**")
+                st.markdown(
+                    f"<div style='font-size:28px; font-weight:800; margin-top:4px;'>{streak}일</div>",
+                    unsafe_allow_html=True
+                )
+                st.caption(msg)
 
         if no_spend_days:
             recent_no_spend = sorted(no_spend_days)[-7:]
