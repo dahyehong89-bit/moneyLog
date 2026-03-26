@@ -3093,37 +3093,44 @@ with tab2:
         today_date = datetime.now(KST).date()
         today_month_str = today_date.strftime("%Y-%m")
 
-        default_calendar_date = today_date if month == today_month_str else pd.to_datetime(f"{month}-01").date()
+        default_calendar_date = (
+            today_date if month == today_month_str else pd.to_datetime(f"{month}-01").date()
+        )
 
         if "calendar_detail_date" not in st.session_state:
             st.session_state["calendar_detail_date"] = default_calendar_date
-        elif st.session_state["calendar_detail_date"].strftime("%Y-%m") != month:
-            st.session_state["calendar_detail_date"] = default_calendar_date
+        else:
+            current_selected = st.session_state["calendar_detail_date"]
+            current_selected_str = str(current_selected)
+            if not current_selected_str.startswith(month):
+                st.session_state["calendar_detail_date"] = default_calendar_date
 
-        selected_calendar_date = st.date_input(
+        st.date_input(
             "날짜 선택",
             key="calendar_detail_date"
         )
 
-        selected_date_str = str(selected_calendar_date)
+        selected_date_str = str(st.session_state["calendar_detail_date"])
 
         day_detail_df = calendar_df.copy()
+        day_detail_df["date"] = day_detail_df["date"].astype(str)
         day_detail_df["date_dt"] = pd.to_datetime(day_detail_df["date"], errors="coerce")
         day_detail_df = day_detail_df[day_detail_df["date"] == selected_date_str].copy()
 
         manual_no_spend_df = load_no_spend_df()
         manual_no_spend_checked = False
         if not manual_no_spend_df.empty:
+            manual_no_spend_df["date"] = manual_no_spend_df["date"].astype(str)
             manual_no_spend_checked = bool(
-                manual_no_spend_df[
-                    (manual_no_spend_df["date"] == selected_date_str) &
-                    (manual_no_spend_df["checked"] == True)
-                ].shape[0] > 0
+                ((manual_no_spend_df["date"] == selected_date_str) &
+                 (manual_no_spend_df["checked"] == True)).any()
             )
 
         auto_no_spend_days = get_auto_no_spend_days(calendar_df, month)
         is_auto_no_spend = selected_date_str in auto_no_spend_days
         is_final_no_spend = selected_date_str in calendar_no_spend_days
+
+        st.caption(f"선택 날짜: {selected_date_str}")
 
         if day_detail_df.empty:
             if is_final_no_spend:
@@ -3132,7 +3139,7 @@ with tab2:
                 else:
                     st.success(f"{selected_date_str} · 🪙 자동 집계된 무지출데이예요!")
             else:
-                st.info("선택한 날짜의 내역이 없어요.")
+                st.info(f"{selected_date_str} 내역이 없어요.")
         else:
             show_day_df = day_detail_df.copy()
             show_day_df["금액_num"] = show_day_df["amount"].abs().astype(int)
