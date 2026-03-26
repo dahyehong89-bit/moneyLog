@@ -3060,6 +3060,33 @@ with tab2:
     calendar_df["date_dt"] = pd.to_datetime(calendar_df["date"], errors="coerce")
 
     if view_mode == "calendar":
+        st.subheader("🗓 월별 달력 보기")
+
+        render_month_calendar(calendar_df, month, theme)
+
+        st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+
+        calendar_summary_df = get_calendar_day_summary(calendar_df, month)
+        calendar_no_spend_days = get_final_no_spend_days(calendar_df, month)
+
+        cal_spent = int(calendar_summary_df["spent"].sum()) if not calendar_summary_df.empty else 0
+        cal_refund = int(calendar_summary_df["refund"].sum()) if not calendar_summary_df.empty else 0
+        cal_no_spend = len(calendar_no_spend_days)
+        cal_net = cal_spent - cal_refund
+
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.metric("월 지출 합계", f"{cal_spent:,}원")
+        with c2:
+            st.metric("월 환급 합계", f"{cal_refund:,}원")
+        with c3:
+            st.metric("월 순지출", f"{cal_net:,}원")
+        with c4:
+            st.metric("무지출데이", f"{cal_no_spend}일")
+
+        st.caption("💡 초록 배경은 무지출데이, ⛽는 주유 기록이 있는 날이에요.")
+
+        st.divider()
         st.subheader("📅 날짜별 세부내역")
 
         KST = ZoneInfo("Asia/Seoul")
@@ -3085,7 +3112,9 @@ with tab2:
         selected_date_str = selected_calendar_date.strftime("%Y-%m-%d")
 
         day_detail_df = calendar_df.copy()
-        day_detail_df["date_dt"] = pd.to_datetime(day_detail_df["date"], errors="coerce")
+        day_detail_df = day_detail_df[
+            day_detail_df["date_dt"].dt.strftime("%Y-%m") == month
+        ].copy()
         day_detail_df = day_detail_df[
             day_detail_df["date_dt"].dt.date == selected_calendar_date
         ].copy()
