@@ -667,6 +667,18 @@ def get_month_checklist(month_key: str) -> pd.DataFrame:
 
     return month_df
 
+def parse_checklist_amount(item_text: str) -> int:
+    text = str(item_text or "").replace(",", "").strip()
+
+    m = re.search(r"(\d+)\s*만", text)
+    if m:
+        return int(m.group(1)) * 10000
+
+    m = re.search(r"(\d+)\s*원", text)
+    if m:
+        return int(m.group(1))
+
+    return 0
 
 def update_checklist_item(month_key: str, item_name: str, checked_value: bool) -> None:
     checklist_df = load_checklist_df()
@@ -2394,7 +2406,17 @@ with tab1:
     total_count = len(checklist_month_df)
     all_checked = total_count > 0 and checked_count == total_count
 
-    expander_title = f"✅ 이번달 체크리스트 ({checked_count}/{total_count})"
+    checklist_month_df["amount"] = checklist_month_df["item"].apply(parse_checklist_amount)
+
+    checked_amount = int(
+        checklist_month_df.loc[checklist_month_df["checked"] == True, "amount"].sum()
+    )
+    total_amount = int(checklist_month_df["amount"].sum())
+
+    expander_title = (
+        f"✅ 이번달 체크리스트 ({checked_count}/{total_count}) "
+        f"· {checked_amount:,}/{total_amount:,}원"
+    )
 
     with st.expander(expander_title, expanded=not all_checked):
         check_cols = st.columns(2)
