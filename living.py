@@ -367,7 +367,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     st.subheader("🏦 생활비 통장")
 
     month_options = get_living_month_options(living_df)
-    current_month = datetime.now(korea).strftime("%Y-%m")
+    current_month = datetime.now(KOREA).strftime("%Y-%m")
 
     top_left, top_right = st.columns([1, 1])
 
