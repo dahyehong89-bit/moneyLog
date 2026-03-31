@@ -2642,7 +2642,7 @@ with tab1:
         m1, m2, m3 = st.columns(3)
 
         with m1:
-            d = st.date_input("날짜", value=date.today(), key="manual_date")
+            d = st.date_input("날짜", value=datetime.now(ZoneInfo("Asia/Seoul")).date(), key="manual_date")
             category = st.selectbox(
                 "카테고리",
                 CATEGORY_OPTIONS,
