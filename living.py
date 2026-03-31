@@ -1,5 +1,9 @@
 import re
 from datetime import date, datetime
+from datetime import datetime
+import pytz
+
+korea = pytz.timezone("Asia/Seoul")
 
 import pandas as pd
 import streamlit as st
