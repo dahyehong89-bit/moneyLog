@@ -2415,7 +2415,7 @@ with tab1:
 
     expander_title = (
         f"✅ 이번달 체크리스트 ({checked_count}/{total_count}) "
-        f"· {checked_amount:,}/{total_amount:,}원"
+        f"· {checked_amount:,} / {total_amount:,}원"
     )
 
     with st.expander(expander_title, expanded=not all_checked):
