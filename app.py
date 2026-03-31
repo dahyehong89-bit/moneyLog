@@ -2550,7 +2550,7 @@ with tab1:
 
     with card_col1:
         render_budget_card(
-            "💳 현대카드(용돈)",
+            "💳 현대카드 · 용돈",
             f"{hyundai_amount:,}원",
             "#F4F4F4",
             "#D6D6D6",
@@ -2578,7 +2578,7 @@ with tab1:
 
     with card_col2:
         render_budget_card(
-            "🏦 신한카드 (고정비)",
+            "🏦 신한카드 · 고정비",
             f"{shinhan_amount:,}원",
             "#F2FBFF",
             "#BFE8F7",
@@ -2604,7 +2604,7 @@ with tab1:
 
     with card_col3:
         render_budget_card(
-            "🧾 사건비통장 (특수지출)",
+            "🧾 사건비 · 특별지출",
             f"{incident_amount:,}원",
             "#FFF8CC",
             "#F2E18B",
@@ -2638,7 +2638,7 @@ with tab1:
 
     with card_col4:
         render_budget_card(
-            "이번달 총 지출",
+            "💸 이번달 총지출",
             f"{total_amount:,}원",
             "#FFEFF6",
             "#FFC4D6",
