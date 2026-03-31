@@ -878,7 +878,7 @@ def parse_quick_input(text: str, default_category: str, default_method: str) -> 
     if not tokens:
         raise ValueError("입력값이 없어요.")
 
-    d = str(date.today())
+    d = str(datetime.now(ZoneInfo("Asia/Seoul")).date())
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", tokens[0]):
         d = tokens[0]
         tokens = tokens[1:]
@@ -1761,7 +1761,7 @@ def add_quick(amount: int, category: str, memo: str = "", method: str = DEFAULT_
         final_amount = -amount
 
     row = {
-        "date": str(date.today()),
+        "date": str(datetime.now(ZoneInfo("Asia/Seoul")).date()),
         "amount": final_amount,
         "category": final_category,
         "method": final_method,
@@ -1782,7 +1782,7 @@ def open_quick_edit(
     non_expense: bool = False
 ):
     st.session_state.pending_quick_entry = {
-        "date": date.today(),
+        "date": datetime.now(ZoneInfo("Asia/Seoul")).date(),
         "amount": abs(int(amount)),
         "category": category,
         "method": method,
