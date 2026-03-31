@@ -1,12 +1,11 @@
 import re
-from datetime import date, datetime
 from datetime import datetime
 import pytz
 
-korea = pytz.timezone("Asia/Seoul")
-
 import pandas as pd
 import streamlit as st
+
+KOREA = pytz.timezone("Asia/Seoul")
 
 LIVING_COLUMNS = ["date", "amount", "category", "method", "memo"]
 
@@ -179,7 +178,7 @@ def save_living_df(df: pd.DataFrame, _get_worksheet_func) -> None:
 
 
 def get_living_month_options(df: pd.DataFrame):
-    current_month = datetime.now(korea).strftime("%Y-%m")
+    current_month = datetime.now(KOREA).strftime("%Y-%m")
 
     if df.empty:
         return [current_month]
@@ -425,7 +424,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     st.subheader("✍ 생활비 입력")
 
     if "living_date" not in st.session_state:
-        st.session_state["living_date"] = date.today()
+        st.session_state["living_date"] = datetime.now(KOREA).date()
     if "living_type" not in st.session_state:
         st.session_state["living_type"] = "지출"
     if "living_category" not in st.session_state:
@@ -436,7 +435,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         st.session_state["living_amount"] = ""
 
     if st.session_state.get("living_form_reset"):
-        st.session_state["living_date"] = date.today()
+        st.session_state["living_date"] = datetime.now(KOREA).date()
         st.session_state["living_type"] = "지출"
         st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
         st.session_state["living_memo"] = ""
@@ -830,7 +829,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     st.divider()
     st.subheader("🏠 최근 1년 관리비 내역")
 
-    today_dt = pd.Timestamp.today()
+    today_dt = pd.Timestamp.now(tz="Asia/Seoul").tz_localize(None)
     one_year_ago = today_dt - pd.DateOffset(months=12)
 
     management_df = living_df.copy()
@@ -890,7 +889,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     cash_df["date_dt"] = pd.to_datetime(cash_df["date"], errors="coerce")
 
-    today = pd.Timestamp.today()
+    today = pd.Timestamp.now(tz="Asia/Seoul").tz_localize(None)
     month_start = today.replace(day=1)
 
     month_cash_df = cash_df[cash_df["date_dt"] >= month_start].copy()
@@ -910,7 +909,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     st.markdown("### ✍ 현금 입력")
 
     if "cash_date" not in st.session_state:
-        st.session_state["cash_date"] = date.today()
+        st.session_state["cash_date"] = datetime.now(KOREA).date()
     if "cash_type" not in st.session_state:
         st.session_state["cash_type"] = CASH_TYPE_OPTIONS[0]
     if "cash_category" not in st.session_state:
@@ -921,7 +920,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         st.session_state["cash_memo"] = ""
 
     if st.session_state.get("cash_form_reset"):
-        st.session_state["cash_date"] = date.today()
+        st.session_state["cash_date"] = datetime.now(KOREA).date()
         st.session_state["cash_type"] = CASH_TYPE_OPTIONS[0]
         st.session_state["cash_category"] = CASH_CATEGORY_OPTIONS[0]
         st.session_state["cash_amount"] = ""
