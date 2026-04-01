@@ -6,7 +6,6 @@ import socket
 from io import BytesIO
 from datetime import date, datetime
 from living import render_living_tab
-from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
 import pandas as pd
