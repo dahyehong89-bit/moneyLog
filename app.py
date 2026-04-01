@@ -18,7 +18,7 @@ FILE = "money.csv"
 CHECKLIST_FILE = "checklist.csv"
 COLUMNS = ["date", "amount", "category", "method", "memo"]
 
-CATEGORY_OPTIONS = ["쇼핑", "외식", "배달", "커피", "편의점", "미용", "고정비", "사건비"]
+CATEGORY_OPTIONS = ["쇼핑", "외식", "배달", "커피", "편의점", "미용", "여행", "고정비", "사건비"]
 METHOD_OPTIONS = ["현대카드", "신한카드", "사건비통장"]
 DEFAULT_METHOD = "현대카드"
 MONTHLY_BUDGET = 600000
@@ -44,6 +44,16 @@ AUTO_CATEGORY = {
     "발젤": "미용",
     "네일": "미용",
     "미용실": "미용",
+    "기차": "여행",
+    "ktx": "여행",
+    "srt": "여행",
+    "열차": "여행",
+    "버스": "여행",
+    "비행기": "여행",
+    "항공": "여행",
+    "호텔": "여행",
+    "숙박": "여행",
+    "펜션": "여행",
 }
 
 AUTO_SHINHAN = [
