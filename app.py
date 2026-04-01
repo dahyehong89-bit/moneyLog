@@ -2545,19 +2545,6 @@ with tab1:
     # -------------------
     st.subheader("💳 카드별 이번달 사용")
 
-    # 이번달 기준 데이터 만들기
-    current_month = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m")
-    month_start = pd.to_datetime(f"{current_month}-01")
-    month_end = month_start + pd.offsets.MonthEnd(1)
-
-    spend_df = df.copy()
-    spend_df["date_dt"] = pd.to_datetime(spend_df["date"], errors="coerce")
-
-    month_df = spend_df[
-        (spend_df["date_dt"] >= month_start) &
-        (spend_df["date_dt"] <= month_end)
-    ].copy()
-
     # 이번달 총지출
     total_amount = abs(int(month_df[month_df["amount"] < 0]["amount"].sum())) if not month_df.empty else 0
 
