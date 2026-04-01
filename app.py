@@ -85,7 +85,7 @@ INCIDENT_CATEGORY_KEYWORDS = {
     "검진": ["검진", "건강검진", "초음파", "엑스레이", "x-ray", "mri", "ct"],
     "선물": ["선물", "생선", "생일선물", "축의", "축하", "꽃", "케이크"],
     "경조사": ["조의금", "부의금", "축의금", "결혼식", "장례식", "부고", "상가", "근조", "화환"],
-    "여행": ["기차", "호텔", "숙박"],
+    "여행": ["기차", "대전행기차", "ktx", "srt", "열차", "버스", "비행기", "항공", "호텔", "숙박", "펜션"]
 }
 
 INCIDENT_EXPENSE_KEYWORDS = {
@@ -95,7 +95,7 @@ INCIDENT_EXPENSE_KEYWORDS = {
     "검진": ["검진", "건강검진", "초음파", "엑스레이", "x-ray", "mri", "ct"],
     "선물": ["선물", "생일선물", "생선", "꽃", "케이크"],
     "경조사": ["조의금", "부의금", "축의금", "결혼식", "장례식", "부고", "상가", "근조", "화환"],
-    "여행": ["기차", "호텔", "숙박"],
+    "여행": ["기차", "대전행기차", "ktx", "srt", "열차", "버스", "비행기", "항공", "호텔", "숙박", "펜션"]
 }
 
 # -----------------------
@@ -736,7 +736,7 @@ def auto_card_and_category(text: str, default_category: str, default_method: str
 def is_incident_expense_text(text: str) -> bool:
     t = (text or "").strip()
 
-    incident_only_categories = ["병원비", "약값", "검진", "선물", "경조사"]
+    incident_only_categories = ["병원비", "약값", "검진", "선물", "경조사", "여행"]
 
     for category in incident_only_categories:
         keywords = INCIDENT_EXPENSE_KEYWORDS.get(category, [])
