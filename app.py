@@ -727,24 +727,26 @@ def auto_card_and_category(text: str, default_category: str, default_method: str
             return "고정비", "신한카드"
 
     # 사건비통장 자동 분류
-    if is_incident_expense_text(t):
-        return "사건비", "사건비통장"
+    incident_category = get_incident_category_from_text(t)
+    if incident_category:
+        return incident_category, "사건비통장"
 
     category = auto_category_from_text(t, default_category)
     return category, default_method
 
-def is_incident_expense_text(text: str) -> bool:
+
+def get_incident_category_from_text(text: str):
     t = (text or "").strip()
 
-    incident_only_categories = ["병원비", "약값", "검진", "선물", "경조사", "여행"]
+    incident_categories = ["병원비", "약값", "검진", "선물", "경조사", "여행"]
 
-    for category in incident_only_categories:
+    for category in incident_categories:
         keywords = INCIDENT_EXPENSE_KEYWORDS.get(category, [])
         for keyword in keywords:
             if keyword in t:
-                return True
+                return category
 
-    return False
+    return None
 
 def split_fuel_memo(memo: str):
     memo = (memo or "").strip()
