@@ -2546,6 +2546,22 @@ with tab1:
     # -------------------
     st.subheader("💳 카드별 이번달 사용")
 
+    # 이번달 기준 데이터 만들기
+    current_month = datetime.now(KOREA).strftime("%Y-%m")
+    month_start = pd.to_datetime(f"{current_month}-01")
+    month_end = month_start + pd.offsets.MonthEnd(1)
+
+    spend_df = df.copy()
+    spend_df["date_dt"] = pd.to_datetime(spend_df["date"], errors="coerce")
+
+    month_df = spend_df[
+        (spend_df["date_dt"] >= month_start) &
+        (spend_df["date_dt"] <= month_end)
+    ].copy()
+
+    # 이번달 총지출
+    total_amount = abs(int(month_df[month_df["amount"] < 0]["amount"].sum())) if not month_df.empty else 0
+
     card_col1, card_col2, card_col3, card_col4 = st.columns(4)
 
     with card_col1:
@@ -2557,24 +2573,34 @@ with tab1:
             "#4A4A4A"
         )
 
-        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+        hyundai_has_detail = any([
+            hyundai_shopping > 0,
+            hyundai_eatout > 0,
+            hyundai_delivery > 0,
+            hyundai_coffee > 0,
+            hyundai_convenience > 0,
+            hyundai_beauty > 0,
+            hyundai_other > 0,
+        ])
 
-        with st.container(border=True):
+        if hyundai_has_detail:
+            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
 
-            if hyundai_shopping > 0:
-                render_card_detail_row("쇼핑", hyundai_shopping, "현대카드", "shopping", "🛒 쇼핑")
-            if hyundai_eatout > 0:
-                render_card_detail_row("외식", hyundai_eatout, "현대카드", "eatout", "🍚 외식")
-            if hyundai_delivery > 0:
-                render_card_detail_row("배달", hyundai_delivery, "현대카드", "delivery", "🛵 배달")
-            if hyundai_coffee > 0:
-                render_card_detail_row("커피", hyundai_coffee, "현대카드", "coffee", "☕ 커피")
-            if hyundai_convenience > 0:
-                render_card_detail_row("편의점", hyundai_convenience, "현대카드", "convenience", "🏪 편의점")
-            if hyundai_beauty > 0:
-                render_card_detail_row("미용", hyundai_beauty, "현대카드", "beauty", "💅 미용")
-            if hyundai_other > 0:
-                render_card_detail_row("기타", hyundai_other, "현대카드", "other", "🧾 기타")
+            with st.container(border=True):
+                if hyundai_shopping > 0:
+                    render_card_detail_row("쇼핑", hyundai_shopping, "현대카드", "shopping", "🛒 쇼핑")
+                if hyundai_eatout > 0:
+                    render_card_detail_row("외식", hyundai_eatout, "현대카드", "eatout", "🍚 외식")
+                if hyundai_delivery > 0:
+                    render_card_detail_row("배달", hyundai_delivery, "현대카드", "delivery", "🛵 배달")
+                if hyundai_coffee > 0:
+                    render_card_detail_row("커피", hyundai_coffee, "현대카드", "coffee", "☕ 커피")
+                if hyundai_convenience > 0:
+                    render_card_detail_row("편의점", hyundai_convenience, "현대카드", "convenience", "🏪 편의점")
+                if hyundai_beauty > 0:
+                    render_card_detail_row("미용", hyundai_beauty, "현대카드", "beauty", "💅 미용")
+                if hyundai_other > 0:
+                    render_card_detail_row("기타", hyundai_other, "현대카드", "other", "🧾 기타")
 
     with card_col2:
         render_budget_card(
@@ -2585,22 +2611,31 @@ with tab1:
             "#3E7C91"
         )
 
-        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+        shinhan_has_detail = any([
+            shinhan_fuel > 0,
+            shinhan_phone > 0,
+            shinhan_internet > 0,
+            shinhan_wow > 0,
+            shinhan_emoji > 0,
+            shinhan_other > 0,
+        ])
 
-        with st.container(border=True):
+        if shinhan_has_detail:
+            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
 
-            if shinhan_fuel > 0:
-                render_card_detail_row("주유", shinhan_fuel, "신한카드", "fuel", "⛽ 주유")
-            if shinhan_phone > 0:
-                render_card_detail_row("통신비", shinhan_phone, "신한카드", "phone", "📱 통신비")
-            if shinhan_internet > 0:
-                render_card_detail_row("인터넷", shinhan_internet, "신한카드", "internet", "🌐 인터넷")
-            if shinhan_wow > 0:
-                render_card_detail_row("쿠팡와우", shinhan_wow, "신한카드", "wow", "📦 쿠팡와우")
-            if shinhan_emoji > 0:
-                render_card_detail_row("이모티콘", shinhan_emoji, "신한카드", "emoji", "💬 이모티콘")
-            if shinhan_other > 0:
-                render_card_detail_row("기타", shinhan_other, "신한카드", "other", "🧾 기타")
+            with st.container(border=True):
+                if shinhan_fuel > 0:
+                    render_card_detail_row("주유", shinhan_fuel, "신한카드", "fuel", "⛽ 주유")
+                if shinhan_phone > 0:
+                    render_card_detail_row("통신비", shinhan_phone, "신한카드", "phone", "📱 통신비")
+                if shinhan_internet > 0:
+                    render_card_detail_row("인터넷", shinhan_internet, "신한카드", "internet", "🌐 인터넷")
+                if shinhan_wow > 0:
+                    render_card_detail_row("쿠팡와우", shinhan_wow, "신한카드", "wow", "📦 쿠팡와우")
+                if shinhan_emoji > 0:
+                    render_card_detail_row("이모티콘", shinhan_emoji, "신한카드", "emoji", "💬 이모티콘")
+                if shinhan_other > 0:
+                    render_card_detail_row("기타", shinhan_other, "신한카드", "other", "🧾 기타")
 
     with card_col3:
         render_budget_card(
@@ -2611,30 +2646,44 @@ with tab1:
             "#8A6A00"
         )
 
-        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+        incident_has_detail = any([
+            incident_hospital > 0,
+            incident_medicine > 0,
+            incident_checkup > 0,
+            incident_beauty > 0,
+            incident_gift > 0,
+            incident_event > 0,
+            incident_other > 0,
+            incident_spent > 0,
+            incident_refund > 0,
+        ])
 
-        with st.container(border=True):
-            if incident_hospital > 0:
-                render_card_detail_row("병원비", incident_hospital, "사건비통장", "hospital", "🏥 병원비")
-            if incident_medicine > 0:
-                render_card_detail_row("약값", incident_medicine, "사건비통장", "medicine", "💊 약값")
-            if incident_checkup > 0:
-                render_card_detail_row("검진", incident_checkup, "사건비통장", "checkup", "🩺 검진")
-            if incident_beauty > 0:
-                render_card_detail_row("미용", incident_beauty, "사건비통장", "beauty", "💅 미용")
-            if incident_gift > 0:
-                render_card_detail_row("선물", incident_gift, "사건비통장", "gift", "🎁 선물")
-            if incident_event > 0:
-                render_card_detail_row("경조사", incident_event, "사건비통장", "event", "🙏 경조사")            
-            if incident_other > 0:
-                render_card_detail_row("기타", incident_other, "사건비통장", "other", "🧾 기타")
-            
-            st.markdown(
-                f"<div style='text-align:right; font-size:13px; opacity:0.7; margin-bottom:10px;'>"
-                f"지출 {incident_spent:,}원 / 💰 환급 {incident_refund:,}원"
-                f"</div>",
-                unsafe_allow_html=True
-            )
+        if incident_has_detail:
+            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+
+            with st.container(border=True):
+                if incident_hospital > 0:
+                    render_card_detail_row("병원비", incident_hospital, "사건비통장", "hospital", "🏥 병원비")
+                if incident_medicine > 0:
+                    render_card_detail_row("약값", incident_medicine, "사건비통장", "medicine", "💊 약값")
+                if incident_checkup > 0:
+                    render_card_detail_row("검진", incident_checkup, "사건비통장", "checkup", "🩺 검진")
+                if incident_beauty > 0:
+                    render_card_detail_row("미용", incident_beauty, "사건비통장", "beauty", "💅 미용")
+                if incident_gift > 0:
+                    render_card_detail_row("선물", incident_gift, "사건비통장", "gift", "🎁 선물")
+                if incident_event > 0:
+                    render_card_detail_row("경조사", incident_event, "사건비통장", "event", "🙏 경조사")
+                if incident_other > 0:
+                    render_card_detail_row("기타", incident_other, "사건비통장", "other", "🧾 기타")
+
+                if incident_spent > 0 or incident_refund > 0:
+                    st.markdown(
+                        f"<div style='text-align:right; font-size:13px; opacity:0.7; margin-bottom:10px;'>"
+                        f"지출 {incident_spent:,}원 / 💰 환급 {incident_refund:,}원"
+                        f"</div>",
+                        unsafe_allow_html=True
+                    )
 
     with card_col4:
         render_budget_card(
@@ -2645,13 +2694,20 @@ with tab1:
             "#A85E74"
         )
 
-        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
-        
-        with st.container(border=True):
-            render_card_detail_row("미용", total_beauty, "통합", "total_beauty", "💅 미용 총 지출")
+        total_has_detail = any([
+            total_beauty > 0,
+            total_fuel_amount_all > 0,
+        ])
 
-            if total_fuel_amount_all > 0:
-                render_card_detail_row("주유", total_fuel_amount_all, "통합", "total_fuel", "⛽ 주유 총 지출")
+        if total_has_detail:
+            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+
+            with st.container(border=True):
+                if total_beauty > 0:
+                    render_card_detail_row("미용", total_beauty, "통합", "total_beauty", "💅 미용 총 지출")
+
+                if total_fuel_amount_all > 0:
+                    render_card_detail_row("주유", total_fuel_amount_all, "통합", "total_fuel", "⛽ 주유 총 지출")
 
     st.divider()
 
