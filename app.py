@@ -2416,37 +2416,38 @@ with tab1:
         st.caption(f"{month_key} 예산 사용률: {percent * 100:.1f}%")
 
     # -------------------
+    # 체크리스트 / 무지출데이 / 월별 예산 결산
+    # -------------------
+    col1, col2, col3 = st.columns([1.1, 1, 1.5])
+
+    # -------------------
     # 체크리스트
     # -------------------
-    checklist_month_df = get_month_checklist(month_key)
+    with col1:
+        st.subheader("✅ 체크리스트")
 
-    checked_count = int(checklist_month_df["checked"].sum())
-    total_count = len(checklist_month_df)
-    all_checked = total_count > 0 and checked_count == total_count
+        checklist_month_df = get_month_checklist(month_key)
 
-    checklist_month_df["amount"] = checklist_month_df["item"].apply(parse_checklist_amount)
+        checked_count = int(checklist_month_df["checked"].sum())
+        total_count = len(checklist_month_df)
+        all_checked = total_count > 0 and checked_count == total_count
 
-    checked_amount = int(
-        checklist_month_df.loc[checklist_month_df["checked"] == True, "amount"].sum()
-    )
-    total_amount = int(checklist_month_df["amount"].sum())
+        checklist_month_df["amount"] = checklist_month_df["item"].apply(parse_checklist_amount)
 
-    expander_title = (
-        f"✅ 이번달 체크리스트 ({checked_count}/{total_count}) "
-        f"· {checked_amount:,} / {total_amount:,}원"
-    )
+        checked_amount = int(
+            checklist_month_df.loc[checklist_month_df["checked"] == True, "amount"].sum()
+        )
+        total_amount = int(checklist_month_df["amount"].sum())
 
-    with st.expander(expander_title, expanded=not all_checked):
-        check_cols = st.columns(2)
+        with st.container(border=True):
+            st.markdown(
+                f"**완료 {checked_count}/{total_count} · {checked_amount:,} / {total_amount:,}원**"
+            )
 
-        checklist_df_reset = checklist_month_df.reset_index(drop=True)
-        half = (len(checklist_df_reset) + 1) // 2
+        with st.expander("상세보기", expanded=not all_checked):
+            checklist_df_reset = checklist_month_df.reset_index(drop=True)
 
-        left_items = checklist_df_reset.iloc[:half]
-        right_items = checklist_df_reset.iloc[half:]
-
-        with check_cols[0]:
-            for _, row in left_items.iterrows():
+            for _, row in checklist_df_reset.iterrows():
                 checked_now = st.checkbox(
                     row["item"],
                     value=bool(row["checked"]),
@@ -2456,23 +2457,11 @@ with tab1:
                     update_checklist_item(month_key, row["item"], checked_now)
                     st.rerun()
 
-        with check_cols[1]:
-            for _, row in right_items.iterrows():
-                checked_now = st.checkbox(
-                    row["item"],
-                    value=bool(row["checked"]),
-                    key=f"check_{month_key}_{row['item']}"
-                )
-                if checked_now != bool(row["checked"]):
-                    update_checklist_item(month_key, row["item"], checked_now)
-                    st.rerun()
-
-    st.divider()
-
-    left_info, right_info = st.columns([1, 1.4])
-
-    with left_info:
-        st.subheader("🪙 이번달 무지출데이")
+    # -------------------
+    # 무지출데이
+    # -------------------
+    with col2:
+        st.subheader("🪙 무지출데이")
 
         no_spend_days = get_final_no_spend_days(df, month_key)
         no_spend_count = len(no_spend_days)
@@ -2503,7 +2492,7 @@ with tab1:
             msg = f"🔥 {streak}일 연속 성공중!!"
 
         with st.container(border=True):
-            st.markdown(f"**🪙 무지출데이 {no_spend_count}일**")
+            st.markdown(f"**이번달 {no_spend_count}일**")
 
             color = "#2F7A4A" if "성공" in msg else "#B4546A"
 
@@ -2525,13 +2514,17 @@ with tab1:
         else:
             st.caption("아직 기록된 무지출데이가 없어요.")
 
-    with right_info:
+    # -------------------
+    # 월별 예산 결산
+    # -------------------
+    with col3:
         st.subheader("📅 월별 예산 결산")
 
         review_df = get_monthly_budget_reviews(df, months=6)
 
         if review_df.empty:
-            st.caption("아직 결산할 데이터가 없어요.")
+            with st.container(border=True):
+                st.caption("아직 결산할 데이터가 없어요.")
         else:
             for _, r in review_df.iterrows():
                 st.markdown(
