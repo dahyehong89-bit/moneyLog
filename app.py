@@ -2441,7 +2441,15 @@ with tab1:
 
         with st.container(border=True):
             st.markdown(
-                f"**완료 {checked_count}/{total_count} · {checked_amount:,} / {total_amount:,}원**"
+                f"""
+                <div style='font-size:18px; font-weight:800;'>
+                    완료 {checked_count}/{total_count}
+                </div>
+                <div style='font-size:14px; color:#666; margin-top:4px;'>
+                    {checked_amount:,} / {total_amount:,}원
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
         with st.expander("상세보기", expanded=not all_checked):
