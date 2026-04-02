@@ -2530,24 +2530,37 @@ with tab1:
     with col3:
         st.subheader("📅 월별 예산 결산")
 
-        review_df = get_monthly_budget_reviews(df, months=6)
+        review_df = get_monthly_budget_reviews(df, months=3)
 
         if review_df.empty:
             with st.container(border=True):
                 st.caption("아직 결산할 데이터가 없어요.")
         else:
             for _, r in review_df.iterrows():
+
+                is_current = r["month"] == current_month
+
+                if is_current:
+                    bg = "#FFF7E6"        # 강조 배경 (연한 노랑)
+                    border = "#F5C16C"    # 강조 테두리
+                    scale = "scale(1.02)" # 살짝 확대
+                else:
+                    bg = r["bg"]
+                    border = r["border"]
+                    scale = "scale(1)"
+
                 st.markdown(
                     f"""
                     <div style="
-                        background:{r['bg']};
-                        border:1px solid {r['border']};
+                        background:{bg};
+                        border:1px solid {border};
                         border-radius:18px;
                         padding:14px 16px;
                         margin-bottom:10px;
+                        transform:{scale};
                     ">
                         <div style="font-size:14px; font-weight:800; color:{r['text']}; margin-bottom:6px;">
-                            {r['month']} 결산
+                            {r['month']} 결산 {"⭐" if is_current else ""}
                         </div>
                         <div style="font-size:18px; font-weight:800; color:{r['text']}; margin-bottom:4px;">
                             사용 {int(r['spent']):,}원 · {r['result_text']}
