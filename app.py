@@ -2536,6 +2536,8 @@ with tab1:
             with st.container(border=True):
                 st.caption("아직 결산할 데이터가 없어요.")
         else:
+            current_month = datetime.now(KST).strftime("%Y-%m")
+
             for _, r in review_df.iterrows():
 
                 is_current = r["month"] == current_month
