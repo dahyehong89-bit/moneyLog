@@ -2442,7 +2442,7 @@ with tab1:
         with st.container(border=True):
             st.markdown(
                 f"""
-                <div style='padding:8px 6px 12px 6px;'>
+                <div style='padding-bottom:12px;'>
                     <div style='font-size:18px; font-weight:800;'>
                         완료 {checked_count}/{total_count}
                     </div>
