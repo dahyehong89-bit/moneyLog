@@ -3368,7 +3368,10 @@ with tab2:
             view = view[view["memo"].astype(str).str.contains("주유", na=False)]
         
         elif record_filter == "사건비":
-            view = view[view["category"] == "사건비"]
+            view = view[
+                (view["category"] == "사건비") |
+                (view["method"] == "사건비통장")
+            ]
         
         elif record_filter == "환급":
             view = view[(view["method"] == "사건비통장") & (view["amount"] > 0)]
