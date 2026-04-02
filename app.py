@@ -2303,6 +2303,7 @@ fuel_all_df = month_df[
 fuel_all_stats_df = extract_fuel_stats_df(fuel_all_df)
 
 total_fuel_amount_all = int(fuel_all_stats_df["fuel_amount"].fillna(0).sum()) if not fuel_all_stats_df.empty else 0
+total_food = abs(int(month_df[month_df["category"] == "외식"]["amount"].sum()))
 
 # 사건비통장: 지출 / 환급 / 순금액
 incident_df = month_df[month_df["method"] == "사건비통장"].copy()
@@ -2723,6 +2724,7 @@ with tab1:
         total_has_detail = any([
             total_beauty > 0,
             total_fuel_amount_all > 0,
+            total_food > 0,
         ])
 
         if total_has_detail:
@@ -2734,6 +2736,9 @@ with tab1:
 
                 if total_fuel_amount_all > 0:
                     render_card_detail_row("주유", total_fuel_amount_all, "통합", "total_fuel", "⛽ 주유 총 지출")
+
+                if total_food > 0:
+                    render_card_detail_row("외식", total_food, "통합", "total_food", "🍽 외식 총 지출")
 
     st.divider()
 
