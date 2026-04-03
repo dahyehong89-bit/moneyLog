@@ -2,6 +2,7 @@ import os
 import re
 import base64
 import socket
+import uuid
 
 from io import BytesIO
 from datetime import date, datetime
@@ -3113,15 +3114,38 @@ with tab1:
                 row = parse_quick_input(
                     quick,
                     default_category=quick_category,
-                    default_method=DEFAULT_METHOD
+                    default_method=""
                 )
-                df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
-                save_df(df)
-                st.success("✅ 저장 완료!")
-                st.rerun()
+
+                if row.get("needs_method_confirm"):
+                    row["dialog_key"] = str(uuid.uuid4())
+                    st.session_state["pending_quick_entry"] = row
+                    st.session_state["show_quick_method_dialog"] = True
+                    st.rerun()
+                else:
+                    save_row = {
+                        "date": row["date"],
+                        "amount": row["amount"],
+                        "category": row["category"],
+                        "method": row["method"],
+                        "memo": row["memo"],
+                    }
+
+                    df = pd.concat([df, pd.DataFrame([save_row])], ignore_index=True)
+                    save_df(df)
+                    st.success("✅ 저장 완료!")
+                    st.rerun()
+
             except Exception as e:
                 st.error(f"저장 실패: {e}")
 
+        # -------------------
+        # 빠른 입력 모달 실행
+        # -------------------
+        if st.session_state.get("show_quick_method_dialog"):
+            st.session_state["show_quick_method_dialog"] = False
+            quick_add_dialog()
+            
     st.divider()
 
     # =========================
