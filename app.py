@@ -2372,11 +2372,12 @@ def get_total_detail_map(month_df: pd.DataFrame) -> dict:
 
     total_detail_map = {}
 
-    # 여러 결제수단에서 같이 잡힐 때만 총지출에 보여줄 카테고리
+    # 총지출 상세에 조건부로 보여줄 카테고리
     AUTO_TOTAL_CATEGORIES = ["외식", "커피", "배달", "쇼핑", "미용"]
 
     for cat in AUTO_TOTAL_CATEGORIES:
         used_methods = set()
+        total_amt = 0
 
         if cat == "미용":
             # 현대카드 미용
@@ -2427,15 +2428,18 @@ def get_total_detail_map(month_df: pd.DataFrame) -> dict:
 
             if not cat_df.empty:
                 used_methods = set(cat_df["method"].dropna().astype(str).tolist())
+                total_amt = abs(int(cat_df["amount"].sum()))
 
-            total_amt = abs(int(cat_df["amount"].sum()))
-
-        # ✅ 결제수단이 2개 이상일 때만 표시
-        if total_amt > 0 and len(used_methods) >= 2:
-            total_detail_map[cat] = total_amt
+        # ✅ 현대카드만 단독이면 숨김
+        # ✅ 현금/이체만 있거나, 사건비통장만 있거나, 여러 수단 섞이면 표시
+        if total_amt > 0:
+            if used_methods == {"현대카드"}:
+                pass
+            else:
+                total_detail_map[cat] = total_amt
 
     # -----------------------------
-    # 주유는 memo 기준 + 결제수단 2개 이상일 때만
+    # 주유는 memo 기준 예외 처리
     # -----------------------------
     fuel_all_df = df[
         (df["memo"].astype(str).str.contains("주유", na=False)) &
@@ -2450,8 +2454,11 @@ def get_total_detail_map(month_df: pd.DataFrame) -> dict:
             fuel_all_stats_df["fuel_amount"].fillna(0).sum()
         ) if not fuel_all_stats_df.empty else 0
 
-        if total_fuel_amount_all > 0 and len(fuel_methods) >= 2:
-            total_detail_map["주유"] = total_fuel_amount_all
+        if total_fuel_amount_all > 0:
+            if fuel_methods == {"현대카드"}:
+                pass
+            else:
+                total_detail_map["주유"] = total_fuel_amount_all
 
     return total_detail_map
 
