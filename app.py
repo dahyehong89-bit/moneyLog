@@ -2000,6 +2000,19 @@ def get_card_detail_df(month_df, method_name, detail_name):
         ].copy()
 
         return fuel_df.sort_values(by="date_dt", ascending=False)
+    
+    if method_name == "통합" and detail_name == "외식":
+        df = month_df.copy()
+
+        if "date_dt" not in df.columns:
+            df["date_dt"] = pd.to_datetime(df["date"], errors="coerce")
+
+        df = df[
+            (df["category"] == "외식") &
+            (df["amount"] < 0)
+        ].copy()
+
+        return df.sort_values(by="date_dt", ascending=False)
 
     # 사건비통장
     if method_name == "사건비통장":
