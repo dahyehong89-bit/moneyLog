@@ -397,45 +397,84 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         )
 
     summary = calc_living_summary(living_df, living_month)
-
     cash_balance = int(cash_df["amount"].sum()) if not cash_df.empty else 0
-
-    # 👉 총 생활비 남은 금액
     total_remaining = summary["available"] + summary["emergency"] + cash_balance
 
     # -------------------
-    # 상단 (핵심 요약)
+    # 카드 영역
+    # 왼쪽 2칸 = 작은 카드 6개
+    # 오른쪽 1칸 = 총 남은 생활비 큰 카드
     # -------------------
-    top1, top2, top3, top4 = st.columns(4, gap="large")
+    left_area, right_area = st.columns([2.2, 1], gap="large")
 
-    with top1:
-        render_budget_card("🔄 이월금액", f"{summary['carryover']:,}원", "#F8FBF7", "#D9E8D4", "#4D6B50")
+    with left_area:
+        top1, top2, top3 = st.columns(3, gap="large")
 
-    with top2:
-        render_budget_card("➕ 입금", f"{summary['income']:,}원", "#F3F8FF", "#D8E6F8", "#4A6688")
+        with top1:
+            render_budget_card("🔄 이월금액", f"{summary['carryover']:,}원", "#F8FBF7", "#D9E8D4", "#4D6B50")
 
-    with top3:
-        render_budget_card("💸 지출", f"{summary['expense']:,}원", "#FFF7F5", "#F2D9D2", "#8A5A4A")
+        with top2:
+            render_budget_card("➕ 입금", f"{summary['income']:,}원", "#F3F8FF", "#D8E6F8", "#4A6688")
 
-    with top4:
-        render_budget_card("💰 총 남은 생활비", f"{total_remaining:,}원", "#F0F7FF", "#CFE3FF", "#2B6CB0")
+        with top3:
+            render_budget_card("💸 지출", f"{summary['expense']:,}원", "#FFF7F5", "#F2D9D2", "#8A5A4A")
 
-    # 👉 줄 간격
-    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
 
-    # -------------------
-    # 하단 (세부 구성)
-    # -------------------
-    bottom1, bottom2, bottom3 = st.columns(3, gap="large")
+        bottom1, bottom2, bottom3 = st.columns(3, gap="large")
 
-    with bottom1:
-        render_budget_card("💳 가용생활비", f"{summary['available']:,}원", "#F7F3FF", "#DCCBFA", "#6C48A6")
+        with bottom1:
+            render_budget_card("💳 가용생활비", f"{summary['available']:,}원", "#F7F3FF", "#DCCBFA", "#6C48A6")
 
-    with bottom2:
-        render_budget_card("🏦 비상금", f"{summary['emergency']:,}원", "#FFF9E9", "#F2E1A8", "#8A6A00")
+        with bottom2:
+            render_budget_card("🏦 비상금", f"{summary['emergency']:,}원", "#FFF9E9", "#F2E1A8", "#8A6A00")
 
-    with bottom3:
-        render_budget_card("💵 현금보유액", f"{cash_balance:,}원", "#F0FFF4", "#C6F6D5", "#2F855A")
+        with bottom3:
+            render_budget_card("💵 현금보유액", f"{cash_balance:,}원", "#F0FFF4", "#C6F6D5", "#2F855A")
+
+    with right_area:
+        st.markdown(
+            f"""
+            <div style="
+                height: 222px;
+                border: 1px solid #CFE3FF;
+                background: linear-gradient(180deg, #F7FBFF 0%, #EDF6FF 100%);
+                border-radius: 18px;
+                padding: 22px 20px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: flex-start;
+            ">
+                <div style="
+                    font-size: 15px;
+                    font-weight: 600;
+                    color: #4A6FA5;
+                    margin-bottom: 12px;
+                ">
+                    💰 총 남은 생활비
+                </div>
+                <div style="
+                    font-size: 32px;
+                    font-weight: 800;
+                    color: #1F4E8C;
+                    line-height: 1.2;
+                    margin-bottom: 10px;
+                ">
+                    {total_remaining:,}원
+                </div>
+                <div style="
+                    font-size: 13px;
+                    color: #6B7280;
+                    line-height: 1.5;
+                ">
+                    가용생활비 + 비상금 + 현금보유액
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         
     st.divider()
     st.subheader("✍ 생활비 입력")
