@@ -26,6 +26,10 @@ BUDGET_METHOD = "현대카드"
 PAGE_SIZE = 10
 
 AUTO_CATEGORY = {
+    "외식": "외식",
+    "밥": "외식",
+    "점심": "외식",
+    "저녁": "외식",
     "스타벅스": "커피",
     "스벅" : "커피",
     "커피": "커피",
@@ -56,12 +60,38 @@ AUTO_CATEGORY = {
     "펜션": "여행",
 }
 
+AUTO_METHOD = {
+    "신한카드": [
+        "주유",
+        "통신비",
+        "쿠팡와우",
+        "이모티콘",
+        "톨게이트",
+        "관리비",
+        "보험",
+        "넷플릭스",
+        "유튜브",
+        "구독",
+        "t우주",
+        "티우주",
+    ],
+    "사건비통장": [
+        "병원", "의원", "치과", "약국", "약값", "검진", "건강검진",
+        "초음파", "엑스레이", "x-ray", "mri", "ct",
+        "조의금", "부의금", "축의금", "결혼식", "장례식", "부고", "화환",
+    ],
+    "현금/이체": [
+        "현금", "계좌이체", "이체", "송금", "atm"
+    ],
+}-
+
 AUTO_SHINHAN = [
     "주유",
     "통신비",
     "쿠팡와우",
     "이모티콘",
     "톨게이트",
+    "T우주",
 ]
 
 INCIDENT_INCOME_KEYWORDS = ["환급", "입금", "수입", "보험금"]
@@ -707,7 +737,6 @@ def update_checklist_item(month_key: str, item_name: str, checked_value: bool) -
 
     save_checklist_df(checklist_df)
 
-
 def auto_category_from_text(text: str, fallback: str = "쇼핑") -> str:
     t = (text or "").strip()
 
@@ -717,6 +746,73 @@ def auto_category_from_text(text: str, fallback: str = "쇼핑") -> str:
 
     return fallback
 
+def classify_quick_category(text: str, default_category: str = "") -> str:
+    text = str(text).strip().lower()
+
+    for keyword, category in AUTO_CATEGORY.items():
+        if keyword.lower() in text:
+            return category
+
+    return default_category or ""
+
+def normalize_method_tag(method: str) -> str | None:
+    method = str(method or "").strip()
+
+    if not method:
+        return None
+
+    mapping = {
+        "현대": "현대카드",
+        "현대카드": "현대카드",
+        "신한": "신한카드",
+        "신한카드": "신한카드",
+        "사건비": "사건비통장",
+        "사건비통장": "사건비통장",
+        "현금": "현금/이체",
+        "이체": "현금/이체",
+        "현금/이체": "현금/이체",
+    }
+
+    return mapping.get(method, method if method in METHOD_OPTIONS else None)
+
+def detect_method_from_tag(text: str):
+    text = str(text)
+
+    if "@현대" in text or "@현대카드" in text:
+        return "현대카드"
+    if "@신한" in text or "@신한카드" in text:
+        return "신한카드"
+    if "@사건비" in text or "@사건비통장" in text:
+        return "사건비통장"
+    if "@현금" in text or "@이체" in text or "@현금/이체" in text:
+        return "현금/이체"
+
+    return None
+
+def detect_quick_method(text: str, tagged_method: str | None = None) -> tuple[str | None, bool]:
+    text = str(text).strip()
+    text_lower = text.lower()
+
+    normalized_tag = normalize_method_tag(tagged_method)
+    if normalized_tag:
+        return normalized_tag, False
+
+    for method_name, keywords in AUTO_METHOD.items():
+        for keyword in keywords:
+            if keyword.lower() in text_lower:
+                return method_name, False
+
+    return None, True
+
+def detect_quick_entry_info(text: str) -> dict:
+    category = classify_quick_category(text)
+    method, needs_confirm = detect_quick_method(text)
+
+    return {
+        "category": category,
+        "method": method,
+        "needs_confirm": needs_confirm,
+    }
 
 def auto_card_and_category(text: str, default_category: str, default_method: str):
     t = (text or "").strip()
@@ -910,12 +1006,12 @@ def parse_quick_input(text: str, default_category: str, default_method: str) -> 
         if not tokens:
             raise ValueError("날짜만 있고 금액이 없어요. 예: 2026-03-01 우유 4500")
 
-    method = default_method or DEFAULT_METHOD
+    tagged_method = None
     filtered_tokens = []
 
     for t in tokens:
         if t.startswith("@") and len(t) > 1:
-            method = t[1:]
+            tagged_method = t[1:]
         else:
             filtered_tokens.append(t)
 
@@ -933,9 +1029,17 @@ def parse_quick_input(text: str, default_category: str, default_method: str) -> 
         raise ValueError("금액이 없어요. 예: 4500 우유 / 우유 4500")
 
     memo = " ".join(memo_tokens).strip()
-    category, method = auto_card_and_category(memo, default_category, method)
 
-    # 사건비통장 + 환급/입금/수입/보험금 => 수입(+)
+    # 1) 카테고리는 카테고리대로만 자동 분류
+    category = classify_quick_category(memo, default_category)
+
+    # 2) 결제수단은 별도로 판별
+    method, needs_method_confirm = detect_quick_method(
+        memo,
+        tagged_method=tagged_method or default_method
+    )
+
+    # 3) 사건비통장 + 환급/입금/수입/보험금 => 수입(+)
     if method == "사건비통장" and any(k in memo for k in INCIDENT_INCOME_KEYWORDS):
         final_amount = abs(amount)
     else:
@@ -945,10 +1049,10 @@ def parse_quick_input(text: str, default_category: str, default_method: str) -> 
         "date": d,
         "amount": final_amount,
         "category": category,
-        "method": method or DEFAULT_METHOD,
+        "method": method,
         "memo": memo,
+        "needs_method_confirm": needs_method_confirm,
     }
-
 
 def get_month_options(df: pd.DataFrame):
     KST = ZoneInfo("Asia/Seoul")
@@ -1824,18 +1928,18 @@ def open_quick_edit(
 
 @st.dialog("📝 빠른 입력 수정")
 def quick_add_dialog():
-    item = st.session_state.get("pending_quick_entry")    
-    
+    item = st.session_state.get("pending_quick_entry")
+
     if not item:
         st.warning("등록할 항목이 없어요.")
         return
 
     dialog_key = item.get("dialog_key", "default")
 
-    current_cat = str(item["category"])
+    current_cat = str(item.get("category", ""))
     cat_index = CATEGORY_OPTIONS.index(current_cat) if current_cat in CATEGORY_OPTIONS else 0
 
-    current_method = str(item["method"]).strip() if str(item["method"]).strip() else DEFAULT_METHOD
+    current_method = str(item.get("method", "")).strip() if str(item.get("method", "")).strip() else DEFAULT_METHOD
     method_index = METHOD_OPTIONS.index(current_method) if current_method in METHOD_OPTIONS else 0
 
     base_memo, base_fuel_price, base_actual_amount, base_is_non_expense = split_fuel_memo(str(item["memo"]))
@@ -1853,17 +1957,25 @@ def quick_add_dialog():
 
             d = st.date_input(
                 "날짜",
-                value=item["date"],
+                value=pd.to_datetime(item["date"]).date() if str(item.get("date", "")).strip() else datetime.now(ZoneInfo("Asia/Seoul")).date(),
                 key=f"quick_edit_date_{dialog_key}"
             )
+
+            is_fixed = (category == "고정비")
+
+            if is_fixed and "신한카드" in METHOD_OPTIONS:
+                method_index = METHOD_OPTIONS.index("신한카드")
 
             method = st.selectbox(
                 "결제수단",
                 METHOD_OPTIONS,
                 index=method_index,
                 key=f"quick_edit_method_{dialog_key}",
-                disabled=False
+                disabled=is_fixed
             )
+
+            if is_fixed:
+                method = "신한카드"
 
         with q2:
             memo = st.text_input(
@@ -1874,7 +1986,7 @@ def quick_add_dialog():
 
             amount_text = st.text_input(
                 "금액",
-                value=f"{abs(int(item['amount'])):,}",
+                value=f"{abs(int(item['amount'])):,}" if str(item.get("amount", "")).strip() else "",
                 key=f"quick_edit_amount_{dialog_key}"
             )
 
@@ -1890,7 +2002,7 @@ def quick_add_dialog():
         with c_right:
             non_expense = st.checkbox(
                 "지출에 반영 안 함 (지출 제외)",
-                value=False,
+                value=base_is_non_expense,
                 key=f"quick_edit_non_expense_{dialog_key}"
             )
 
@@ -1922,15 +2034,13 @@ def quick_add_dialog():
                 is_non_expense=non_expense
             )
 
+            # 여기서는 자동 재판별하지 말고 사용자가 최종 선택한 값 그대로 사용
             if non_expense:
                 final_category = category
                 final_method = ""
             else:
-                final_category, final_method = auto_card_and_category(
-                    final_memo,
-                    category,
-                    method or DEFAULT_METHOD
-                )
+                final_category = category
+                final_method = method or DEFAULT_METHOD
 
             amount_value = int(amount_clean)
 
@@ -1954,13 +2064,15 @@ def quick_add_dialog():
             save_df(current_df)
 
             st.session_state.pending_quick_entry = None
+            st.session_state.pop("show_quick_method_dialog", None)
             st.success("✅ 저장 완료!")
             st.rerun()
 
     if canceled:
         st.session_state.pending_quick_entry = None
+        st.session_state.pop("show_quick_method_dialog", None)
         st.rerun()
-
+        
 def get_card_detail_df(month_df, method_name, detail_name):
     df = month_df.copy()
 
