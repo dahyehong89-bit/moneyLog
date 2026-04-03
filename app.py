@@ -3096,7 +3096,7 @@ with tab1:
         with st.form("quick_add", clear_on_submit=True):
             quick = st.text_input(
                 "입력",
-                placeholder="4500 스타벅스 @현대카드",
+                placeholder="예) 스타벅스 4500 @현대카드",
                 key="quick_input_text"
             )
         
