@@ -3099,6 +3099,8 @@ with tab1:
                 placeholder="예) 스타벅스 4500 @현대카드",
                 key="quick_input_text"
             )
+
+            st.caption("예: 외식 20000 / 스타벅스 5500 / 주유 70000 @신한")
         
             submitted_quick = st.form_submit_button("저장 (Enter)", use_container_width=True)        
 
