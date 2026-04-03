@@ -3135,6 +3135,13 @@ with tab1:
     with right_col:
         st.subheader("⚡ 빠른 입력")
 
+        if "quick_input_prefill" not in st.session_state:
+            st.session_state["quick_input_prefill"] = None
+
+        if st.session_state["quick_input_prefill"] is not None:
+            st.session_state["quick_input_text"] = st.session_state["quick_input_prefill"]
+            st.session_state["quick_input_prefill"] = None
+
         quick = st.text_input(
             "입력",
             placeholder="예) 스타벅스 4500 @현대카드",
@@ -3178,15 +3185,15 @@ with tab1:
                             ]
 
                             if number_tokens:
-                                st.session_state["quick_input_text"] = f"{suggestion} {number_tokens[0]}"
+                                st.session_state["quick_input_prefill"] = f"{suggestion} {number_tokens[0]}"
                             else:
-                                st.session_state["quick_input_text"] = suggestion
+                                st.session_state["quick_input_prefill"] = suggestion
                         else:
-                            st.session_state["quick_input_text"] = suggestion
+                            st.session_state["quick_input_prefill"] = suggestion
 
                         st.rerun()
 
-        submitted_quick = st.button("저장 (Enter)", use_container_width=True)
+        submitted_quick = st.button("저장", use_container_width=True)
 
         if submitted_quick:
             try:
@@ -3218,9 +3225,6 @@ with tab1:
             except Exception as e:
                 st.error(f"저장 실패: {e}")
 
-        # -------------------
-        # 빠른 입력 모달 실행
-        # -------------------
         if st.session_state.get("show_quick_method_dialog"):
             st.session_state["show_quick_method_dialog"] = False
             quick_add_dialog()
