@@ -1671,6 +1671,9 @@ def edit_dialog(rid: int):
                 key=f"edit_date_{rid}"
             )
 
+            if category == "고정비" and "신한카드" in METHOD_OPTIONS:
+                method_index = METHOD_OPTIONS.index("신한카드")
+
             method = st.selectbox(
                 "결제수단",
                 METHOD_OPTIONS,
