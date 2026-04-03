@@ -1237,6 +1237,47 @@ def render_budget_card(title: str, value: str, bg: str, border: str, text: str):
         unsafe_allow_html=True
     )
 
+def get_quick_input_suggestions(df: pd.DataFrame, query: str = "", limit: int = 8) -> list[str]:
+    if df.empty or "memo" not in df.columns:
+        return []
+
+    temp = df.copy()
+    temp["memo"] = temp["memo"].fillna("").astype(str).str.strip()
+    temp = temp[temp["memo"] != ""]
+
+    if temp.empty:
+        return []
+
+    # 최근 입력 우선
+    temp = temp.iloc[::-1].copy()
+
+    seen = set()
+    suggestions = []
+
+    query = (query or "").strip().lower()
+
+    for memo in temp["memo"]:
+        base_memo, _, _, _ = split_fuel_memo(memo)
+        base_memo = str(base_memo).strip()
+
+        if not base_memo:
+            continue
+
+        key = base_memo.lower()
+        if key in seen:
+            continue
+
+        if query:
+            if query not in key:
+                continue
+
+        seen.add(key)
+        suggestions.append(base_memo)
+
+        if len(suggestions) >= limit:
+            break
+
+    return suggestions
 
 # -----------------------------
 # App
@@ -3093,16 +3134,59 @@ with tab1:
 
     with right_col:
         st.subheader("⚡ 빠른 입력")
-        with st.form("quick_add", clear_on_submit=True):
-            quick = st.text_input(
-                "입력",
-                placeholder="예) 스타벅스 4500 @현대카드",
-                key="quick_input_text"
-            )
 
-            st.caption("예: 외식 20000 / 스타벅스 5500 / 주유 70000 @신한")
-        
-            submitted_quick = st.form_submit_button("저장 (Enter)", use_container_width=True)        
+        quick = st.text_input(
+            "입력",
+            placeholder="예) 스타벅스 4500 @현대카드",
+            key="quick_input_text"
+        )
+
+        st.caption("예: 외식 20000 / 스타벅스 5500 / 주유 70000 @신한")
+
+        # -------------------
+        # 최근 입력 / 추천 메모
+        # -------------------
+        quick_query_for_suggest = st.session_state.get("quick_input_text", "").strip()
+
+        suggestions = get_quick_input_suggestions(
+            df,
+            query=quick_query_for_suggest,
+            limit=8
+        )
+
+        if not suggestions and not quick_query_for_suggest:
+            suggestions = get_quick_input_suggestions(df, query="", limit=8)
+
+        if suggestions:
+            st.caption("최근 입력 / 추천 메모")
+
+            suggest_cols = st.columns(4)
+            for i, suggestion in enumerate(suggestions):
+                with suggest_cols[i % 4]:
+                    if st.button(
+                        suggestion,
+                        key=f"quick_suggest_{i}",
+                        use_container_width=True
+                    ):
+                        current_text = st.session_state.get("quick_input_text", "").strip()
+
+                        if current_text:
+                            parts = current_text.split()
+                            number_tokens = [
+                                p for p in parts
+                                if re.fullmatch(r"[+-]?\d+", p.replace(",", ""))
+                            ]
+
+                            if number_tokens:
+                                st.session_state["quick_input_text"] = f"{suggestion} {number_tokens[0]}"
+                            else:
+                                st.session_state["quick_input_text"] = suggestion
+                        else:
+                            st.session_state["quick_input_text"] = suggestion
+
+                        st.rerun()
+
+        submitted_quick = st.button("저장 (Enter)", use_container_width=True)
 
         if submitted_quick:
             try:
