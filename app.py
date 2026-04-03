@@ -83,7 +83,7 @@ AUTO_METHOD = {
     "현금/이체": [
         "현금", "계좌이체", "이체", "송금", "atm"
     ],
-}-
+}
 
 AUTO_SHINHAN = [
     "주유",
@@ -2072,7 +2072,7 @@ def quick_add_dialog():
         st.session_state.pending_quick_entry = None
         st.session_state.pop("show_quick_method_dialog", None)
         st.rerun()
-        
+
 def get_card_detail_df(month_df, method_name, detail_name):
     df = month_df.copy()
 
