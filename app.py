@@ -1971,14 +1971,15 @@ def get_card_detail_df(month_df, method_name, detail_name):
         # 주유는 category가 아니라 memo 기준
         if detail_name == "주유":
             fuel_df = df[
-                df["memo"].astype(str).str.contains("주유", na=False)
+                (df["memo"].astype(str).str.contains("주유", na=False)) &
+                (df["amount"] < 0)
             ].copy()
             return fuel_df.sort_values(by="date_dt", ascending=False)
 
-        # 미용은 현대카드(category) + 사건비통장(detail_category) 통합
+        # 미용은 현대카드(category) + 현금/이체(category) + 사건비통장(detail_category) 통합
         if detail_name == "미용":
-            hyundai_beauty_df = df[
-                (df["method"] == "현대카드") &
+            beauty_df = df[
+                (df["method"].isin(["현대카드", "현금/이체"])) &
                 (df["category"] == "미용") &
                 (df["amount"] < 0)
             ].copy()
@@ -1994,7 +1995,7 @@ def get_card_detail_df(month_df, method_name, detail_name):
                     incident_beauty_df["detail_category"] == "미용"
                 ].copy()
 
-            merged_df = pd.concat([hyundai_beauty_df, incident_beauty_df], ignore_index=True)
+            merged_df = pd.concat([beauty_df, incident_beauty_df], ignore_index=True)
             return merged_df.sort_values(by="date_dt", ascending=False)
 
         # 나머지 통합 항목은 category 기준 공통 처리
@@ -2010,7 +2011,6 @@ def get_card_detail_df(month_df, method_name, detail_name):
     # -----------------------------
     df = df[df["method"] == method_name].copy()
 
-    # 사건비통장
     if method_name == "사건비통장":
         df = df[df["amount"] < 0].copy()
 
@@ -2036,7 +2036,6 @@ def get_card_detail_df(month_df, method_name, detail_name):
         else:
             df = df[df["category"] == detail_name].copy()
 
-    # 신한카드
     elif method_name == "신한카드":
         df = df[df["amount"] < 0].copy()
         memo_series = df["memo"].astype(str)
@@ -2373,17 +2372,61 @@ def get_total_detail_map(month_df: pd.DataFrame) -> dict:
 
     total_detail_map = {}
 
-    # 외식: 결제수단 상관없이 category 기준
-    total_eatout = abs(int(
-        df[
-            (df["category"] == "외식") &
-            (df["amount"] < 0)
-        ]["amount"].sum()
-    ))
-    if total_eatout > 0:
-        total_detail_map["외식"] = total_eatout
+    # 총지출 상세에 자동으로 보여줄 카테고리
+    AUTO_TOTAL_CATEGORIES = ["외식", "커피", "배달", "쇼핑", "미용"]
 
-    # 주유: memo 기준
+    # -----------------------------
+    # 1) 일반 카테고리 자동 합산
+    # -----------------------------
+    for cat in AUTO_TOTAL_CATEGORIES:
+        if cat == "미용":
+            # 미용은 현대카드 category + 사건비통장 detail_category 통합
+            hyundai_beauty = abs(int(
+                df[
+                    (df["method"] == "현대카드") &
+                    (df["category"] == "미용") &
+                    (df["amount"] < 0)
+                ]["amount"].sum()
+            ))
+
+            cash_beauty = abs(int(
+                df[
+                    (df["method"] == "현금/이체") &
+                    (df["category"] == "미용") &
+                    (df["amount"] < 0)
+                ]["amount"].sum()
+            ))
+
+            incident_beauty_df = df[
+                (df["method"] == "사건비통장") &
+                (df["amount"] < 0)
+            ].copy()
+
+            incident_beauty = 0
+            if not incident_beauty_df.empty:
+                incident_beauty_df["detail_category"] = incident_beauty_df["memo"].apply(classify_incident_memo)
+                incident_beauty = abs(int(
+                    incident_beauty_df[
+                        incident_beauty_df["detail_category"] == "미용"
+                    ]["amount"].sum()
+                ))
+
+            total_amt = hyundai_beauty + cash_beauty + incident_beauty
+
+        else:
+            total_amt = abs(int(
+                df[
+                    (df["category"] == cat) &
+                    (df["amount"] < 0)
+                ]["amount"].sum()
+            ))
+
+        if total_amt > 0:
+            total_detail_map[cat] = total_amt
+
+    # -----------------------------
+    # 2) 주유는 예외 처리
+    # -----------------------------
     fuel_all_df = df[
         (df["memo"].astype(str).str.contains("주유", na=False)) &
         (df["amount"] < 0)
@@ -2397,33 +2440,6 @@ def get_total_detail_map(month_df: pd.DataFrame) -> dict:
     if total_fuel_amount_all > 0:
         total_detail_map["주유"] = total_fuel_amount_all
 
-    # 미용: 현대카드 + 사건비통장 통합
-    hyundai_beauty = abs(int(
-        df[
-            (df["method"] == "현대카드") &
-            (df["category"] == "미용") &
-            (df["amount"] < 0)
-        ]["amount"].sum()
-    ))
-
-    incident_beauty_df = df[
-        (df["method"] == "사건비통장") &
-        (df["amount"] < 0)
-    ].copy()
-
-    incident_beauty = 0
-    if not incident_beauty_df.empty:
-        incident_beauty_df["detail_category"] = incident_beauty_df["memo"].apply(classify_incident_memo)
-        incident_beauty = abs(int(
-            incident_beauty_df[
-                incident_beauty_df["detail_category"] == "미용"
-            ]["amount"].sum()
-        ))
-
-    total_beauty = hyundai_beauty + incident_beauty
-    if total_beauty > 0:
-        total_detail_map["미용"] = total_beauty
-
     return total_detail_map
 
 total_detail_map = get_total_detail_map(month_df)
@@ -2431,6 +2447,9 @@ total_detail_map = get_total_detail_map(month_df)
 total_fuel_amount_all = total_detail_map.get("주유", 0)
 total_food = total_detail_map.get("외식", 0)
 total_beauty = total_detail_map.get("미용", 0)
+total_coffee = total_detail_map.get("커피", 0)
+total_delivery = total_detail_map.get("배달", 0)
+total_shopping = total_detail_map.get("쇼핑", 0)
 
 with tab1:
     # -------------------
@@ -2790,9 +2809,12 @@ with tab1:
 
             with st.container(border=True):
                 icon_map = {
+                    "외식": "🍽",
+                    "커피": "☕",
+                    "배달": "🛵",
+                    "쇼핑": "🛍️",
                     "미용": "💅",
                     "주유": "⛽",
-                    "외식": "🍽",
                 }
 
                 for detail_name, amount in total_detail_map.items():
