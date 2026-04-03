@@ -2057,6 +2057,16 @@ def get_card_detail_df(month_df, method_name, detail_name):
                 | memo_series.str.contains("이모티콘", na=False)
             )
             df = df[~known_mask].copy()
+            
+    elif method_name == "현금/이체":
+        known = ["쇼핑", "외식", "배달", "커피", "편의점", "미용"]
+
+        df = df[df["amount"] < 0].copy()
+
+        if detail_name == "기타":
+            df = df[~df["category"].isin(known)].copy()
+        else:
+            df = df[df["category"] == detail_name].copy()
 
     return df.sort_values(by="date_dt", ascending=False)
 
