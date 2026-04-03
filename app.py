@@ -3094,13 +3094,6 @@ with tab1:
     with right_col:
         st.subheader("⚡ 빠른 입력")
         with st.form("quick_add", clear_on_submit=True):
-            quick_category = st.selectbox(
-                "카테고리",
-                CATEGORY_OPTIONS,
-                index=CATEGORY_OPTIONS.index("쇼핑"),
-                key="quick_category_select"
-            )
-        
             quick = st.text_input(
                 "입력",
                 placeholder="4500 스타벅스 @현대카드",
@@ -3113,7 +3106,7 @@ with tab1:
             try:
                 row = parse_quick_input(
                     quick,
-                    default_category=quick_category,
+                    default_category="",
                     default_method=""
                 )
 
