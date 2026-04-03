@@ -1955,64 +1955,56 @@ def quick_add_dialog():
         st.rerun()
 
 def get_card_detail_df(month_df, method_name, detail_name):
-    df = month_df[month_df["method"] == method_name].copy()
+    df = month_df.copy()
 
     if "date_dt" not in df.columns:
         df["date_dt"] = pd.to_datetime(df["date"], errors="coerce")
-    
-    # 통합 카테고리용
-    if method_name == "통합" and detail_name == "미용":
-        df = month_df.copy()
 
-        if "date_dt" not in df.columns:
-            df["date_dt"] = pd.to_datetime(df["date"], errors="coerce")
+    # -----------------------------
+    # 통합 보기
+    # -----------------------------
+    if method_name == "통합":
+        # 주유는 category가 아니라 memo 기준
+        if detail_name == "주유":
+            fuel_df = df[
+                df["memo"].astype(str).str.contains("주유", na=False)
+            ].copy()
+            return fuel_df.sort_values(by="date_dt", ascending=False)
 
-        # 현대카드 미용
-        hyundai_beauty_df = df[
-            (df["method"] == "현대카드") &
-            (df["category"] == "미용") &
-            (df["amount"] < 0)
-        ].copy()
-
-        # 사건비통장 미용
-        incident_beauty_df = df[
-            (df["method"] == "사건비통장") &
-            (df["amount"] < 0)
-        ].copy()
-
-        if not incident_beauty_df.empty:
-            incident_beauty_df["detail_category"] = incident_beauty_df["memo"].apply(classify_incident_memo)
-            incident_beauty_df = incident_beauty_df[
-                incident_beauty_df["detail_category"] == "미용"
+        # 미용은 현대카드(category) + 사건비통장(detail_category) 통합
+        if detail_name == "미용":
+            hyundai_beauty_df = df[
+                (df["method"] == "현대카드") &
+                (df["category"] == "미용") &
+                (df["amount"] < 0)
             ].copy()
 
-        merged_df = pd.concat([hyundai_beauty_df, incident_beauty_df], ignore_index=True)
-        return merged_df.sort_values(by="date_dt", ascending=False)
+            incident_beauty_df = df[
+                (df["method"] == "사건비통장") &
+                (df["amount"] < 0)
+            ].copy()
 
-    if method_name == "통합" and detail_name == "주유":
-        df = month_df.copy()
+            if not incident_beauty_df.empty:
+                incident_beauty_df["detail_category"] = incident_beauty_df["memo"].apply(classify_incident_memo)
+                incident_beauty_df = incident_beauty_df[
+                    incident_beauty_df["detail_category"] == "미용"
+                ].copy()
 
-        if "date_dt" not in df.columns:
-            df["date_dt"] = pd.to_datetime(df["date"], errors="coerce")
+            merged_df = pd.concat([hyundai_beauty_df, incident_beauty_df], ignore_index=True)
+            return merged_df.sort_values(by="date_dt", ascending=False)
 
-        fuel_df = df[
-            df["memo"].astype(str).str.contains("주유", na=False)
-        ].copy()
-
-        return fuel_df.sort_values(by="date_dt", ascending=False)
-    
-    if method_name == "통합" and detail_name == "외식":
-        df = month_df.copy()
-
-        if "date_dt" not in df.columns:
-            df["date_dt"] = pd.to_datetime(df["date"], errors="coerce")
-
+        # 나머지 통합 항목은 category 기준 공통 처리
         df = df[
-            (df["category"] == "외식") &
+            (df["category"] == detail_name) &
             (df["amount"] < 0)
         ].copy()
 
         return df.sort_values(by="date_dt", ascending=False)
+
+    # -----------------------------
+    # 결제수단별 보기
+    # -----------------------------
+    df = df[df["method"] == method_name].copy()
 
     # 사건비통장
     if method_name == "사건비통장":
@@ -2023,7 +2015,7 @@ def get_card_detail_df(month_df, method_name, detail_name):
         else:
             df["detail_category"] = pd.Series(dtype="object")
 
-        known = ["병원비", "약값", "검진", "선물", "경조사", "미용"]
+        known = ["병원비", "약값", "검진", "선물", "경조사", "미용", "여행"]
 
         if detail_name == "기타":
             df = df[~df["detail_category"].isin(known)].copy()
@@ -2032,7 +2024,7 @@ def get_card_detail_df(month_df, method_name, detail_name):
 
     # 현대카드
     elif method_name == "현대카드":
-        known = ["쇼핑", "외식", "배달", "커피", "편의점"]
+        known = ["쇼핑", "외식", "배달", "커피", "편의점", "미용"]
 
         df = df[df["amount"] < 0].copy()
 
@@ -2309,15 +2301,6 @@ shinhan_known_total = (
 
 shinhan_other = max(shinhan_amount - shinhan_known_total, 0)
 
-fuel_all_df = month_df[
-    month_df["memo"].astype(str).str.contains("주유", na=False)
-].copy()
-
-fuel_all_stats_df = extract_fuel_stats_df(fuel_all_df)
-
-total_fuel_amount_all = int(fuel_all_stats_df["fuel_amount"].fillna(0).sum()) if not fuel_all_stats_df.empty else 0
-total_food = abs(int(month_df[month_df["category"] == "외식"]["amount"].sum()))
-
 # 사건비통장: 지출 / 환급 / 순금액
 incident_df = month_df[month_df["method"] == "사건비통장"].copy()
 
@@ -2379,7 +2362,72 @@ incident_amount = incident_spent - incident_refund
 
 total_amount = hyundai_amount + shinhan_amount + incident_amount
 
-total_beauty = hyundai_beauty + incident_beauty
+def get_total_detail_map(month_df: pd.DataFrame) -> dict:
+    df = month_df.copy()
+
+    if "date_dt" not in df.columns:
+        df["date_dt"] = pd.to_datetime(df["date"], errors="coerce")
+
+    total_detail_map = {}
+
+    # 외식: 결제수단 상관없이 category 기준
+    total_eatout = abs(int(
+        df[
+            (df["category"] == "외식") &
+            (df["amount"] < 0)
+        ]["amount"].sum()
+    ))
+    if total_eatout > 0:
+        total_detail_map["외식"] = total_eatout
+
+    # 주유: memo 기준
+    fuel_all_df = df[
+        (df["memo"].astype(str).str.contains("주유", na=False)) &
+        (df["amount"] < 0)
+    ].copy()
+
+    fuel_all_stats_df = extract_fuel_stats_df(fuel_all_df)
+    total_fuel_amount_all = int(
+        fuel_all_stats_df["fuel_amount"].fillna(0).sum()
+    ) if not fuel_all_stats_df.empty else 0
+
+    if total_fuel_amount_all > 0:
+        total_detail_map["주유"] = total_fuel_amount_all
+
+    # 미용: 현대카드 + 사건비통장 통합
+    hyundai_beauty = abs(int(
+        df[
+            (df["method"] == "현대카드") &
+            (df["category"] == "미용") &
+            (df["amount"] < 0)
+        ]["amount"].sum()
+    ))
+
+    incident_beauty_df = df[
+        (df["method"] == "사건비통장") &
+        (df["amount"] < 0)
+    ].copy()
+
+    incident_beauty = 0
+    if not incident_beauty_df.empty:
+        incident_beauty_df["detail_category"] = incident_beauty_df["memo"].apply(classify_incident_memo)
+        incident_beauty = abs(int(
+            incident_beauty_df[
+                incident_beauty_df["detail_category"] == "미용"
+            ]["amount"].sum()
+        ))
+
+    total_beauty = hyundai_beauty + incident_beauty
+    if total_beauty > 0:
+        total_detail_map["미용"] = total_beauty
+
+    return total_detail_map
+
+total_detail_map = get_total_detail_map(month_df)
+
+total_fuel_amount_all = total_detail_map.get("주유", 0)
+total_food = total_detail_map.get("외식", 0)
+total_beauty = total_detail_map.get("미용", 0)
 
 with tab1:
     # -------------------
@@ -2734,25 +2782,26 @@ with tab1:
             "#A85E74"
         )
 
-        total_has_detail = any([
-            total_beauty > 0,
-            total_fuel_amount_all > 0,
-            total_food > 0,
-        ])
-
-        if total_has_detail:
+        if total_detail_map:
             st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
 
             with st.container(border=True):
-                if total_beauty > 0:
-                    render_card_detail_row("미용", total_beauty, "통합", "total_beauty", "💅 미용 총 지출")
+                icon_map = {
+                    "미용": "💅",
+                    "주유": "⛽",
+                    "외식": "🍽",
+                }
 
-                if total_fuel_amount_all > 0:
-                    render_card_detail_row("주유", total_fuel_amount_all, "통합", "total_fuel", "⛽ 주유 총 지출")
-
-                if total_food > 0:
-                    render_card_detail_row("외식", total_food, "통합", "total_food", "🍽 외식 총 지출")
-
+                for detail_name, amount in total_detail_map.items():
+                    icon = icon_map.get(detail_name, "💸")
+                    render_card_detail_row(
+                        detail_name,
+                        amount,
+                        "통합",
+                        f"total_{detail_name}",
+                        f"{icon} {detail_name} 총 지출"
+                    )
+    
     st.divider()
 
     # =========================
