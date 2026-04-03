@@ -2372,73 +2372,86 @@ def get_total_detail_map(month_df: pd.DataFrame) -> dict:
 
     total_detail_map = {}
 
-    # 총지출 상세에 자동으로 보여줄 카테고리
+    # 여러 결제수단에서 같이 잡힐 때만 총지출에 보여줄 카테고리
     AUTO_TOTAL_CATEGORIES = ["외식", "커피", "배달", "쇼핑", "미용"]
 
-    # -----------------------------
-    # 1) 일반 카테고리 자동 합산
-    # -----------------------------
     for cat in AUTO_TOTAL_CATEGORIES:
+        used_methods = set()
+
         if cat == "미용":
-            # 미용은 현대카드 category + 사건비통장 detail_category 통합
-            hyundai_beauty = abs(int(
-                df[
-                    (df["method"] == "현대카드") &
-                    (df["category"] == "미용") &
-                    (df["amount"] < 0)
-                ]["amount"].sum()
-            ))
+            # 현대카드 미용
+            hyundai_df = df[
+                (df["method"] == "현대카드") &
+                (df["category"] == "미용") &
+                (df["amount"] < 0)
+            ].copy()
+            if not hyundai_df.empty:
+                used_methods.add("현대카드")
 
-            cash_beauty = abs(int(
-                df[
-                    (df["method"] == "현금/이체") &
-                    (df["category"] == "미용") &
-                    (df["amount"] < 0)
-                ]["amount"].sum()
-            ))
+            # 현금/이체 미용
+            cash_df = df[
+                (df["method"] == "현금/이체") &
+                (df["category"] == "미용") &
+                (df["amount"] < 0)
+            ].copy()
+            if not cash_df.empty:
+                used_methods.add("현금/이체")
 
-            incident_beauty_df = df[
+            # 사건비통장 미용
+            incident_df = df[
                 (df["method"] == "사건비통장") &
                 (df["amount"] < 0)
             ].copy()
 
             incident_beauty = 0
-            if not incident_beauty_df.empty:
-                incident_beauty_df["detail_category"] = incident_beauty_df["memo"].apply(classify_incident_memo)
-                incident_beauty = abs(int(
-                    incident_beauty_df[
-                        incident_beauty_df["detail_category"] == "미용"
-                    ]["amount"].sum()
-                ))
+            if not incident_df.empty:
+                incident_df["detail_category"] = incident_df["memo"].apply(classify_incident_memo)
+                incident_df = incident_df[
+                    incident_df["detail_category"] == "미용"
+                ].copy()
+                if not incident_df.empty:
+                    used_methods.add("사건비통장")
+                    incident_beauty = abs(int(incident_df["amount"].sum()))
 
-            total_amt = hyundai_beauty + cash_beauty + incident_beauty
+            total_amt = (
+                abs(int(hyundai_df["amount"].sum()))
+                + abs(int(cash_df["amount"].sum()))
+                + incident_beauty
+            )
 
         else:
-            total_amt = abs(int(
-                df[
-                    (df["category"] == cat) &
-                    (df["amount"] < 0)
-                ]["amount"].sum()
-            ))
+            cat_df = df[
+                (df["category"] == cat) &
+                (df["amount"] < 0)
+            ].copy()
 
-        if total_amt > 0:
+            if not cat_df.empty:
+                used_methods = set(cat_df["method"].dropna().astype(str).tolist())
+
+            total_amt = abs(int(cat_df["amount"].sum()))
+
+        # ✅ 결제수단이 2개 이상일 때만 표시
+        if total_amt > 0 and len(used_methods) >= 2:
             total_detail_map[cat] = total_amt
 
     # -----------------------------
-    # 2) 주유는 예외 처리
+    # 주유는 memo 기준 + 결제수단 2개 이상일 때만
     # -----------------------------
     fuel_all_df = df[
         (df["memo"].astype(str).str.contains("주유", na=False)) &
         (df["amount"] < 0)
     ].copy()
 
-    fuel_all_stats_df = extract_fuel_stats_df(fuel_all_df)
-    total_fuel_amount_all = int(
-        fuel_all_stats_df["fuel_amount"].fillna(0).sum()
-    ) if not fuel_all_stats_df.empty else 0
+    if not fuel_all_df.empty:
+        fuel_methods = set(fuel_all_df["method"].dropna().astype(str).tolist())
+        fuel_all_stats_df = extract_fuel_stats_df(fuel_all_df)
 
-    if total_fuel_amount_all > 0:
-        total_detail_map["주유"] = total_fuel_amount_all
+        total_fuel_amount_all = int(
+            fuel_all_stats_df["fuel_amount"].fillna(0).sum()
+        ) if not fuel_all_stats_df.empty else 0
+
+        if total_fuel_amount_all > 0 and len(fuel_methods) >= 2:
+            total_detail_map["주유"] = total_fuel_amount_all
 
     return total_detail_map
 
