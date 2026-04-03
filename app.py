@@ -1806,6 +1806,8 @@ def open_quick_edit(
     method: str = DEFAULT_METHOD,
     non_expense: bool = False
 ):
+    dialog_key = f"{method}_{category}_{memo}_{abs(int(amount))}"
+
     st.session_state.pending_quick_entry = {
         "date": datetime.now(ZoneInfo("Asia/Seoul")).date(),
         "amount": abs(int(amount)),
@@ -1813,9 +1815,9 @@ def open_quick_edit(
         "method": method,
         "memo": memo,
         "non_expense": non_expense,
+        "dialog_key": dialog_key,
     }
     quick_add_dialog()
-
 
 @st.dialog("📝 빠른 입력 수정")
 def quick_add_dialog():
@@ -1825,6 +1827,8 @@ def quick_add_dialog():
         st.warning("등록할 항목이 없어요.")
         return
 
+    dialog_key = item.get("dialog_key", "default")
+
     current_cat = str(item["category"])
     cat_index = CATEGORY_OPTIONS.index(current_cat) if current_cat in CATEGORY_OPTIONS else 0
 
@@ -1833,7 +1837,7 @@ def quick_add_dialog():
 
     base_memo, base_fuel_price, base_actual_amount, base_is_non_expense = split_fuel_memo(str(item["memo"]))
 
-    with st.form("quick_add_edit_form"):
+    with st.form(f"quick_add_edit_form_{dialog_key}"):
         q1, q2 = st.columns(2)
 
         with q1:
@@ -1841,20 +1845,20 @@ def quick_add_dialog():
                 "카테고리",
                 CATEGORY_OPTIONS,
                 index=cat_index,
-                key="quick_edit_cat"
+                key=f"quick_edit_cat_{dialog_key}"
             )
 
             d = st.date_input(
                 "날짜",
                 value=item["date"],
-                key="quick_edit_date"
+                key=f"quick_edit_date_{dialog_key}"
             )
 
             method = st.selectbox(
                 "결제수단",
                 METHOD_OPTIONS,
                 index=method_index,
-                key="quick_edit_method",
+                key=f"quick_edit_method_{dialog_key}",
                 disabled=False
             )
 
@@ -1862,20 +1866,20 @@ def quick_add_dialog():
             memo = st.text_input(
                 "메모",
                 value=base_memo,
-                key="quick_edit_memo"
+                key=f"quick_edit_memo_{dialog_key}"
             )
 
             amount_text = st.text_input(
                 "금액",
                 value=f"{abs(int(item['amount'])):,}",
-                key="quick_edit_amount"
+                key=f"quick_edit_amount_{dialog_key}"
             )
 
             fuel_price = st.text_input(
                 "리터당 가격",
                 value=base_fuel_price,
                 placeholder="주유일 때만 입력",
-                key="quick_edit_fuel_price"
+                key=f"quick_edit_fuel_price_{dialog_key}"
             )
 
         c_left, c_right = st.columns([1, 1])
@@ -1884,7 +1888,7 @@ def quick_add_dialog():
             non_expense = st.checkbox(
                 "지출에 반영 안 함 (지출 제외)",
                 value=False,
-                key="quick_edit_non_expense"
+                key=f"quick_edit_non_expense_{dialog_key}"
             )
 
             if non_expense:
