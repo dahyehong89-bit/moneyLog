@@ -369,12 +369,39 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     month_options = get_living_month_options(living_df)
     current_month = datetime.now(KOREA).strftime("%Y-%m")
 
+    # -------------------
+    # 상단 필터
+    # -------------------
+    top_left, top_right = st.columns([1, 1])
+
+    with top_left:
+        default_month = current_month if current_month in month_options else month_options[0]
+
+        if (
+            "living_selected_month" not in st.session_state
+            or st.session_state["living_selected_month"] not in month_options
+        ):
+            st.session_state["living_selected_month"] = default_month
+
+        living_month = st.selectbox(
+            "월 선택",
+            month_options,
+            key="living_selected_month"
+        )
+
+    with top_right:
+        living_q = st.text_input(
+            "검색(카테고리/메모/구분)",
+            placeholder="예: 식비 / 관리비 / 입금 / 비상금",
+            key="living_search_text"
+        )
+
     summary = calc_living_summary(living_df, living_month)
 
     cash_balance = int(cash_df["amount"].sum()) if not cash_df.empty else 0
 
     # 👉 총 생활비 남은 금액
-    total_remaining = summary['available'] + summary['emergency'] + cash_balance
+    total_remaining = summary["available"] + summary["emergency"] + cash_balance
 
     # -------------------
     # 상단 (핵심 요약)
@@ -409,7 +436,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     with bottom3:
         render_budget_card("💵 현금보유액", f"{cash_balance:,}원", "#F0FFF4", "#C6F6D5", "#2F855A")
-
+        
     st.divider()
     st.subheader("✍ 생활비 입력")
 
