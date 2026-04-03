@@ -1036,7 +1036,7 @@ def parse_quick_input(text: str, default_category: str, default_method: str) -> 
     # 2) 결제수단은 별도로 판별
     method, needs_method_confirm = detect_quick_method(
         memo,
-        tagged_method=tagged_method or default_method
+        tagged_method=tagged_method
     )
 
     # 3) 사건비통장 + 환급/입금/수입/보험금 => 수입(+)
