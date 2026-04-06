@@ -484,6 +484,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
     if "living_form_reset" not in st.session_state:
         st.session_state["living_form_reset"] = False
 
+
     @st.dialog("📝 생활비 빠른 입력")
     def quick_living_dialog():
         quick_mode = st.session_state.get("living_quick_mode")
@@ -494,7 +495,12 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
         today = datetime.now(KOREA).date()
 
-        if quick_mode == "extra_income":
+        if quick_mode == "regular_income":
+            title = "💵 정기수입 입력"
+            quick_type = "입금"
+            quick_category = "정기수입"   # 실제 옵션값에 맞게 수정
+            default_memo = "월급 / 생활비 이체"
+        elif quick_mode == "extra_income":
             title = "💰 추가수입 입력"
             quick_type = "입금"
             quick_category = "추가수입"   # 실제 옵션값에 맞게 수정
@@ -504,6 +510,11 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             quick_type = "비상금"
             quick_category = "비상금 넣기"
             default_memo = "비상금 넣기"
+        elif quick_mode == "emergency_withdraw":
+            title = "💸 비상금 빼기"
+            quick_type = "비상금"
+            quick_category = "비상금 빼기"
+            default_memo = "비상금 빼기"
         else:
             st.warning("알 수 없는 빠른입력 종류야.")
             return
@@ -585,16 +596,31 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     with left_col:
         with st.container(border=True):
-            st.subheader("⚡ 빠른 입력")
-            st.caption("자주 쓰는 항목을 한 번에 입력")
+            st.subheader("⚡ 빠른 수입")
+            st.caption("자주 쓰는 수입/비상금 항목을 빠르게 입력")
 
-            if st.button("💰 추가수입", use_container_width=True):
-                st.session_state["living_quick_mode"] = "extra_income"
-                quick_living_dialog()
+            q1, q2 = st.columns(2)
+            q3, q4 = st.columns(2)
 
-            if st.button("🏦 비상금 넣기", use_container_width=True):
-                st.session_state["living_quick_mode"] = "emergency_deposit"
-                quick_living_dialog()
+            with q1:
+                if st.button("💵 정기수입", use_container_width=True):
+                    st.session_state["living_quick_mode"] = "regular_income"
+                    quick_living_dialog()
+
+            with q2:
+                if st.button("💰 추가수입", use_container_width=True):
+                    st.session_state["living_quick_mode"] = "extra_income"
+                    quick_living_dialog()
+
+            with q3:
+                if st.button("🏦 비상금 넣기", use_container_width=True):
+                    st.session_state["living_quick_mode"] = "emergency_deposit"
+                    quick_living_dialog()
+
+            with q4:
+                if st.button("💸 비상금 빼기", use_container_width=True):
+                    st.session_state["living_quick_mode"] = "emergency_withdraw"
+                    quick_living_dialog()
 
     with right_col:
         with st.container(border=True):
@@ -619,7 +645,8 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 st.session_state["living_amount"] = ""
                 st.session_state["living_form_reset"] = False
 
-            f1, f2, f3, f4, f5 = st.columns(5)
+            f1, f2, f3 = st.columns(3)
+            f4, f5 = st.columns([2, 1])
 
             with f1:
                 living_date = st.date_input("날짜", key="living_date")
