@@ -595,7 +595,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             st.session_state["living_quick_mode"] = "emergency_deposit"
             quick_living_dialog()
 
-
+    st.divider()
     st.subheader("✍ 생활비 입력")
 
     if "living_date" not in st.session_state:
