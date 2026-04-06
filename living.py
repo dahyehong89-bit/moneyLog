@@ -497,7 +497,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         if quick_mode == "extra_income":
             title = "💰 추가수입 입력"
             quick_type = "입금"
-            quick_category = "추가수입"   # ← 실제 옵션값이 다르면 수정
+            quick_category = "추가수입"   # 실제 옵션값에 맞게 수정
             default_memo = "캐시백 / 이자 등"
         elif quick_mode == "emergency_deposit":
             title = "🏦 비상금 넣기"
@@ -581,107 +581,110 @@ def render_living_tab(get_worksheet_func, render_budget_card):
                 st.rerun()
 
 
-    st.markdown("### ⚡ 빠른 입력")
+    left_col, right_col = st.columns([1, 2])
 
-    q1, q2 = st.columns(2)
+    with left_col:
+        with st.container(border=True):
+            st.subheader("⚡ 빠른 입력")
+            st.caption("자주 쓰는 항목을 한 번에 입력")
 
-    with q1:
-        if st.button("💰 추가수입", use_container_width=True):
-            st.session_state["living_quick_mode"] = "extra_income"
-            quick_living_dialog()
+            if st.button("💰 추가수입", use_container_width=True):
+                st.session_state["living_quick_mode"] = "extra_income"
+                quick_living_dialog()
 
-    with q2:
-        if st.button("🏦 비상금 넣기", use_container_width=True):
-            st.session_state["living_quick_mode"] = "emergency_deposit"
-            quick_living_dialog()
+            if st.button("🏦 비상금 넣기", use_container_width=True):
+                st.session_state["living_quick_mode"] = "emergency_deposit"
+                quick_living_dialog()
 
-    st.divider()
-    st.subheader("✍ 생활비 입력")
+    with right_col:
+        with st.container(border=True):
+            st.subheader("✍ 생활비 입력")
 
-    if "living_date" not in st.session_state:
-        st.session_state["living_date"] = datetime.now(KOREA).date()
-    if "living_type" not in st.session_state:
-        st.session_state["living_type"] = "지출"
-    if "living_category" not in st.session_state:
-        st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
-    if "living_memo" not in st.session_state:
-        st.session_state["living_memo"] = ""
-    if "living_amount" not in st.session_state:
-        st.session_state["living_amount"] = ""
+            if "living_date" not in st.session_state:
+                st.session_state["living_date"] = datetime.now(KOREA).date()
+            if "living_type" not in st.session_state:
+                st.session_state["living_type"] = "지출"
+            if "living_category" not in st.session_state:
+                st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
+            if "living_memo" not in st.session_state:
+                st.session_state["living_memo"] = ""
+            if "living_amount" not in st.session_state:
+                st.session_state["living_amount"] = ""
 
-    if st.session_state.get("living_form_reset"):
-        st.session_state["living_date"] = datetime.now(KOREA).date()
-        st.session_state["living_type"] = "지출"
-        st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
-        st.session_state["living_memo"] = ""
-        st.session_state["living_amount"] = ""
-        st.session_state["living_form_reset"] = False
+            if st.session_state.get("living_form_reset"):
+                st.session_state["living_date"] = datetime.now(KOREA).date()
+                st.session_state["living_type"] = "지출"
+                st.session_state["living_category"] = LIVING_EXPENSE_CATEGORY_OPTIONS[0]
+                st.session_state["living_memo"] = ""
+                st.session_state["living_amount"] = ""
+                st.session_state["living_form_reset"] = False
 
-    f1, f2, f3, f4, f5 = st.columns(5)
+            f1, f2, f3, f4, f5 = st.columns(5)
 
-    with f1:
-        living_date = st.date_input("날짜", key="living_date")
+            with f1:
+                living_date = st.date_input("날짜", key="living_date")
 
-    with f2:
-        living_type = st.selectbox("구분", LIVING_TYPE_OPTIONS, key="living_type")
+            with f2:
+                living_type = st.selectbox("구분", LIVING_TYPE_OPTIONS, key="living_type")
 
-    with f3:
-        if living_type == "입금":
-            category_options = LIVING_INCOME_CATEGORY_OPTIONS
-        elif living_type == "비상금":
-            category_options = LIVING_EMERGENCY_CATEGORY_OPTIONS
-        else:
-            category_options = LIVING_EXPENSE_CATEGORY_OPTIONS
+            with f3:
+                if living_type == "입금":
+                    category_options = LIVING_INCOME_CATEGORY_OPTIONS
+                elif living_type == "비상금":
+                    category_options = LIVING_EMERGENCY_CATEGORY_OPTIONS
+                else:
+                    category_options = LIVING_EXPENSE_CATEGORY_OPTIONS
 
-        if st.session_state.get("living_category") not in category_options:
-            st.session_state["living_category"] = category_options[0]
+                if st.session_state.get("living_category") not in category_options:
+                    st.session_state["living_category"] = category_options[0]
 
-        living_category = st.selectbox("카테고리", category_options, key="living_category")
+                living_category = st.selectbox("카테고리", category_options, key="living_category")
 
-    with f4:
-        living_memo = st.text_input("메모", key="living_memo")
+            with f4:
+                living_memo = st.text_input("메모", key="living_memo")
 
-    with f5:
-        living_amount_text = st.text_input("금액", placeholder="금액 입력", key="living_amount")
+            with f5:
+                living_amount_text = st.text_input("금액", placeholder="금액 입력", key="living_amount")
 
-    living_saved = st.button("➕ 생활비 저장", use_container_width=True, type="primary")
+            living_saved = st.button("➕ 생활비 저장", use_container_width=True, type="primary")
 
-    if living_saved:
-        amount_clean = living_amount_text.replace(",", "").strip()
+            if living_saved:
+                amount_clean = living_amount_text.replace(",", "").strip()
 
-        if not amount_clean:
-            st.error("금액을 입력해줘.")
-        elif not re.fullmatch(r"\d+", amount_clean):
-            st.error("금액은 숫자만 입력해줘.")
-        else:
-            amount_value = int(amount_clean)
+                if not amount_clean:
+                    st.error("금액을 입력해줘.")
+                elif not re.fullmatch(r"\d+", amount_clean):
+                    st.error("금액은 숫자만 입력해줘.")
+                else:
+                    amount_value = int(amount_clean)
 
-            if living_type == "입금":
-                final_amount = amount_value
-            elif living_type == "비상금":
-                final_amount = -amount_value if living_category == "비상금 넣기" else amount_value
-            else:
-                final_amount = -amount_value
+                    if living_type == "입금":
+                        final_amount = amount_value
+                    elif living_type == "비상금":
+                        final_amount = -amount_value if living_category == "비상금 넣기" else amount_value
+                    else:
+                        final_amount = -amount_value
 
-            memo_value = living_memo.strip()
-            if living_type == "비상금" and not memo_value:
-                memo_value = living_category
+                    memo_value = living_memo.strip()
+                    if living_type == "비상금" and not memo_value:
+                        memo_value = living_category
 
-            new_row = {
-                "date": str(living_date),
-                "amount": final_amount,
-                "category": living_category,
-                "method": LIVING_DEFAULT_METHOD,
-                "memo": memo_value,
-            }
+                    new_row = {
+                        "date": str(living_date),
+                        "amount": final_amount,
+                        "category": living_category,
+                        "method": LIVING_DEFAULT_METHOD,
+                        "memo": memo_value,
+                    }
 
-            current_df = load_living_df(get_worksheet_func)
-            current_df = pd.concat([current_df, pd.DataFrame([new_row])], ignore_index=True)
-            save_living_df(current_df, get_worksheet_func)
+                    current_df = load_living_df(get_worksheet_func)
+                    current_df = pd.concat([current_df, pd.DataFrame([new_row])], ignore_index=True)
+                    save_living_df(current_df, get_worksheet_func)
 
-            st.success("✅ 생활비 저장 완료!")
-            st.session_state["living_form_reset"] = True
-            st.rerun()
+                    st.success("✅ 생활비 저장 완료!")
+                    st.session_state["living_form_reset"] = True
+                    st.rerun()
+                    
     @st.dialog("✏ 생활비 기록 수정")
     def edit_living_dialog(rid: int):
         current_df = load_living_df(get_worksheet_func)
