@@ -477,6 +477,125 @@ def render_living_tab(get_worksheet_func, render_budget_card):
         )
         
     st.divider()
+
+    if "living_quick_mode" not in st.session_state:
+        st.session_state["living_quick_mode"] = None
+
+    if "living_form_reset" not in st.session_state:
+        st.session_state["living_form_reset"] = False
+
+    @st.dialog("📝 생활비 빠른 입력")
+    def quick_living_dialog():
+        quick_mode = st.session_state.get("living_quick_mode")
+
+        if not quick_mode:
+            st.warning("빠른입력 종류를 먼저 선택해줘.")
+            return
+
+        today = datetime.now(KOREA).date()
+
+        if quick_mode == "extra_income":
+            title = "💰 추가수입 입력"
+            quick_type = "입금"
+            quick_category = "추가수입"   # ← 실제 옵션값이 다르면 수정
+            default_memo = "캐시백 / 이자 등"
+        elif quick_mode == "emergency_deposit":
+            title = "🏦 비상금 넣기"
+            quick_type = "비상금"
+            quick_category = "비상금 넣기"
+            default_memo = "비상금 넣기"
+        else:
+            st.warning("알 수 없는 빠른입력 종류야.")
+            return
+
+        st.markdown(f"### {title}")
+
+        quick_date = st.date_input(
+            "날짜",
+            value=today,
+            key=f"quick_living_date_{quick_mode}"
+        )
+        quick_memo = st.text_input(
+            "메모",
+            value=default_memo,
+            key=f"quick_living_memo_{quick_mode}"
+        )
+        quick_amount_text = st.text_input(
+            "금액",
+            placeholder="금액 입력",
+            key=f"quick_living_amount_{quick_mode}"
+        )
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            if st.button(
+                "저장",
+                use_container_width=True,
+                type="primary",
+                key=f"quick_living_save_{quick_mode}"
+            ):
+                amount_clean = quick_amount_text.replace(",", "").strip()
+
+                if not amount_clean:
+                    st.error("금액을 입력해줘.")
+                elif not re.fullmatch(r"\d+", amount_clean):
+                    st.error("금액은 숫자만 입력해줘.")
+                else:
+                    amount_value = int(amount_clean)
+
+                    if quick_type == "입금":
+                        final_amount = amount_value
+                    elif quick_type == "비상금":
+                        final_amount = -amount_value if quick_category == "비상금 넣기" else amount_value
+                    else:
+                        final_amount = -amount_value
+
+                    memo_value = quick_memo.strip()
+                    if quick_type == "비상금" and not memo_value:
+                        memo_value = quick_category
+
+                    new_row = {
+                        "date": str(quick_date),
+                        "amount": final_amount,
+                        "category": quick_category,
+                        "method": LIVING_DEFAULT_METHOD,
+                        "memo": memo_value,
+                    }
+
+                    current_df = load_living_df(get_worksheet_func)
+                    current_df = pd.concat([current_df, pd.DataFrame([new_row])], ignore_index=True)
+                    save_living_df(current_df, get_worksheet_func)
+
+                    st.success("✅ 생활비 저장 완료!")
+                    st.session_state["living_quick_mode"] = None
+                    st.rerun()
+
+        with c2:
+            if st.button(
+                "취소",
+                use_container_width=True,
+                key=f"quick_living_cancel_{quick_mode}"
+            ):
+                st.session_state["living_quick_mode"] = None
+                st.rerun()
+
+
+    st.markdown("### ⚡ 빠른 입력")
+
+    q1, q2 = st.columns(2)
+
+    with q1:
+        if st.button("💰 추가수입", use_container_width=True):
+            st.session_state["living_quick_mode"] = "extra_income"
+            quick_living_dialog()
+
+    with q2:
+        if st.button("🏦 비상금 넣기", use_container_width=True):
+            st.session_state["living_quick_mode"] = "emergency_deposit"
+            quick_living_dialog()
+
+
     st.subheader("✍ 생활비 입력")
 
     if "living_date" not in st.session_state:
@@ -563,7 +682,6 @@ def render_living_tab(get_worksheet_func, render_budget_card):
             st.success("✅ 생활비 저장 완료!")
             st.session_state["living_form_reset"] = True
             st.rerun()
-
     @st.dialog("✏ 생활비 기록 수정")
     def edit_living_dialog(rid: int):
         current_df = load_living_df(get_worksheet_func)
