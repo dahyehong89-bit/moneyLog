@@ -596,7 +596,7 @@ def render_living_tab(get_worksheet_func, render_budget_card):
 
     with left_col:
         with st.container(border=True):
-            st.subheader("⚡ 빠른 수입")
+            st.subheader("⚡ 빠른 입력")
             st.caption("자주 쓰는 수입/비상금 항목을 빠르게 입력")
 
             q1, q2 = st.columns(2)
