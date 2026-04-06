@@ -3507,7 +3507,7 @@ with tab2:
     st.divider()
 
     if "record_view_mode" not in st.session_state:
-        st.session_state["record_view_mode"] = "calendar"
+        st.session_state["record_view_mode"] = "list"
 
     view_mode = st.radio(
         "보기 방식",
