@@ -3,20 +3,21 @@ import re
 import base64
 import socket
 import uuid
+import calendar
 
 from io import BytesIO
 from datetime import date, datetime
-from living import render_living_tab
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-import calendar
 
-FILE = "money.csv"
-CHECKLIST_FILE = "checklist.csv"
+from living import render_living_tab
+
+KOREA = ZoneInfo("Asia/Seoul")
+
 COLUMNS = ["date", "amount", "category", "method", "memo"]
 
 CATEGORY_OPTIONS = ["쇼핑", "외식", "배달", "커피", "편의점", "미용", "여행", "고정비", "사건비"]
