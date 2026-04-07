@@ -1,11 +1,12 @@
 import re
 from datetime import datetime
-import pytz
+from zoneinfo import ZoneInfo  # ✅ pytz 대신 이걸 사용
 
 import pandas as pd
 import streamlit as st
 
-KOREA = pytz.timezone("Asia/Seoul")
+# 한국 시간대 설정
+KOREA = ZoneInfo("Asia/Seoul")
 
 LIVING_COLUMNS = ["date", "amount", "category", "method", "memo"]
 
