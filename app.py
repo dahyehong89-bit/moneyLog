@@ -2598,23 +2598,27 @@ def get_total_detail_map(month_df: pd.DataFrame) -> dict:
             else:
                 total_detail_map[cat] = total_amt
 
-    # -----------------------------
-    # 주유는 memo 기준 예외 처리
-    # -----------------------------
-    fuel_all_df = df[
-        (df["memo"].astype(str).str.contains("주유", na=False)) &
-        (df["amount"] < 0)
-    ].copy()
+        # -----------------------------
+        # 주유는 memo 기준 예외 처리
+        # -----------------------------
+        fuel_all_df = df[
+            df["memo"].fillna("").astype(str).str.contains("주유", na=False)
+        ].copy()
 
-    if not fuel_all_df.empty:
-        fuel_methods = set(fuel_all_df["method"].dropna().astype(str).tolist())
-        fuel_all_stats_df = extract_fuel_stats_df(fuel_all_df)
+        if not fuel_all_df.empty:
+            fuel_methods = set(fuel_all_df["method"].dropna().astype(str).tolist())
 
-        total_fuel_amount_all = int(
-            fuel_all_stats_df["fuel_amount"].fillna(0).sum()
-        ) if not fuel_all_stats_df.empty else 0
+            # 실제 지출만 금액 계산
+            fuel_expense_df = fuel_all_df[fuel_all_df["amount"] < 0].copy()
+            fuel_expense_stats_df = extract_fuel_stats_df(fuel_expense_df)
 
-        if total_fuel_amount_all > 0:
+            total_fuel_amount_all = int(
+                fuel_expense_stats_df["fuel_amount"].fillna(0).sum()
+            ) if not fuel_expense_stats_df.empty else 0
+
+            # ✅ 현대카드만 단독이면 숨김
+            # ✅ 현금/이체만 있거나, 사건비통장만 있거나, 여러 수단 섞이면 표시
+            # ✅ 비지출만 있어도 0원으로 표시
             if fuel_methods == {"현대카드"}:
                 pass
             else:
