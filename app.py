@@ -2128,9 +2128,9 @@ def get_card_detail_df(month_df, method_name, detail_name):
     if method_name == "통합":
         # 주유는 category가 아니라 memo 기준
         if detail_name == "주유":
+            memo_series = df["memo"].fillna("").astype(str)
             fuel_df = df[
-                (df["memo"].astype(str).str.contains("주유", na=False)) &
-                (df["amount"] < 0)
+                memo_series.str.contains("주유", na=False)
             ].copy()
             return fuel_df.sort_values(by="date_dt", ascending=False)
 
