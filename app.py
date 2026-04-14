@@ -951,7 +951,7 @@ def extract_fuel_stats_df(df: pd.DataFrame) -> pd.DataFrame:
     fuel_df["date_dt"] = pd.to_datetime(fuel_df["date"], errors="coerce")
 
     # 리터당 가격
-    fuel_df["unit_price"] = fuel_df["memo"].str.extract(r"리터당\s*([\d,]+)원")[0]
+    fuel_df["unit_price"] = fuel_df["memo"].str.extract(r"(?:리터당|단가)\s*([\d,]+)원?")[0]
     fuel_df["unit_price"] = (
         fuel_df["unit_price"]
         .astype(str)
@@ -960,11 +960,11 @@ def extract_fuel_stats_df(df: pd.DataFrame) -> pd.DataFrame:
     fuel_df["unit_price"] = pd.to_numeric(fuel_df["unit_price"], errors="coerce")
 
     # 리터
-    fuel_df["liters"] = fuel_df["memo"].str.extract(r"([\d.]+)L")[0]
+    fuel_df["liters"] = fuel_df["memo"].str.extract(r"([\d.]+)\s*(?:L|리터)")[0]
     fuel_df["liters"] = pd.to_numeric(fuel_df["liters"], errors="coerce")
 
     # 실제 금액 (비지출 주유용)
-    fuel_df["actual_amount"] = fuel_df["memo"].str.extract(r"실제\s*([\d,]+)원")[0]
+    fuel_df["actual_amount"] = fuel_df["memo"].str.extract(r"(?:실제|실주유|주유금액)\s*([\d,]+)원")[0]
     fuel_df["actual_amount"] = (
         fuel_df["actual_amount"]
         .astype(str)
@@ -2129,9 +2129,11 @@ def get_card_detail_df(month_df, method_name, detail_name):
         # 주유는 category가 아니라 memo 기준
         if detail_name == "주유":
             memo_series = df["memo"].fillna("").astype(str)
+
             fuel_df = df[
-                memo_series.str.contains("주유", na=False)
+                memo_series.str.contains("주유|주유소|휘발유|경유|고급휘발유|셀프", na=False, regex=True)
             ].copy()
+
             return fuel_df.sort_values(by="date_dt", ascending=False)
 
         # 미용은 현대카드(category) + 현금/이체(category) + 사건비통장(detail_category) 통합
